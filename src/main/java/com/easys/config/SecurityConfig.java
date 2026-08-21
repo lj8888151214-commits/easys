@@ -50,6 +50,7 @@ public class SecurityConfig {
                 );
 
         int a;
+        int b;
         return http.build();
     }
 }
