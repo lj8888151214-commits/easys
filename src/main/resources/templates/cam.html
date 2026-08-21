@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout1}">
+<head>
+    <meta charset="UTF-8">
+    <title>실시간 화상 스터디룸</title>
+</head>
+
+<th:block layout:fragment="css">
+    <style>
+        .margin {
+            margin-bottom: 30px;
+        }
+        .center {
+            text-align: center;
+        }
+        .cam-box {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .cam-badge {
+            display: inline-block;
+            color: white;
+            padding: 4px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            animation: pulse 1.5s infinite;
+        }
+        .cam-stream-img {
+            max-width: 100%;
+            height: 380px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid #333;
+            background-color: #000;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</th:block>
+
+<body>
+<div layout:fragment="content" class="container" style="max-width: 1200px; margin-top: 30px;">
+
+    <div class="center margin">
+        <h2 style="font-weight: bold;">📹 실시간 화상 스터디룸</h2>
+        <p style="color: #666;">내 웹캠 화면을 확인하고 다른 스터디원과 화면을 공유해보세요.</p>
+    </div>
+
+    <!-- 📹 실시간 듀얼 스트리밍 영역 -->
+    <div class="cam-box">
+
+        <!-- [화면 1] 현재 컴퓨터 로컬 웹캠 -->
+        <div style="flex: 1; min-width: 340px; max-width: 550px;">
+            <div style="margin-bottom: 8px;">
+                <span class="cam-badge" style="background-color: #ff4757;">● LOCAL CAM</span>
+                <h4 style="margin-top: 5px; font-weight: bold;">내 로컬 웹캠</h4>
+            </div>
+            <!-- 내 웹캠 비디오 태그 -->
+            <video id="cameraview" width="100%" height="380" autoplay playsinline muted class="cam-stream-img"></video>
+
+            <div style="margin-top: 10px;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="initLocalCamera()">
+                    📷 웹캠 다시 연결
+                </button>
+            </div>
+        </div>
+
+        <!-- [화면 2] 다른 컴퓨터에서 접속 시 보여주는 원격 화면 -->
+        <div style="flex: 1; min-width: 340px; max-width: 550px;">
+            <div style="margin-bottom: 8px;">
+                <span class="cam-badge" style="background-color: #2ed573;">● REMOTE VIEW</span>
+                <h4 style="margin-top: 5px; font-weight: bold;">원격 접속자 화면</h4>
+            </div>
+            <!-- 원격 화면 비디오 태그 -->
+            <video id="remoteview" width="100%" height="380" autoplay playsinline class="cam-stream-img"></video>
+
+            <div style="margin-top: 10px;">
+                <button type="button" class="btn btn-outline-success btn-sm" onclick="sendMyScreenToHost()">
+                    🖥️ 내 화면(캠) 상대방에게 송출하기
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</body>
+
+<th:block layout:fragment="script">
+    <script>
+        let localStream = null;
+        let peerConnection = null;
+        let signalingSocket = null;
+        let candidateQueue = [];
+
+        const rtcConfig = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        // jQuery 의존성을 제거하고 표준 DOMContentLoaded 이벤트로 즉시 실행
+        document.addEventListener("DOMContentLoaded", function() {
+            initLocalCamera();
+            initWebSocket();
+        });
+
+        // 📹 1번 화면: 로컬 웹캠 시작
+        async function initLocalCamera() {
+            try {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    localStream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: false
+                    });
+                    const camVideo = document.getElementById("cameraview");
+                    if (camVideo) {
+                        camVideo.srcObject = localStream;
+                        camVideo.play().catch(e => console.log("로컬 재생:", e));
+                    }
+                } else {
+                    alert("이 브라우저/환경에서는 카메라 API를 지원하지 않습니다. (localhost 주소 확인 필요)");
+                }
+            } catch (err) {
+                console.error("로컬 웹캠 권한 거부 또는 장치 없음:", err);
+                alert("카메라 장치를 찾을 수 없거나 브라우저에서 권한이 차단되었습니다.");
+            }
+        }
+
+        // 🌐 WebSocket 시그널링 통신
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host;
+
+            try {
+                signalingSocket = new WebSocket(`${protocol}//${host}/signal`);
+
+                signalingSocket.onopen = function() {
+                    console.log(">>> [WebSocket] 시그널링 서버 연결 완료");
+                };
+
+                signalingSocket.onmessage = async function(event) {
+                    try {
+                        const message = JSON.parse(event.data);
+
+                        if (message.offer) {
+                            console.log(">>> [WebRTC] Offer 수신");
+                            if (!peerConnection) {
+                                createPeerConnection();
+                            }
+                            await peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer));
+                            processCandidateQueue();
+
+                            const answer = await peerConnection.createAnswer();
+                            await peerConnection.setLocalDescription(answer);
+                            signalingSocket.send(JSON.stringify({ answer: answer }));
+                        }
+                        else if (message.answer) {
+                            console.log(">>> [WebRTC] Answer 수신");
+                            await peerConnection.setRemoteDescription(new RTCSessionDescription(message.answer));
+                            processCandidateQueue();
+                        }
+                        else if (message.candidate) {
+                            const candidate = new RTCIceCandidate(message.candidate);
+                            if (peerConnection && peerConnection.remoteDescription) {
+                                await peerConnection.addIceCandidate(candidate);
+                            } else {
+                                candidateQueue.push(candidate);
+                            }
+                        }
+                    } catch (e) {
+                        console.error("시그널링 처리 오류:", e);
+                    }
+                };
+
+                signalingSocket.onclose = function() {
+                    console.warn(">>> [WebSocket] 끊김. 재연결 대기...");
+                    setTimeout(initWebSocket, 3000);
+                };
+            } catch (e) {
+                console.warn("WebSocket 초기화 실패:", e);
+            }
+        }
+
+        // 🔗 RTCPeerConnection 생성
+        function createPeerConnection(sendStream) {
+            peerConnection = new RTCPeerConnection(rtcConfig);
+
+            peerConnection.ontrack = function(event) {
+                console.log(">>> [WebRTC] 원격 스트림 수신 성공");
+                const remoteVideo = document.getElementById("remoteview");
+                if (remoteVideo) {
+                    remoteVideo.srcObject = event.streams[0];
+                    remoteVideo.muted = true;
+                    remoteVideo.play().catch(err => console.warn("원격 재생 오류:", err));
+                }
+            };
+
+            peerConnection.onicecandidate = function(event) {
+                if (event.candidate && signalingSocket && signalingSocket.readyState === WebSocket.OPEN) {
+                    signalingSocket.send(JSON.stringify({ candidate: event.candidate }));
+                }
+            };
+
+            if (sendStream) {
+                sendStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, sendStream);
+                });
+            }
+        }
+
+        async function processCandidateQueue() {
+            while (candidateQueue.length > 0) {
+                const candidate = candidateQueue.shift();
+                try {
+                    await peerConnection.addIceCandidate(candidate);
+                } catch (err) {
+                    console.error("Candidate 처리 실패:", err);
+                }
+            }
+        }
+
+        // 🌟 송출 버튼
+        async function sendMyScreenToHost() {
+            try {
+                let streamToSend = null;
+                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+                if (isMobile) {
+                    streamToSend = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+                        audio: false
+                    });
+                } else {
+                    streamToSend = await navigator.mediaDevices.getDisplayMedia({
+                        video: { cursor: "always", frameRate: 30 },
+                        audio: false
+                    });
+                }
+
+                createPeerConnection(streamToSend);
+
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                if (signalingSocket && signalingSocket.readyState === WebSocket.OPEN) {
+                    signalingSocket.send(JSON.stringify({ offer: offer }));
+                    alert(isMobile ? "모바일 카메라 송출 시작" : "화면 송출 시작");
+                } else {
+                    alert("시그널링 서버와 연결되지 않았습니다.");
+                }
+            } catch (err) {
+                console.error("송출 오류:", err);
+            }
+        }
+    </script>
+</th:block>
+</html>
