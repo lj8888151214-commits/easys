@@ -1,0 +1,618 @@
+.mentoring-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #f7f9f7;
+  color: #243329;
+}
+
+/* ================================
+   HERO
+================================ */
+
+.mentoring-hero {
+  position: relative;
+  width: 100%;
+  height: 430px;
+  overflow: hidden;
+  background: #243329;
+}
+
+.mentoring-hero-bg {
+  position: absolute;
+  top: -60px;
+  left: 0;
+  width: 100%;
+  height: calc(100% + 120px);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  will-change: transform;
+}
+
+.mentoring-hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    90deg,
+    rgba(20, 35, 26, 0.82),
+    rgba(20, 35, 26, 0.45),
+    rgba(20, 35, 26, 0.2)
+  );
+}
+
+.mentoring-hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1200px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 30px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: white;
+}
+
+.mentoring-eyebrow {
+  margin-bottom: 18px;
+  color: #cce0d1;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 4px;
+}
+
+.mentoring-hero-content h1 {
+  margin: 0;
+  color: white;
+  font-size: clamp(48px, 7vw, 82px);
+  font-weight: 800;
+  letter-spacing: -4px;
+}
+
+.mentoring-hero-content p {
+  margin: 25px 0 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+/* ================================
+   CONTENT
+================================ */
+
+.mentoring-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 30px 120px;
+  box-sizing: border-box;
+}
+
+/* ================================
+   INTRO
+================================ */
+
+.mentoring-intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 45px;
+}
+
+.section-label {
+  display: block;
+  margin-bottom: 10px;
+  color: #78907d;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+.mentoring-intro h2 {
+  margin: 0;
+  color: #243329;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.2;
+  letter-spacing: -2.5px;
+}
+
+.mentoring-intro p {
+  margin: 20px 0 0;
+  color: #778179;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.mentor-register-button {
+  flex-shrink: 0;
+  padding: 14px 22px;
+  border: 0;
+  border-radius: 25px;
+  background: #243329;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.mentor-register-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(36, 51, 41, 0.15);
+}
+
+/* ================================
+   FILTER
+================================ */
+
+.mentoring-filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+  padding-bottom: 5px;
+  overflow-x: auto;
+}
+
+.mentoring-filter::-webkit-scrollbar {
+  display: none;
+}
+
+.mentoring-filter-button {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: 1px solid #dfe6df;
+  border-radius: 25px;
+  background: white;
+  color: #68736c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentoring-filter-button:hover {
+  border-color: #b9c8bc;
+  color: #243329;
+}
+
+.mentoring-filter-button.active {
+  border-color: #243329;
+  background: #243329;
+  color: white;
+}
+
+/* ================================
+   MENTOR GRID
+================================ */
+
+.mentor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.mentor-card {
+  padding: 28px;
+  border: 1px solid #e3e9e3;
+  border-radius: 22px;
+  background: white;
+  transition: 0.25s ease;
+}
+
+.mentor-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 40px rgba(30, 50, 38, 0.08);
+}
+
+/* ================================
+   PROFILE
+================================ */
+
+.mentor-card-top {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.mentor-profile {
+  flex-shrink: 0;
+}
+
+.mentor-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: #edf3ee;
+  color: #243329;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.mentor-avatar.large {
+  width: 75px;
+  height: 75px;
+  font-size: 27px;
+}
+
+.mentor-basic {
+  min-width: 0;
+}
+
+.mentor-basic > span {
+  color: #78907d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.mentor-basic h3 {
+  margin: 5px 0 4px;
+  color: #243329;
+  font-size: 20px;
+}
+
+.mentor-basic p {
+  margin: 0;
+  color: #7b857e;
+  font-size: 12px;
+}
+
+/* ================================
+   RATING
+================================ */
+
+.mentor-rating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.mentor-rating strong {
+  color: #566d5c;
+  font-size: 14px;
+}
+
+.mentor-rating span {
+  color: #8a938d;
+  font-size: 11px;
+}
+
+/* ================================
+   DESCRIPTION
+================================ */
+
+.mentor-description {
+  min-height: 48px;
+  margin: 18px 0;
+  color: #68736c;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* ================================
+   SKILLS
+================================ */
+
+.mentor-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mentor-skills span {
+  padding: 6px 10px;
+  border-radius: 15px;
+  background: #edf3ee;
+  color: #53665a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ================================
+   CARD BOTTOM
+================================ */
+
+.mentor-card-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 25px;
+  padding-top: 18px;
+  border-top: 1px solid #edf0ed;
+}
+
+.mentor-card-bottom div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mentor-card-bottom small {
+  color: #8a938d;
+  font-size: 10px;
+}
+
+.mentor-card-bottom strong {
+  color: #243329;
+  font-size: 18px;
+}
+
+.mentor-card-bottom button {
+  padding: 9px 15px;
+  border: 0;
+  border-radius: 20px;
+  background: #243329;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentor-card-bottom button:hover {
+  transform: translateY(-2px);
+}
+
+/* ================================
+   MODAL BACKGROUND
+================================ */
+
+.mentor-modal-background {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  background: rgba(20, 30, 24, 0.65);
+  backdrop-filter: blur(5px);
+}
+
+/* ================================
+   MODAL
+================================ */
+
+.mentor-modal {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 40px;
+  box-sizing: border-box;
+  border-radius: 25px;
+  background: #ffffff;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+}
+
+.mentor-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  width: 35px;
+  height: 35px;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f4f1;
+  color: #435247;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mentor-modal-profile {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #edf0ed;
+}
+
+.mentor-modal-profile span {
+  color: #78907d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.mentor-modal-profile h2 {
+  margin: 5px 0;
+  color: #243329;
+  font-size: 26px;
+}
+
+.mentor-modal-profile p {
+  margin: 0;
+  color: #7b857e;
+  font-size: 13px;
+}
+
+/* ================================
+   MODAL SECTION
+================================ */
+
+.mentor-modal-section {
+  margin-top: 28px;
+}
+
+.mentor-modal-section > span {
+  color: #78907d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.mentor-modal-section h3 {
+  margin: 7px 0 10px;
+  color: #243329;
+  font-size: 18px;
+}
+
+.mentor-modal-section > p {
+  margin: 0;
+  color: #707a73;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* ================================
+   MODAL BOTTOM
+================================ */
+
+.mentor-modal-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 35px;
+  padding-top: 22px;
+  border-top: 1px solid #edf0ed;
+}
+
+.mentor-modal-bottom div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mentor-modal-bottom small {
+  color: #8a938d;
+  font-size: 10px;
+}
+
+.mentor-modal-bottom strong {
+  color: #243329;
+  font-size: 20px;
+}
+
+.mentor-request-button {
+  padding: 13px 20px;
+  border: 0;
+  border-radius: 24px;
+  background: #243329;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentor-request-button:hover {
+  transform: translateY(-2px);
+}
+
+/* ================================
+   TABLET
+================================ */
+
+@media screen and (max-width: 900px) {
+  .mentoring-content {
+    padding: 60px 20px 90px;
+  }
+
+  .mentoring-intro {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mentor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================
+   MOBILE
+================================ */
+
+@media screen and (max-width: 600px) {
+  .mentoring-hero {
+    height: 360px;
+  }
+
+  .mentoring-hero-content {
+    padding: 0 15px;
+  }
+
+  .mentoring-hero-content h1 {
+    font-size: 48px;
+  }
+
+  .mentoring-hero-content p {
+    font-size: 14px;
+  }
+
+  .mentoring-content {
+    padding: 45px 15px 70px;
+  }
+
+  .mentoring-intro h2 {
+    font-size: 32px;
+    letter-spacing: -2px;
+  }
+
+  .mentor-register-button {
+    width: 100%;
+  }
+
+  .mentor-card {
+    padding: 22px;
+    border-radius: 20px;
+  }
+
+  .mentor-avatar {
+    width: 55px;
+    height: 55px;
+    font-size: 19px;
+  }
+
+  .mentor-basic h3 {
+    font-size: 18px;
+  }
+
+  .mentor-description {
+    min-height: auto;
+  }
+
+  .mentor-card-bottom {
+    align-items: center;
+  }
+
+  .mentor-card-bottom strong {
+    font-size: 16px;
+  }
+
+  .mentor-card-bottom button {
+    padding: 9px 12px;
+  }
+
+  .mentor-modal {
+    padding: 30px 22px;
+    border-radius: 22px;
+  }
+
+  .mentor-modal-profile {
+    align-items: flex-start;
+  }
+
+  .mentor-modal-bottom {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mentor-request-button {
+    width: 100%;
+  }
+}
