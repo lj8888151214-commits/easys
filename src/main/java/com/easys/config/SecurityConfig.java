@@ -49,7 +49,6 @@ public class SecurityConfig {
                         .permitAll()
                 );
 
-        int a;
         return http.build();
     }
 }
