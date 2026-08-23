@@ -1,17 +1,13 @@
 package com.easys.config;
 
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
-
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,267 +24,84 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
         http
+                // 1. CSRF 비활성화 (React 비동기 요청 필수)
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors
-                        .configurationSource(corsConfigurationSource())
-                )
 
+                // 2. CORS 허용
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // 3. 요청 URL 권한 제어
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                HttpMethod.OPTIONS,
-                                "/**"
-                        ).permitAll()
-                        .requestMatchers(
-                                "/signal",
-                                "/signal/**"
-                        ).permitAll()
+                        // Preflight(OPTIONS) 통과
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // 로그인, 회원가입, 메일인증 전체 허용
                         .requestMatchers(
-                                "/"
-                        ).permitAll()
-
-                        .requestMatchers(
-                                "/login"
-                        ).permitAll()
-
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/member"
-                        ).permitAll()
-
-                        .requestMatchers(
-                                "/member/join"
-                        ).permitAll()
-
-                        .requestMatchers(
-                                "/api/calendar/personal",
-                                "/api/calendar/personal/**",
-                                "/api/study-groups",
-                                "/api/study-groups/**"
-                        ).authenticated()
-
-                        .requestMatchers(
-                                "/email/**"
-                        ).permitAll()
-
-                        .requestMatchers(
-                                "/auth/**"
-                        ).permitAll()
-
-                        .requestMatchers(
+                                "/",
+                                "/login",
+                                "/member",
+                                "/member/**",
+                                "/api/member",
+                                "/api/member/**",
+                                "/email/**",
+                                "/api/email/**",
+                                "/auth/**",
+                                "/api/auth/**",
                                 "/css/**",
                                 "/js/**",
-                                "/images/**"
-                        ).permitAll()
-
-                        .requestMatchers(
-                                "/profile-images/**"
-                        ).permitAll()
-
-                        .requestMatchers(
+                                "/images/**",
                                 "/error"
                         ).permitAll()
 
-                        .requestMatchers(
-                                "/member/me",
-                                "/member/me/**"
-                        ).authenticated()
+                        // 스터디 조회는 비로그인도 가능
+                        .requestMatchers(HttpMethod.GET, "/study", "/study/**", "/api/study/**").permitAll()
 
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/study",
-                                "/study/**"
-                        ).permitAll()
-
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/mentor",
-                                "/mentor/{mentorId}"
-                        ).permitAll()
-
-                        // 전체 공개 멘토링 목록(mentor-grid) / 특정 멘토가 등록한 멘토링 목록
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/mentor/offerings",
-                                "/mentor/offerings/mentor/*"
-                        ).permitAll()
-
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/mentor/reservation/*/booked-dates"
-                        ).permitAll()
-
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/mentor/reviews/eligible/**"
-                        ).authenticated()
-
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/mentor/reviews/**"
-                        ).permitAll()
-
-                        // 스터디룸 목록/상세/검색/리뷰 조회 (예약 전 누구나 볼 수 있어야 함)
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/study-rooms",
-                                "/study-rooms/**"
-                        ).permitAll()
-
-                        // 스터디룸 예약 가능 시간 조회
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/reservations/availability"
-                        ).permitAll()
-
-                        // 커뮤니티 게시글 조회
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/community/posts",
-                                "/community/posts/**"
-                        ).permitAll()
-
-                        // 관리자 전용 API (스터디룸/커뮤니티 관리 등)
-                        .requestMatchers(
-                                "/admin/**"
-                        ).hasRole("ADMIN")
-
-                        .requestMatchers("/api/ai/**").permitAll() // 🌟 AI 경로 허용 추가
-                        .requestMatchers("/api/member/me", "/api/study-groups").authenticated() // 필요에 따라 설정
-
-                        // 그 외 모든 요청은 로그인 필요
+                        // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )
 
-                // /api/** 요청은 로그인 페이지로 리다이렉트하지 않고 401/403 JSON 응답 내려주기
-                .exceptionHandling(exception -> exception
-                        .defaultAuthenticationEntryPointFor(
-                                (request, response, authException) -> {
-                                    response.setStatus(
-                                            HttpServletResponse.SC_UNAUTHORIZED
-                                    );
-                                    response.setContentType(
-                                            "application/json;charset=UTF-8"
-                                    );
-                                    response.getWriter().write(
-                                            "{\"message\":\"로그인이 필요합니다.\"}"
-                                    );
-                                },
-                                PathPatternRequestMatcher.pathPattern("/api/**")
-                        )
-                        .defaultAccessDeniedHandlerFor(
-                                (request, response, accessDeniedException) -> {
-                                    response.setStatus(
-                                            HttpServletResponse.SC_FORBIDDEN
-                                    );
-                                    response.setContentType(
-                                            "application/json;charset=UTF-8"
-                                    );
-                                    response.getWriter().write(
-                                            "{\"message\":\"관리자만 접근할 수 있습니다.\"}"
-                                    );
-                                },
-                                PathPatternRequestMatcher.pathPattern("/api/**")
-                        )
-                )
-
-                // 로그인 설정
+                // 4. Spring Security 기본 로그인 핸들러 (200 OK / 401 JSON 응답)
                 .formLogin(form -> form
                         .loginProcessingUrl("/login")
-                        .usernameParameter("username")
+                        .usernameParameter("username") // "email" -> "username" 으로 변경 (프론트와 일치)
                         .passwordParameter("password")
-                        .successHandler(
-                                (request, response, authentication) -> {
-                                    response.setStatus(
-                                            HttpServletResponse.SC_OK
-                                    );
-                                    response.setContentType(
-                                            "application/json;charset=UTF-8"
-                                    );
-                                    response.getWriter().write(
-                                            "{\"message\":\"로그인 성공\"}"
-                                    );
-                                }
-                        )
-                        .failureHandler(
-                                (request, response, exception) -> {
-                                    response.setStatus(
-                                            HttpServletResponse.SC_UNAUTHORIZED
-                                    );
-                                    response.setContentType(
-                                            "application/json;charset=UTF-8"
-                                    );
-                                    response.getWriter().write(
-                                            "{\"message\":\"이메일 또는 비밀번호가 일치하지 않습니다.\"}"
-                                    );
-                                }
-                        )
+                        .successHandler((request, response, authentication) -> {
+                            response.setStatus(HttpServletResponse.SC_OK);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"message\":\"로그인 성공\"}");
+                        })
+                        .failureHandler((request, response, exception) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"message\":\"이메일 또는 비밀번호가 일치하지 않습니다.\"}");
+                        })
                         .permitAll()
                 )
 
+                // 5. 로그아웃 핸들러
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessHandler(
-                                (request, response, authentication) -> {
-                                    response.setStatus(
-                                            HttpServletResponse.SC_OK
-                                    );
-                                    response.setContentType(
-                                            "application/json;charset=UTF-8"
-                                    );
-                                    response.getWriter().write(
-                                            "{\"message\":\"로그아웃 성공\"}"
-                                    );
-                                }
-                        )
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setStatus(HttpServletResponse.SC_OK);
+                        })
                         .permitAll()
                 );
 
         return http.build();
     }
 
+    // React(5173 포트) 통신을 위한 CORS 설정
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-
-        CorsConfiguration configuration =
-                new CorsConfiguration();
-
-        configuration.setAllowedOriginPatterns(
-                List.of(
-                        "http://localhost:5173",
-                        "http://127.0.0.1:5173",
-                        "http://192.168.*.*:*",
-                        "http://10.*.*.*:*"
-                )
-        );
-
-        configuration.setAllowedMethods(
-                List.of(
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "DELETE",
-                        "PATCH",
-                        "OPTIONS"
-                )
-        );
-
-        configuration.setAllowedHeaders(
-                List.of("*")
-        );
-
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
-        source.registerCorsConfiguration(
-                "/**",
-                configuration
-        );
-
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }

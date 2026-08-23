@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Signup.css";
@@ -25,7 +26,6 @@ function Signup() {
 
     // 입력값 변경
     const change = (e) => {
-
         setForm({
             ...form,
             [e.target.name]: e.target.value
@@ -40,36 +40,27 @@ function Signup() {
         setMessage("");
 
         if (!form.email) {
-
             setError("이메일을 입력해주세요.");
-
             return;
         }
 
         try {
 
-            const response = await fetch(
-                "/api/email/send",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        email: form.email
-                    })
-                }
-            );
+            const response = await fetch("/api/email/send", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: form.email
+                })
+            });
 
             const text = await response.text();
 
             if (!response.ok) {
-
                 throw new Error(
-                    text ||
-                    "인증번호 발송에 실패했습니다."
+                    text || "인증번호 발송에 실패했습니다."
                 );
             }
 
@@ -78,8 +69,7 @@ function Signup() {
         } catch (error) {
 
             setError(
-                error.message ||
-                "인증번호 발송에 실패했습니다."
+                error.message || "인증번호 발송에 실패했습니다."
             );
         }
     };
@@ -92,61 +82,45 @@ function Signup() {
         setMessage("");
 
         if (!form.email) {
-
             setError("이메일을 입력해주세요.");
-
             return;
         }
 
         if (!code) {
-
             setError("인증번호를 입력해주세요.");
-
             return;
         }
 
         try {
 
-            const response = await fetch(
-                "/api/email/verify",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        email: form.email,
-                        verificationCode: code
-                    })
-                }
-            );
+            const response = await fetch("/api/email/verify", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: form.email,
+                    verificationCode: code
+                })
+            });
 
             const text = await response.text();
 
             if (!response.ok) {
-
                 throw new Error(
-                    text ||
-                    "이메일 인증에 실패했습니다."
+                    text || "이메일 인증에 실패했습니다."
                 );
             }
 
             setVerified(true);
-
-            setMessage(
-                text ||
-                "이메일 인증이 완료되었습니다."
-            );
+            setMessage(text || "이메일 인증이 완료되었습니다.");
 
         } catch (error) {
 
             setVerified(false);
 
             setError(
-                error.message ||
-                "이메일 인증에 실패했습니다."
+                error.message || "이메일 인증에 실패했습니다."
             );
         }
     };
@@ -161,20 +135,12 @@ function Signup() {
         setMessage("");
 
         if (!verified) {
-
-            setError(
-                "이메일 인증을 먼저 완료해주세요."
-            );
-
+            setError("이메일 인증을 먼저 완료해주세요.");
             return;
         }
 
         if (form.password !== form.passwordConfirm) {
-
-            setError(
-                "비밀번호가 일치하지 않습니다."
-            );
-
+            setError("비밀번호가 일치하지 않습니다.");
             return;
         }
 
@@ -182,31 +148,21 @@ function Signup() {
 
         try {
 
-            const response = await fetch(
-                "/api/member",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify(form)
-                }
-            );
+            const response = await fetch("/api/member", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(form)
+            });
 
             const text = await response.text();
 
             let data = {};
 
             try {
-
-                data = text
-                    ? JSON.parse(text)
-                    : {};
-
+                data = text ? JSON.parse(text) : {};
             } catch {
-
                 data = {
                     message: text
                 };
@@ -221,16 +177,11 @@ function Signup() {
                 );
             }
 
-            setMessage(
-                "회원가입이 완료되었습니다."
-            );
-
+            setMessage("회원가입이 완료되었습니다.");
 
             // 성공했을 때만 로그인 페이지로 이동
             setTimeout(() => {
-
                 navigate("/login");
-
             }, 500);
 
         } catch (error) {
@@ -248,7 +199,6 @@ function Signup() {
 
 
     return (
-
         <main className="auth-page">
 
             <form
@@ -260,9 +210,7 @@ function Signup() {
                     EASYS
                 </span>
 
-                <h1>
-                    회원가입
-                </h1>
+                <h1>회원가입</h1>
 
                 <p>
                     간단한 정보 입력 후 이메일 인증을 완료해주세요.
@@ -270,7 +218,6 @@ function Signup() {
 
 
                 {/* 생년월일 */}
-
                 <label>
                     생년월일 (6자리)
 
@@ -285,7 +232,6 @@ function Signup() {
 
 
                 {/* 이메일 */}
-
                 <label>
                     이메일
 
@@ -296,9 +242,7 @@ function Signup() {
                             type="email"
                             value={form.email}
                             onChange={(e) => {
-
                                 change(e);
-
                                 setVerified(false);
                             }}
                             required
@@ -316,7 +260,6 @@ function Signup() {
 
 
                 {/* 인증번호 */}
-
                 <label>
                     인증번호
 
@@ -341,7 +284,6 @@ function Signup() {
 
 
                 {/* 닉네임 */}
-
                 <label>
                     닉네임
 
@@ -356,7 +298,6 @@ function Signup() {
 
 
                 {/* 비밀번호 */}
-
                 <label>
                     비밀번호
 
@@ -371,7 +312,6 @@ function Signup() {
 
 
                 {/* 비밀번호 확인 */}
-
                 <label>
                     비밀번호 확인
 
@@ -386,29 +326,22 @@ function Signup() {
 
 
                 {/* 성공 메시지 */}
-
                 {message && (
-
                     <div className="auth-message">
                         {message}
                     </div>
-
                 )}
 
 
                 {/* 에러 메시지 */}
-
                 {error && (
-
                     <div className="auth-error">
                         {error}
                     </div>
-
                 )}
 
 
                 {/* 회원가입 버튼 */}
-
                 <button
                     type="submit"
                     disabled={loading}
@@ -439,3 +372,4 @@ function Signup() {
 }
 
 export default Signup;
+

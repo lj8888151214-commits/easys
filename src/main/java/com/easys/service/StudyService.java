@@ -3,10 +3,8 @@ package com.easys.service;
 import com.easys.dto.StudyCreateDto;
 import com.easys.dto.StudyResponseDto;
 import com.easys.entity.Member;
-import com.easys.entity.MemberRole;
 import com.easys.entity.Study;
 import com.easys.repository.MemberRepository;
-import com.easys.repository.StudyApplicationRepository;
 import com.easys.repository.StudyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,8 +18,6 @@ public class StudyService {
 
     private final StudyRepository studyRepository;
 
-    private final StudyApplicationRepository applicationRepository;
-
     private final MemberRepository memberRepository;
 
 
@@ -30,46 +26,29 @@ public class StudyService {
     // =====================================================
 
     @Transactional
-    public StudyResponseDto createStudy(
-            StudyCreateDto request,
-            String email
-    ) {
+    public StudyResponseDto createStudy(StudyCreateDto request, String email) {
 
-        if (request == null) {
-
-            throw new IllegalArgumentException(
-                    "스터디 정보를 입력해주세요."
-            );
-        }
-
-
-        Member member =
-                memberRepository
+        // 현재 로그인한 회원 찾기
+        Member member = memberRepository
                         .findByEmail(email)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "회원을 찾을 수 없습니다."
-                                )
-                        );
-
-
-        Study study =
-                new Study(
-                        request.getTitle(),
-                        request.getContent(),
-                        request.getCategory(),
-                        request.getMaxMembers(),
-                        member
-                );
-
-
-        Study savedStudy =
-                studyRepository.save(study);
-
-
-        return new StudyResponseDto(
-                savedStudy
+                                new RuntimeException("회원을 찾을 수 없습니다."));
+        // 스터디 생성
+        Study study = new Study(
+                request.getTitle(),
+                request.getContent(),
+                request.getCategory(),
+                request.getMaxMembers(),
+                member
         );
+
+
+        // DB 저장
+        studyRepository.save(study);
+
+
+        // 저장된 스터디를 DTO로 변환해서 반환
+        return new StudyResponseDto(study);
     }
 
 
@@ -80,8 +59,21 @@ public class StudyService {
     @Transactional(readOnly = true)
     public List<StudyResponseDto> getStudies() {
 
-        return studyRepository
-                .findAllByOrderByCreatedAtDesc()
+        /*
+         * 스터디를 최신순으로 가져온다.
+         */
+
+        List<Study> studies = studyRepository
+                        .findAllByOrderByCreatedAtDesc();
+
+
+        /*
+         * Entity
+         *    ↓
+         * DTO
+         */
+
+        return studies
                 .stream()
                 .map(StudyResponseDto::new)
                 .toList();
@@ -93,23 +85,15 @@ public class StudyService {
     // =====================================================
 
     @Transactional(readOnly = true)
-    public StudyResponseDto getStudy(
-            Long id
-    ) {
+    public StudyResponseDto getStudy(Long id) {
 
-        Study study =
-                studyRepository
+        Study study = studyRepository
                         .findById(id)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "스터디를 찾을 수 없습니다."
-                                )
-                        );
+                                new RuntimeException("스터디를 찾을 수 없습니다."));
 
 
-        return new StudyResponseDto(
-                study
-        );
+        return new StudyResponseDto(study);
     }
 
 
@@ -118,48 +102,45 @@ public class StudyService {
     // =====================================================
 
     @Transactional
-    public StudyResponseDto updateStudy(
-            Long id,
-            StudyCreateDto request,
-            String email
-    ) {
+    public StudyResponseDto updateStudy(Long id, StudyCreateDto request, String email) {
 
-        if (request == null) {
-
-            throw new IllegalArgumentException(
-                    "스터디 정보를 입력해주세요."
-            );
-        }
-
-
-        Study study =
-                studyRepository
+        // 수정할 스터디 찾기
+        Study study = studyRepository
                         .findById(id)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "스터디를 찾을 수 없습니다."
-                                )
-                        );
+                                new RuntimeException("스터디를 찾을 수 없습니다."));
 
 
+        // =================================================
         // 작성자 확인
-        checkOwner(
-                study,
-                email
-        );
+        // =================================================
 
+        /*
+         * Study.java에서 작성자를
+         *
+         * private Member member;
+         *
+         * 로 만들었기 때문에
+         *
+         * study.getMember()
+         *
+         * 를 사용해야 한다.
+         */
 
+        if (!study.getMember()
+                .getEmail()
+                .equals(email)) {
+            throw new RuntimeException("작성자만 수정이 가능합니다.");
+        }
+
+        // 스터디 내용 수정
         study.update(
                 request.getTitle(),
                 request.getContent(),
                 request.getCategory(),
                 request.getMaxMembers()
         );
-
-
-        return new StudyResponseDto(
-                study
-        );
+        return new StudyResponseDto(study);
     }
 
 
@@ -168,36 +149,24 @@ public class StudyService {
     // =====================================================
 
     @Transactional
-    public void deleteStudy(
-            Long id,
-            String email
-    ) {
+    public void deleteStudy(Long id, String email) {
 
-        Study study =
-                studyRepository
+        // 삭제할 스터디 찾기
+        Study study = studyRepository
                         .findById(id)
                         .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "스터디를 찾을 수 없습니다."
-                                )
+                                new RuntimeException("스터디를 찾을 수 없습니다.")
                         );
 
 
-        // 작성자 본인이거나 관리자만 삭제 가능
-        checkOwnerOrAdmin(
-                study,
-                email
-        );
+        // =================================================
+        // 작성자 확인
+        // =================================================
 
-
-        /*
-         * StudyApplication이 Study를 참조하고 있으므로
-         * 신청 정보를 먼저 삭제한다.
-         */
-        applicationRepository.deleteByStudyId(id);
-
-
-        // 스터디 삭제
+        if (!study.getMember().getEmail().equals(email)) {
+            throw new RuntimeException("작성자만 삭제가 가능합니다.");
+        }
+        // 삭제
         studyRepository.delete(study);
     }
 
@@ -212,112 +181,50 @@ public class StudyService {
             String category
     ) {
 
-        boolean hasKeyword =
-                keyword != null &&
-                        !keyword.isBlank();
-
-
-        boolean hasCategory =
-                category != null &&
-                        !category.isBlank();
-
-
         List<Study> studies;
 
 
-        // 검색 조건 없음
-        if (!hasKeyword && !hasCategory) {
+        // =================================================
+        // 1. 검색어 X + 카테고리 X
+        // =================================================
 
-            studies =
-                    studyRepository
+        if ((keyword == null || keyword.isBlank()) && (category == null || category.isBlank())
+        ) {studies = studyRepository
                             .findAllByOrderByCreatedAtDesc();
         }
 
 
-        // 제목 검색
-        else if (hasKeyword && !hasCategory) {
+        // =================================================
+        // 2. 제목 검색만
+        // =================================================
 
-            studies =
-                    studyRepository
-                            .findByTitleContainingIgnoreCase(
-                                    keyword.trim()
-                            );
+        else if (category == null || category.isBlank()) {
+            studies = studyRepository
+                            .findByTitleContainingIgnoreCase(keyword);
         }
 
+        // =================================================
+        // 3. 카테고리 검색만
+        // =================================================
 
-        // 카테고리 검색
-        else if (!hasKeyword && hasCategory) {
-
-            studies =
-                    studyRepository
-                            .findByCategory(
-                                    category.trim()
-                            );
+        else if (keyword == null || keyword.isBlank()) {
+            studies = studyRepository.findByCategory(category);
         }
-
-
-        // 제목 + 카테고리 검색
+        // =================================================
+        // 4. 제목 + 카테고리 검색
+        // =================================================
         else {
-
-            studies =
-                    studyRepository
-                            .findByTitleContainingIgnoreCaseAndCategory(
-                                    keyword.trim(),
-                                    category.trim()
-                            );
+            studies = studyRepository
+                            .findByTitleContainingIgnoreCase(keyword)
+                            .stream()
+                            .filter(study -> study.getCategory()
+                                    .equals(category))
+                            .toList();
         }
-
-
+        // Entity → DTO
         return studies
                 .stream()
                 .map(StudyResponseDto::new)
                 .toList();
-    }
-
-
-    // =====================================================
-    // 작성자 확인
-    // =====================================================
-
-    private void checkOwner(
-            Study study,
-            String email
-    ) {
-
-        if (!study.getMember()
-                .getEmail()
-                .equals(email)) {
-
-            throw new IllegalArgumentException(
-                    "스터디 작성자만 수정하거나 삭제할 수 있습니다."
-            );
-        }
-    }
-
-
-    // 삭제 전용: 작성자 본인이거나 관리자면 통과
-    private void checkOwnerOrAdmin(
-            Study study,
-            String email
-    ) {
-
-        if (study.getMember().getEmail().equals(email)) {
-            return;
-        }
-
-        Member requester =
-                memberRepository.findByEmail(email)
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "회원을 찾을 수 없습니다."
-                                )
-                        );
-
-        if (requester.getRole() != MemberRole.ADMIN) {
-
-            throw new IllegalArgumentException(
-                    "스터디 작성자만 수정하거나 삭제할 수 있습니다."
-            );
-        }
     }
 }

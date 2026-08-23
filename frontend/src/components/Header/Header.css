@@ -27,10 +27,6 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* =====================================================
-   전체 컨테이너
-===================================================== */
-
 .header-container {
   width: 1200px;
   max-width: calc(100% - 40px);
@@ -41,18 +37,23 @@
   gap: 28px;
 }
 
-/* =====================================================
-   로고
-===================================================== */
-
+/* 로고 */
 .header-logo {
-  position: relative;
-  flex-shrink: 0;
-  width: 155px;
-  height: 60px;
+    position: relative;
+    flex-shrink: 0;
+    width: 155px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.header-logo a {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
-  text-decoration: none;
 }
 
 .logo {
@@ -90,10 +91,7 @@
     scale(1.08);
 }
 
-/* =====================================================
-   PC 메뉴
-===================================================== */
-
+/* PC 메뉴 */
 .main-nav {
   flex: 1;
   height: 100%;
@@ -117,20 +115,20 @@
 }
 
 .main-nav a {
-    position: relative;
-    display: inline-block;
-    padding: 8px 2px;
-    color: #000000;
-    text-decoration: none;
-    font-size: 15px;
-    font-weight: 600;
-    transition:
+  position: relative;
+  display: inline-block;
+  padding: 8px 2px;
+  color: white;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  transition:
     color 0.25s ease,
     transform 0.25s ease;
 }
 
 .main-header.scrolled .main-nav a {
-  color: #000000;
+  color: #cadfd0;
 }
 
 .main-nav a::after {
@@ -140,15 +138,10 @@
   bottom: 0;
   width: 0;
   height: 2px;
-
   border-radius: 10px;
   background: currentColor;
   transform: translateX(-50%);
   transition: width 0.25s ease;
-}
-.campage .main-header .main-nav a,
-.campage .main-header.scrolled .main-nav a {
-  color: #000000;
 }
 
 .main-nav a:hover {
@@ -161,10 +154,7 @@
   width: 100%;
 }
 
-/* =====================================================
-   오른쪽 영역
-===================================================== */
-
+/* 오른쪽 영역 */
 .header-right {
   display: flex;
   align-items: center;
@@ -174,10 +164,7 @@
   margin-left: auto;
 }
 
-/* =====================================================
-   검색
-===================================================== */
-
+/* 검색 */
 .header-search {
   flex-shrink: 0;
 }
@@ -220,21 +207,18 @@
 }
 
 .main-header.scrolled .header-search input {
-  color: #2e4033;
+  color: #2E4033;
 }
 
 .header-search input::placeholder {
-  color: rgba(255, 255, 255, 0.9);
-  opacity: 1;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .main-header.scrolled .header-search input::placeholder {
-  color: #7d9382;
-  opacity: 1;
+  color: #9caf9f;
 }
 
 .header-search button {
-  flex-shrink: 0;
   width: 45px;
   height: 100%;
   padding: 0;
@@ -253,212 +237,106 @@
   transform: scale(1.2);
 }
 
-/* =====================================================
-   로그인 / 회원가입
-===================================================== */
-
+/* 로그인 / 회원가입 */
 .header-member {
   display: flex;
   align-items: center;
+  gap: 10px;
   white-space: nowrap;
 }
 
+/* 로그인 */
 .login-btn {
   padding: 8px 5px;
   color: white;
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
+  transition:
+    color 0.25s ease,
+    transform 0.25s ease;
 }
 
 .main-header.scrolled .login-btn {
   color: #cadfd0;
 }
 
+.login-btn:hover {
+  transform:
+    translateY(-3px)
+    scale(1.05);
+}
+
+/* 회원가입 */
 .signup-btn {
   min-width: 75px;
   padding: 9px 14px;
   border-radius: 20px;
   background: white;
-  color: #2e4033;
+  color: #2E4033;
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
-}
-
-.main-header.scrolled .signup-btn {
-  background: #cadfd0;
-  color: #2e4033;
-}
-
-/* =====================================================
-   알림
-===================================================== */
-
-.notification-bell {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.notification-bell-button {
-  position: relative;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: white;
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.main-header.scrolled .notification-bell-button {
-  color: #2e4033;
-}
-
-.notification-bell-button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: scale(1.06);
-}
-
-.main-header.scrolled .notification-bell-button:hover {
-  background: rgba(46, 64, 51, 0.08);
-}
-
-.notification-badge {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 15px;
-  height: 15px;
-  padding: 0 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: #d9534f;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.notification-panel {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: -10px;
-  width: 320px;
-  max-width: calc(100vw - 20px);
-  max-height: 420px;
-  overflow-y: auto;
-  border-radius: 14px;
-  background: white;
-  color: #2e4033;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-  z-index: 10000;
-}
-
-.notification-panel-header {
-  padding: 14px 16px;
-  border-bottom: 1px solid #edf1ed;
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.notification-empty {
-  padding: 24px 16px;
-  margin: 0;
-  color: #8a958d;
-  font-size: 13px;
-  text-align: center;
-}
-
-.notification-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.notification-list li {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f2f5f2;
-}
-
-.notification-list li:last-child {
-  border-bottom: 0;
-}
-
-.notification-list li.unread {
-  background: #f6faf7;
-}
-
-.notification-list li strong {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 13px;
-  color: #2e4033;
-}
-
-.notification-list li p {
-  margin: 0 0 6px;
-  color: #5c655f;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.notification-list li span {
-  color: #a5aca7;
-  font-size: 11px;
-}
-
-/* =====================================================
-   로그인 후 PC 프로필
-===================================================== */
-
-.user-member {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.profile-link {
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  overflow: hidden;
-  text-decoration: none;
   transition:
     transform 0.25s ease,
     box-shadow 0.25s ease;
 }
 
-.header-profile-image {
-  width: 34px;
-  height: 34px;
-  display: block;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: center;
-  border: 2px solid rgba(255, 255, 255, 0.95);
+.main-header.scrolled .signup-btn {
   background: #cadfd0;
+  color: #2E4033;
 }
 
-.profile-link:hover {
+.signup-btn:hover {
+  transform:
+    translateY(-3px)
+    scale(1.05);
+  box-shadow:
+    0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* 로그인 후 */
+.user-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 프로필 자리 */
+.profile-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  text-decoration: none;
+  transition: transform 0.25s ease;
+}
+
+.profile-placeholder {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #cadfd0;
+  color: #2E4033;
+  border: 2px solid white;
+  font-size: 18px;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.profile-link:hover .profile-placeholder {
   transform: scale(1.08);
   box-shadow:
     0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
+/* 닉네임 */
 .user-nickname {
   max-width: 100px;
   overflow: hidden;
@@ -468,6 +346,9 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
+  transition:
+    color 0.25s ease,
+    transform 0.25s ease;
 }
 
 .main-header.scrolled .user-nickname {
@@ -475,40 +356,21 @@
 }
 
 .user-nickname:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
-.admin-link {
-  padding: 4px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 12px;
-  color: white;
-  text-decoration: none;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.main-header.scrolled .admin-link {
-  border-color: #a9c1ad;
-  color: #2e4033;
-}
-
-.admin-link:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* =====================================================
-   PC 로그아웃
-===================================================== */
-
+/* 로그아웃 */
 .logout-btn {
-  padding: 7px 4px;
+  padding: 7px 5px;
   border: none;
   background: transparent;
   color: white;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
+  transition:
+    color 0.25s ease,
+    transform 0.25s ease;
 }
 
 .main-header.scrolled .logout-btn {
@@ -516,13 +378,10 @@
 }
 
 .logout-btn:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
-/* =====================================================
-   모바일 버튼
-===================================================== */
-
+/* 모바일 버튼 */
 .mobile-menu-btn {
   display: none;
   width: 40px;
@@ -551,18 +410,12 @@
   background: #cadfd0;
 }
 
-/* =====================================================
-   모바일 메뉴
-===================================================== */
-
+/* 모바일 메뉴 */
 .mobile-menu {
   display: none;
 }
 
-/* =====================================================
-   태블릿
-===================================================== */
-
+/* 태블릿 */
 @media screen and (max-width: 1100px) {
   .header-container {
     max-width: calc(100% - 30px);
@@ -583,7 +436,6 @@
 
   .main-nav a {
     font-size: 14px;
-
   }
 
   .header-search form {
@@ -595,12 +447,8 @@
   }
 }
 
-/* =====================================================
-   모바일
-===================================================== */
-
+/* 모바일 */
 @media screen and (max-width: 768px) {
-
   .main-header {
     height: 65px;
   }
@@ -610,97 +458,43 @@
     max-width: none;
     height: 65px;
     margin: 0;
-    padding: 0 52px 0 10px;
-    gap: 6px;
+    padding: 0 55px 0 12px;
+    gap: 8px;
   }
 
   .main-nav {
     display: none;
   }
 
-  /* 로고 */
   .header-logo {
-    width: 105px;
+    width: 115px;
     height: 45px;
-    flex-shrink: 0;
   }
 
   .logo {
-    height: 38px;
+    height: 40px;
   }
 
-  /* 오른쪽 */
   .header-right {
-    min-width: 0;
     margin-left: auto;
-    gap: 5px;
-  }
-
-  /* 검색창 */
-  .header-search {
-    min-width: 0;
+    gap: 6px;
   }
 
   .header-search form {
-    width: 135px;
+    width: 125px;
     height: 35px;
   }
 
   .header-search form:focus-within {
-    width: 180px;
+    width: 140px;
   }
 
   .header-search input {
-    width: 100%;
-    min-width: 0;
-    padding: 0 10px;
     font-size: 12px;
   }
 
-  .header-search input::placeholder {
-    color: rgba(255, 255, 255, 0.95);
-    opacity: 1;
-  }
-
-  .main-header.scrolled .header-search input::placeholder {
-    color: #7d9382;
-    opacity: 1;
-  }
-
-  .header-search button {
-    width: 36px;
-  }
-
-  /* 로그인 상태 */
-  .header-member {
-    flex-shrink: 0;
-  }
-
-  /* 모바일에서는 닉네임 / 로그아웃 숨김 */
-  .user-nickname,
-  .admin-link,
-  .logout-btn {
-    display: none;
-  }
-
-  /* 모바일 프로필 */
-  .profile-link {
-    width: 30px;
-    height: 30px;
-  }
-
-  .header-profile-image {
-    width: 30px;
-    height: 30px;
-    object-fit: cover;
-    object-position: center;
-    border-width: 1.5px;
-  }
-
-  /* 로그인 상태가 아닐 때 */
   .login-btn {
     font-size: 12px;
-    padding: 6px 4px;
   }
 
   .signup-btn {
@@ -709,16 +503,32 @@
     font-size: 12px;
   }
 
-  /* 햄버거 */
+  .user-nickname {
+    display: none;
+  }
+
+  .profile-link,
+  .profile-placeholder {
+    width: 32px;
+    height: 32px;
+  }
+
+  .profile-placeholder {
+    font-size: 15px;
+  }
+
+  .logout-btn {
+    font-size: 11px;
+  }
+
   .mobile-menu-btn {
     display: block;
     position: absolute;
     top: 50%;
-    right: 6px;
+    right: 8px;
     transform: translateY(-50%);
   }
 
-  /* 모바일 메뉴 */
   .mobile-menu {
     display: block;
     position: absolute;
@@ -753,11 +563,25 @@
 
   .mobile-menu nav > a {
     padding: 14px 5px;
-
-    color: #000000; /* 진한 회색/녹색에서 완전한 검은색으로 변경 */
+    color: #2E4033;
     text-decoration: none;
     font-size: 15px;
     font-weight: 600;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease;
+  }
+
+  .mobile-menu.active nav > a {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .mobile-menu nav > a:hover {
+    color: #cadfd0;
+    transform: translateX(5px);
   }
 
   .mobile-menu-divider {
@@ -766,40 +590,31 @@
     background: #eeeeee;
   }
 
-  /* 모바일 메뉴 프로필 */
   .mobile-member {
     display: flex;
     align-items: center;
+    gap: 15px;
     padding: 10px 5px;
   }
 
-  .mobile-profile-link {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #2e4033;
+  .mobile-member a {
+    color: #2E4033;
     text-decoration: none;
     font-size: 14px;
     font-weight: 600;
   }
 
-  .mobile-profile-image {
-    width: 34px;
-    height: 34px;
-    flex-shrink: 0;
-    display: block;
-    border-radius: 50%;
-    object-fit: cover;
-    object-position: center;
-    border: 1px solid #ddd;
-    background: #cadfd0;
+  .mobile-member button {
+    border: none;
+    background: transparent;
+    color: #2E4033;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
   }
 }
 
-/* =====================================================
-   햄버거 → X
-===================================================== */
-
+/* 햄버거 → X */
 .mobile-menu-btn.active span:nth-child(1) {
   transform:
     translateY(7px)
@@ -816,40 +631,36 @@
     rotate(-45deg);
 }
 
-/* =====================================================
-   작은 모바일
-===================================================== */
-
+/* 작은 모바일 */
 @media screen and (max-width: 480px) {
-
   .header-container {
-    padding-left: 7px;
+    padding-left: 8px;
     padding-right: 48px;
   }
 
   .header-logo {
-    width: 90px;
+    width: 100px;
   }
 
   .logo {
-    height: 34px;
+    height: 36px;
   }
 
   .header-search form {
-    width: 110px;
+    width: 100px;
   }
 
   .header-search form:focus-within {
-    width: 165px;
+    width: 110px;
   }
 
   .header-search input {
     font-size: 11px;
-    padding: 0 7px;
+    padding: 0 8px;
   }
 
   .header-search button {
-    width: 32px;
+    width: 34px;
   }
 
   .login-btn {
@@ -859,15 +670,5 @@
   .signup-btn {
     padding: 6px 7px;
     font-size: 11px;
-  }
-
-  .profile-link {
-    width: 29px;
-    height: 29px;
-  }
-
-  .header-profile-image {
-    width: 29px;
-    height: 29px;
   }
 }

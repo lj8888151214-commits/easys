@@ -42,10 +42,7 @@ function useHeroVideo() {
     return () => clearInterval(timer);
   }, []);
 
-  return {
-    currentVideo,
-    heroVideos,
-  };
+  return { currentVideo, heroVideos };
 }
 
 export default useHeroVideo;

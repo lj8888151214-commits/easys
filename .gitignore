@@ -35,10 +35,3 @@ out/
 
 ### VS Code ###
 .vscode/
-
-uploads/
-
-### 환경변수 / 시크릿 ###
-.env
-.env.*
-application-local.properties

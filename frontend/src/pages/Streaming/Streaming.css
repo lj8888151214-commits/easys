@@ -3,7 +3,6 @@
   min-height: 100vh;
   background: #f7f9f7;
   color: #243329;
-  overflow-x: hidden; /* 가로 스크롤 시 전체 페이지 흔들림 방지 */
 }
 
 /* =================================
@@ -20,10 +19,10 @@
 
 .streaming-hero-bg {
   position: absolute;
-  top: -50px;
+  top: -60px;
   left: 0;
   width: 100%;
-  height: calc(100% + 100px);
+  height: calc(100% + 120px);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -34,13 +33,12 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background:
-    linear-gradient(
-      90deg,
-      rgba(36, 51, 41, 0.72),
-      rgba(36, 51, 41, 0.38),
-      rgba(36, 51, 41, 0.18)
-    );
+  background: linear-gradient(
+    90deg,
+    rgba(20, 35, 26, 0.82),
+    rgba(20, 35, 26, 0.45),
+    rgba(20, 35, 26, 0.2)
+  );
 }
 
 .streaming-hero-content {
@@ -57,45 +55,42 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  color: #fff;
+  color: white;
 }
 
 .streaming-eyebrow {
-  display: block;
-  margin-bottom: 16px;
-  color: #d4e4d7;
-  font-size: 12px;
-  font-weight: 800;
+  margin-bottom: 18px;
+  color: #cce0d1;
+  font-size: 13px;
+  font-weight: 700;
   letter-spacing: 4px;
 }
 
 .streaming-hero-content h1 {
   margin: 0;
-  color: #fff;
-  font-size: clamp(48px, 7vw, 78px);
+  color: white;
+  font-size: clamp(48px, 7vw, 82px);
   font-weight: 800;
   letter-spacing: -4px;
 }
 
 .streaming-hero-content p {
-  margin: 22px 0 0;
+  margin: 25px 0 0;
   color: rgba(255, 255, 255, 0.88);
-  font-size: 16px;
-  line-height: 1.8;
+  font-size: 17px;
+  line-height: 1.7;
 }
 
 /* =================================
-   CONTENT (기본 레이아웃 통제)
+   CONTENT
 ================================= */
 
 .streaming-content {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 90px 30px 120px;
+  padding: 80px 30px 120px;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
 }
 
 /* =================================
@@ -104,8 +99,8 @@
 
 .section-label {
   display: block;
-  margin-bottom: 11px;
-  color: #718b78;
+  margin-bottom: 10px;
+  color: #78907d;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 3px;
@@ -115,27 +110,14 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 30px;
+  margin-bottom: 28px;
 }
 
 .stream-section-heading h2 {
   margin: 0;
   color: #243329;
   font-size: 30px;
-  font-weight: 800;
   letter-spacing: -1.5px;
-}
-
-.stream-more-link {
-  color: #607467;
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 700;
-  transition: color 0.2s ease;
-}
-
-.stream-more-link:hover {
-  color: #243329;
 }
 
 /* =================================
@@ -143,127 +125,67 @@
 ================================= */
 
 .stream-start-section {
-  position: relative;
   display: grid;
   grid-template-columns: 1fr 0.8fr;
   gap: 60px;
   align-items: center;
-  padding: 65px;
-  border: 1px solid rgba(212, 228, 215, 0.8);
+  padding: 70px;
   border-radius: 28px;
-  background:
-    radial-gradient(
-      circle at 85% 15%,
-      rgba(212, 228, 215, 0.55),
-      transparent 35%
-    ),
-    #edf3ee;
-  overflow: hidden;
-}
-
-.stream-start-section::before {
-  content: "";
-  position: absolute;
-  width: 240px;
-  height: 240px;
-  top: -120px;
-  right: -70px;
-  border-radius: 50%;
-  background: rgba(202, 223, 208, 0.45);
-  pointer-events: none;
-}
-
-.stream-start-content {
-  position: relative;
-  z-index: 1;
+  background: #edf3ee;
 }
 
 .stream-start-content h2 {
   margin: 0;
   color: #243329;
-  font-size: clamp(38px, 5vw, 58px);
-  font-weight: 800;
+  font-size: clamp(38px, 5vw, 60px);
   line-height: 1.15;
   letter-spacing: -3px;
 }
 
 .stream-start-content p {
-  margin: 24px 0 0;
-  color: #718078;
-  font-size: 14px;
+  margin: 25px 0 0;
+  color: #6f7d73;
+  font-size: 15px;
   line-height: 1.8;
 }
 
 .stream-start-button {
   margin-top: 30px;
-  padding: 14px 24px;
-  border: 1px solid #243329;
-  border-radius: 10px;
+  padding: 14px 23px;
+  border: 0;
+  border-radius: 25px;
   background: #243329;
-  color: #fff;
-  font-size: 13px;
+  color: white;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease;
+  transition: 0.2s ease;
 }
 
 .stream-start-button:hover {
-  background: #344b3c;
   transform: translateY(-2px);
 }
 
-/* =================================
-   방송 시작 VISUAL
-================================= */
-
 .stream-start-visual {
-  position: relative;
   min-height: 280px;
-  border-radius: 24px;
+  border-radius: 25px;
   background: #243329;
-  color: #fff;
+  color: white;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
-  overflow: hidden;
-  box-shadow: 0 18px 45px rgba(36, 51, 41, 0.15);
-}
-
-.stream-start-visual::before {
-  content: "";
-  position: absolute;
-  width: 220px;
-  height: 220px;
-  top: -100px;
-  right: -80px;
-  border-radius: 50%;
-  background: rgba(212, 228, 215, 0.1);
-}
-
-.stream-start-visual::after {
-  content: "";
-  position: absolute;
-  width: 160px;
-  height: 160px;
-  bottom: -90px;
-  left: -50px;
-  border-radius: 50%;
-  background: rgba(202, 223, 208, 0.08);
+  box-shadow: 0 20px 45px rgba(36, 51, 41, 0.15);
 }
 
 .live-badge {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
   gap: 7px;
   margin-bottom: 20px;
-  color: #d4e4d7;
-  font-size: 10px;
+  color: #d7eadb;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 2px;
 }
@@ -273,39 +195,29 @@
   height: 7px;
   border-radius: 50%;
   background: #a9cdb0;
-  box-shadow: 0 0 0 5px rgba(169, 205, 176, 0.1);
 }
 
 .stream-visual-circle {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 82px;
-  height: 82px;
-  margin-bottom: 20px;
+  width: 85px;
+  height: 85px;
+  margin-bottom: 22px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
-  color: #d4e4d7;
-  font-size: 23px;
+  font-size: 25px;
 }
 
 .stream-start-visual strong {
-  position: relative;
-  z-index: 1;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 18px;
 }
 
 .stream-start-visual > span:last-child {
-  position: relative;
-  z-index: 1;
   margin-top: 8px;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 10px;
-  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
 }
 
 /* =================================
@@ -325,20 +237,15 @@
 .stream-feature-card {
   position: relative;
   padding: 32px;
-  border: 1px solid #dfe7e1;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 8px 25px rgba(36, 51, 41, 0.035);
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    border-color 0.25s ease;
+  border: 1px solid #e3e9e3;
+  border-radius: 22px;
+  background: white;
+  transition: 0.25s ease;
 }
 
 .stream-feature-card:hover {
   transform: translateY(-5px);
-  border-color: #cbdacf;
-  box-shadow: 0 18px 40px rgba(36, 51, 41, 0.08);
+  box-shadow: 0 18px 40px rgba(30, 50, 38, 0.08);
 }
 
 .stream-feature-icon {
@@ -348,24 +255,21 @@
   width: 52px;
   height: 52px;
   margin-bottom: 22px;
-  border: 1px solid #d9e5dc;
   border-radius: 15px;
   background: #edf3ee;
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .stream-feature-card h3 {
   margin: 0 0 12px;
-  color: #243329;
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 19px;
 }
 
 .stream-feature-card p {
   margin: 0;
   color: #78827b;
-  font-size: 13px;
-  line-height: 1.75;
+  font-size: 14px;
+  line-height: 1.7;
 }
 
 .feature-tag {
@@ -373,104 +277,81 @@
   margin-top: 18px;
   padding: 5px 9px;
   border-radius: 20px;
-  background: #edf3ee;
-  color: #607467;
+  background: #243329;
+  color: white;
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 1px;
 }
 
 /* =================================
-   현재 방송 (상단 컨테이너 폭 1200px에 맞춘 파노라마 영역)
+   현재 방송
 ================================= */
 
 .stream-list-section {
-  margin-top: 2px; /* 기존 100px에서 50px로 축소 */
-  width: 60%;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 30px;
-  box-sizing: border-box;
-  overflow: hidden;
+  margin-top: 120px;
 }
 
-.stream-list-section .stream-section-heading {
-  width: 100%;
-  margin-bottom: 25px;
-  padding: 0;
+.stream-more-link {
+  color: #5d7062;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
 }
 
-/* 🌟 가로로 길게 늘어선 무한 파노라마 트랙 */
 .stream-grid {
-  display: flex;
-  gap: 20px;
-  width: max-content;
-  overflow: visible;
-  animation: scroll-stream-left 32s linear infinite;
-  will-change: transform;
-  padding: 10px 0 20px 0;
-}
-
-/* 마우스 올리면 일시 정지 */
-.stream-grid:hover {
-  animation-play-state: paused;
-}
-
-@keyframes scroll-stream-left {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
 }
 
 /* =================================
-   방송 카드 디자인 리뉴얼 (컴팩트하고 모던한 스타일)
+   방송 카드
 ================================= */
 
-.stream-grid .stream-card {
-  flex: 0 0 360px;
-  width: 360px;
+.stream-card {
   overflow: hidden;
-  border: 1px solid #e2ece4;
+  border: 1px solid #e3e8e3;
   border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 10px 30px rgba(36, 51, 41, 0.05);
-  box-sizing: border-box;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  background: white;
+  transform: scale(1);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
-.stream-grid .stream-card:hover {
-  transform: translateY(-6px);
-  border-color: #b7d0bc;
-  box-shadow: 0 18px 40px rgba(36, 51, 41, 0.1);
+/* PC에서 마우스를 올리면 카드 자체가 살짝 커짐 */
+.stream-card:hover {
+  transform: scale(1.035);
+  box-shadow: 0 25px 50px rgba(30, 50, 38, 0.13);
 }
 
 /* =================================
-   영상
+   실제 영상
 ================================= */
 
 .stream-thumbnail {
   position: relative;
   width: 100%;
-  height: 210px;
+  height: 250px;
   overflow: hidden;
-  background: #1a261e;
+  background: #1f2d24;
 }
 
 .stream-video {
-  display: block;
   width: 100%;
   height: 100%;
+  display: block;
   object-fit: cover;
-  transform: scale(1.02);
-  transition: transform 0.4s ease;
+  background: #1f2d24;
+  transform: scale(1.01);
+  transition: transform 0.45s ease;
+  will-change: transform;
 }
 
+/* 카드에 마우스를 올리면 영상도 아주 조금 확대 */
 .stream-card:hover .stream-video {
-  transform: scale(1.06);
+  transform: scale(1.05);
 }
 
 .stream-video-overlay {
@@ -480,29 +361,27 @@
   pointer-events: none;
   background: linear-gradient(
     to bottom,
-    rgba(36, 51, 41, 0.2),
-    transparent 50%,
-    rgba(36, 51, 41, 0.35)
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.05),
+    rgba(0, 0, 0, 0.35)
   );
 }
 
 /* =================================
-   LIVE
+   LIVE 표시
 ================================= */
 
 .stream-live {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 14px;
+  left: 14px;
   z-index: 3;
-  padding: 5px 9px;
+  padding: 6px 10px;
   border-radius: 6px;
-  background: rgba(36, 51, 41, 0.85);
-  color: #fff;
-  font-size: 9px;
+  background: #243329;
+  color: white;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.5px;
-  backdrop-filter: blur(4px);
 }
 
 /* =================================
@@ -511,20 +390,19 @@
 
 .screen-share-badge {
   position: absolute;
-  right: 12px;
-  bottom: 12px;
+  right: 14px;
+  bottom: 14px;
   z-index: 3;
-  padding: 5px 10px;
-  border-radius: 14px;
-  background: rgba(36, 51, 41, 0.82);
-  color: #fff;
-  font-size: 9px;
+  padding: 7px 11px;
+  border-radius: 20px;
+  background: rgba(36, 51, 41, 0.9);
+  color: white;
+  font-size: 10px;
   font-weight: 700;
-  backdrop-filter: blur(4px);
 }
 
 /* =================================
-   재생 아이콘
+   재생 버튼
 ================================= */
 
 .stream-play {
@@ -535,20 +413,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.92);
   color: #243329;
   transform: translate(-50%, -50%);
-  font-size: 14px;
+  font-size: 18px;
   pointer-events: none;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease;
-}
-
-.stream-card:hover .stream-play {
-  transform: translate(-50%, -50%) scale(1.1);
 }
 
 /* =================================
@@ -556,55 +428,47 @@
 ================================= */
 
 .stream-card-content {
-  padding: 20px;
+  padding: 22px;
 }
 
 .stream-category {
-  color: #5c7c63;
+  color: #78907d;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 1.2px;
+  letter-spacing: 1.5px;
 }
 
 .stream-card-content h3 {
-  margin: 8px 0 6px 0;
+  margin: 9px 0;
   color: #243329;
-  font-size: 16px;
-  font-weight: 800;
-  line-height: 1.35;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 17px;
 }
 
 .stream-card-content p {
   margin: 0;
-  color: #727c75;
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #858d87;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .stream-host {
   display: block;
-  margin-top: 8px;
-  color: #8a968e;
-  font-size: 11px;
+  margin-top: 10px;
+  color: #7b877e;
+  font-size: 12px;
 }
 
 .stream-card-bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #edf2ee;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #edf0ed;
 }
 
 .stream-card-bottom span {
-  color: #7b877f;
+  color: #758078;
   font-size: 11px;
 }
 
@@ -615,12 +479,6 @@
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.stream-card-bottom button:hover {
-  color: #00b894;
-  transform: translateX(3px);
 }
 
 /* =================================
@@ -641,21 +499,10 @@
   display: flex;
   align-items: center;
   gap: 25px;
-  padding: 20px 24px;
-  border: 1px solid #dfe7e1;
+  padding: 22px 25px;
+  border: 1px solid #e3e8e3;
   border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 7px 22px rgba(36, 51, 41, 0.035);
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.upcoming-item:hover {
-  transform: translateY(-2px);
-  border-color: #cbdacf;
-  box-shadow: 0 12px 30px rgba(36, 51, 41, 0.07);
+  background: white;
 }
 
 .upcoming-date {
@@ -666,7 +513,6 @@
   width: 60px;
   height: 70px;
   flex-shrink: 0;
-  border: 1px solid #dce7df;
   border-radius: 14px;
   background: #edf3ee;
   color: #718174;
@@ -687,67 +533,44 @@
 
 .upcoming-info > span {
   color: #78907d;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.5px;
 }
 
 .upcoming-info h3 {
   margin: 7px 0;
-  color: #243329;
   font-size: 16px;
-  font-weight: 800;
 }
 
 .upcoming-info p {
   margin: 0;
   color: #858d87;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .upcoming-item button {
   padding: 9px 15px;
-  border: 1px solid #d5e0d7;
+  border: 1px solid #dce3dd;
   border-radius: 20px;
-  background: #fff;
-  color: #526158;
-  font-size: 11px;
+  background: white;
+  color: #4f6155;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.upcoming-item button:hover {
-  border-color: #aebdb2;
-  background: #f5f8f5;
 }
 
 /* =================================
-   BOTTOM BANNER
+   BOTTOM
 ================================= */
 
 .stream-bottom-banner {
-  position: relative;
   margin-top: 120px;
   padding: 75px 30px;
   border-radius: 28px;
-  background:
-    radial-gradient(
-      circle at 15% 20%,
-      rgba(212, 228, 215, 0.16),
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 85% 80%,
-      rgba(202, 223, 208, 0.12),
-      transparent 30%
-    ),
-    #243329;
+  background: #243329;
   color: white;
   text-align: center;
-  overflow: hidden;
 }
 
 .stream-bottom-banner .section-label {
@@ -756,38 +579,27 @@
 
 .stream-bottom-banner h2 {
   margin: 15px 0 20px;
-  color: #fff;
-  font-size: clamp(34px, 5vw, 56px);
-  font-weight: 800;
+  font-size: clamp(34px, 5vw, 58px);
   line-height: 1.15;
   letter-spacing: -3px;
 }
 
 .stream-bottom-banner p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 15px;
   line-height: 1.8;
 }
 
 .stream-bottom-banner button {
   margin-top: 30px;
-  padding: 13px 23px;
+  padding: 13px 22px;
   border: 0;
-  border-radius: 10px;
-  background: #fff;
+  border-radius: 25px;
+  background: white;
   color: #243329;
-  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease;
-}
-
-.stream-bottom-banner button:hover {
-  background: #edf3ee;
-  transform: translateY(-2px);
 }
 
 /* =================================
@@ -795,16 +607,21 @@
 ================================= */
 
 @media screen and (min-width: 1200px) {
+  .stream-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
   .stream-thumbnail {
-    height: 220px;
+    height: 290px;
   }
 
   .stream-card-content {
-    padding: 22px;
+    padding: 25px;
   }
 
   .stream-card-content h3 {
-    font-size: 17px;
+    font-size: 18px;
   }
 }
 
@@ -813,17 +630,16 @@
 ================================= */
 
 @media screen and (max-width: 900px) {
-  .streaming-hero {
-    height: 400px;
-  }
-
   .stream-start-section {
     grid-template-columns: 1fr;
-    gap: 40px;
     padding: 50px;
   }
 
   .stream-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stream-grid {
     grid-template-columns: 1fr;
   }
 
@@ -834,12 +650,14 @@
     margin-top: 90px;
   }
 
-  .stream-grid .stream-card:hover {
-    transform: translateY(-3px);
+  /* 태블릿에서는 카드 확대 효과 제거 */
+  .stream-card:hover {
+    transform: none;
+    box-shadow: none;
   }
 
-  .stream-grid .stream-card:hover .stream-video {
-    transform: scale(1.02);
+  .stream-card:hover .stream-video {
+    transform: scale(1.01);
   }
 }
 
@@ -852,187 +670,68 @@
     height: 360px;
   }
 
-  .streaming-hero-bg {
-    top: -30px;
-    height: calc(100% + 60px);
-  }
-
   .streaming-hero-content {
-    padding: 0 20px;
-  }
-
-  .streaming-eyebrow {
-    margin-bottom: 13px;
-    font-size: 10px;
-    letter-spacing: 3px;
+    padding: 0 15px;
   }
 
   .streaming-hero-content h1 {
     font-size: 48px;
-    letter-spacing: -3px;
   }
 
   .streaming-hero-content p {
-    margin-top: 18px;
-    font-size: 13px;
-    line-height: 1.7;
+    font-size: 14px;
   }
 
   .streaming-content {
-    padding: 55px 15px 80px;
+    padding: 45px 15px 70px;
   }
-
-  .stream-section-heading {
-    align-items: flex-end;
-    margin-bottom: 22px;
-  }
-
-  .stream-section-heading h2 {
-    font-size: 25px;
-    letter-spacing: -1px;
-  }
-
-  .stream-more-link {
-    font-size: 11px;
-  }
-
-  /* 방송 시작 */
 
   .stream-start-section {
-    gap: 30px;
     padding: 35px 25px;
     border-radius: 22px;
   }
 
   .stream-start-content h2 {
-    font-size: 38px;
-    letter-spacing: -2px;
-  }
-
-  .stream-start-content p {
-    margin-top: 20px;
-    font-size: 13px;
-  }
-
-  .stream-start-button {
-    width: 100%;
-    margin-top: 25px;
+    font-size: 40px;
   }
 
   .stream-start-visual {
-    min-height: 230px;
-    border-radius: 20px;
+    min-height: 240px;
   }
 
-  .stream-visual-circle {
-    width: 72px;
-    height: 72px;
-  }
-
-  /* 기능 */
-
-  .stream-feature-section,
-  .stream-list-section,
-  .stream-upcoming-section {
-    margin-top: 80px;
-  }
-
-  .stream-feature-card {
-    padding: 27px;
-    border-radius: 18px;
-  }
-
-  /* 현재 방송 (파노라마 여백 및 폭 조정) */
-
-  .stream-list-section {
-    margin-top: 80px;
-    width: 100%;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0 15px;
-    box-sizing: border-box;
-    overflow: hidden;
-  }
-
-  .stream-list-section .stream-section-heading {
-    width: 50%;
-    margin-bottom: 20px;
-    padding: 0;
-  }
-
-  .stream-grid {
-    display: flex;
-    gap: 16px;
-    width: max-content;
-    overflow: visible;
-    animation: scroll-stream-left 32s linear infinite;
-    will-change: transform;
-    padding: 10px 0 15px 0;
-  }
-
-  .stream-grid .stream-card {
-    flex: 0 0 280px;
-    width: 280px;
-    border-radius: 18px;
-  }
-
-  .stream-grid .stream-card:hover {
-    transform: none;
-    box-shadow: 0 8px 28px rgba(36, 51, 41, 0.04);
-  }
-
-  .stream-grid .stream-card:hover .stream-video {
-    transform: scale(1.01);
+  .stream-section-heading h2 {
+    font-size: 25px;
   }
 
   .stream-thumbnail {
-    height: 160px;
+    height: 190px;
   }
 
-  .stream-card-content {
-    padding: 18px;
+  .stream-video {
+    object-fit: cover;
   }
 
-  .stream-card-content h3 {
-    font-size: 15px;
+  /* 모바일에서는 확대 효과 없음 */
+  .stream-card:hover {
+    transform: none;
+    box-shadow: none;
   }
 
-  /* 예정 방송 */
+  .stream-card:hover .stream-video {
+    transform: scale(1.01);
+  }
 
   .upcoming-item {
-    gap: 14px;
-    padding: 16px;
-    border-radius: 16px;
-  }
-
-  .upcoming-date {
-    width: 55px;
-    height: 65px;
-  }
-
-  .upcoming-date strong {
-    font-size: 22px;
-  }
-
-  .upcoming-info h3 {
-    font-size: 14px;
-  }
-
-  .upcoming-info p {
-    font-size: 10px;
+    gap: 15px;
+    padding: 17px;
   }
 
   .upcoming-item button {
     padding: 8px 10px;
     white-space: nowrap;
-    font-size: 10px;
   }
 
-  /* 하단 */
-
   .stream-bottom-banner {
-    margin-top: 80px;
     padding: 55px 20px;
     border-radius: 22px;
   }
@@ -1043,10 +742,6 @@
   }
 
   .stream-bottom-banner p {
-    font-size: 12px;
-  }
-
-  .stream-bottom-banner button {
-    width: 100%;
+    font-size: 13px;
   }
 }
