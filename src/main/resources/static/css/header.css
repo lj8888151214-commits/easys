@@ -1,0 +1,1128 @@
+/* =========================================================
+   기본
+========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.main-header {
+
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 80px;
+
+    z-index: 9999;
+
+    background: transparent;
+
+    transition:
+            background-color 0.3s ease,
+            box-shadow 0.3s ease,
+            backdrop-filter 0.3s ease;
+}
+
+
+/* =========================================================
+   스크롤 후
+========================================================= */
+
+.main-header.scrolled {
+
+    background: rgba(255, 255, 255, 0.96);
+
+    backdrop-filter: blur(12px);
+
+    box-shadow:
+            0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+
+/* =========================================================
+   HEADER CONTAINER
+========================================================= */
+
+.header-container {
+
+    width: 1200px;
+
+    max-width: calc(100% - 40px);
+
+    height: 80px;
+
+    margin: 0 auto;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 30px;
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.header-logo {
+    position: relative;
+
+    flex-shrink: 0;
+
+    width: 155px;
+    height: 60px;
+
+    display: flex;
+
+    align-items: center;
+}
+
+
+.logo {
+    position: absolute;
+
+    left: 0;
+    top: 50%;
+
+    width: auto;
+
+    height: 58px;
+
+    transform: translateY(-50%);
+
+    object-fit: contain;
+
+    transition:
+            opacity 0.3s ease,
+            transform 0.3s ease;
+}
+
+
+/* 기본 로고 */
+
+.logo-primary {
+
+    opacity: 1;
+}
+
+
+/* 스크롤 로고 */
+
+.logo-secondary {
+
+    opacity: 0;
+}
+
+
+/* 스크롤하면 두 번째 로고 */
+
+.main-header.scrolled .logo-primary {
+
+    opacity: 0;
+}
+
+
+.main-header.scrolled .logo-secondary {
+
+    opacity: 1;
+}
+
+
+/* 로고 hover */
+
+.header-logo:hover .logo {
+
+    transform:
+            translateY(-50%)
+            scale(1.08);
+}
+
+
+/* =========================================================
+   PC NAVIGATION
+========================================================= */
+
+.main-nav {
+
+    flex: 1;
+
+    height: 100%;
+}
+
+
+.main-nav ul {
+
+    height: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 32px;
+
+    margin: 0;
+
+    padding: 0;
+
+    list-style: none;
+}
+
+
+.main-nav li {
+
+    white-space: nowrap;
+}
+
+
+.main-nav a {
+
+    position: relative;
+
+    display: inline-block;
+
+    padding: 8px 2px;
+
+    color: white;
+
+    text-decoration: none;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    transition:
+            color 0.25s ease,
+            transform 0.25s ease;
+}
+
+
+/* =========================================================
+   스크롤 후 메뉴 색상
+========================================================= */
+
+.main-header.scrolled .main-nav a {
+
+    color: #cadfd0;
+}
+
+
+/* =========================================================
+   메뉴 밑줄
+========================================================= */
+
+.main-nav a::after {
+
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+
+    bottom: 0;
+
+    width: 0;
+
+    height: 2px;
+
+    border-radius: 10px;
+
+    background: currentColor;
+
+    transform: translateX(-50%);
+
+    transition:
+            width 0.25s ease;
+}
+
+
+.main-nav a:hover {
+
+    transform:
+            translateY(-4px)
+            scale(1.04);
+}
+
+
+.main-nav a:hover::after {
+
+    width: 100%;
+}
+
+
+/* =========================================================
+   HEADER RIGHT
+========================================================= */
+
+.header-right {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    flex-shrink: 0;
+
+    margin-left: auto;
+}
+
+
+/* =========================================================
+   검색
+========================================================= */
+
+.header-search {
+
+    flex-shrink: 0;
+}
+
+
+.header-search form {
+
+    width: 210px;
+
+    height: 40px;
+
+    display: flex;
+
+    align-items: center;
+
+    overflow: hidden;
+
+    border-radius: 22px;
+
+    border:
+            1px solid rgba(255, 255, 255, 0.7);
+
+    background:
+            rgba(255, 255, 255, 0.15);
+
+    backdrop-filter: blur(6px);
+
+    transition:
+            width 0.25s ease,
+            background-color 0.25s ease,
+            border-color 0.25s ease;
+}
+
+
+/* 스크롤 후 검색창 */
+
+.main-header.scrolled .header-search form {
+
+    background: white;
+
+    border-color: #cadfd0;
+}
+
+
+.header-search form:focus-within {
+
+    width: 230px;
+}
+
+
+.header-search input {
+
+    flex: 1;
+
+    min-width: 0;
+
+    height: 100%;
+
+    padding: 0 14px;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    color: white;
+
+    font-size: 14px;
+}
+
+
+.main-header.scrolled
+.header-search input {
+
+    color: #cadfd0;
+}
+
+
+.header-search input::placeholder {
+
+    color:
+            rgba(255, 255, 255, 0.8);
+}
+
+
+.main-header.scrolled
+.header-search input::placeholder {
+
+    color: #9caf9f;
+}
+
+
+.header-search button {
+
+    width: 45px;
+
+    height: 100%;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    color: white;
+
+    cursor: pointer;
+
+    transition:
+            transform 0.2s ease;
+}
+
+
+.main-header.scrolled
+.header-search button {
+
+    color: #cadfd0;
+}
+
+
+.header-search button:hover {
+
+    transform: scale(1.2);
+}
+
+
+/* =========================================================
+   로그인 / 회원가입
+========================================================= */
+
+.header-member {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    white-space: nowrap;
+}
+
+
+/* 로그인 */
+
+.login-btn {
+
+    padding: 8px 5px;
+
+    color: white;
+
+    text-decoration: none;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    transition:
+            color 0.25s ease,
+            transform 0.25s ease;
+}
+
+
+.main-header.scrolled
+.login-btn {
+
+    color: #cadfd0;
+}
+
+
+.login-btn:hover {
+
+    transform:
+            translateY(-3px)
+            scale(1.05);
+}
+
+
+/* =========================================================
+   회원가입
+========================================================= */
+
+.signup-btn {
+
+    min-width: 75px;
+
+    padding: 9px 14px;
+
+    border-radius: 20px;
+
+    background: white;
+
+    color: #2E4033;
+
+    text-decoration: none;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    transition:
+            transform 0.25s ease,
+            box-shadow 0.25s ease;
+}
+
+
+/* 스크롤 후 */
+
+.main-header.scrolled
+.signup-btn {
+
+    background: #cadfd0;
+
+    color: #2E4033;
+}
+
+
+.signup-btn:hover {
+
+    transform:
+            translateY(-3px)
+            scale(1.05);
+
+    box-shadow:
+            0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+
+/* =========================================================
+   로그인 후 프로필
+========================================================= */
+
+.user-member {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+.profile-link {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-decoration: none;
+
+    transition:
+            transform 0.25s ease;
+}
+
+
+.profile-link:hover {
+
+    transform:
+            translateY(-3px)
+            scale(1.08);
+}
+
+
+.profile-image {
+
+    width: 36px;
+
+    height: 36px;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+    border:
+            2px solid #cadfd0;
+}
+
+
+/* =========================================================
+   닉네임
+========================================================= */
+
+.user-nickname {
+
+    max-width: 100px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color: white;
+
+    text-decoration: none;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    transition:
+            color 0.25s ease,
+            transform 0.25s ease;
+}
+
+
+.main-header.scrolled
+.user-nickname {
+
+    color: #cadfd0;
+}
+
+
+.user-nickname:hover {
+
+    transform:
+            translateY(-3px);
+}
+
+
+/* =========================================================
+   로그아웃
+========================================================= */
+
+.logout-form {
+
+    margin: 0;
+}
+
+
+.logout-btn {
+
+    padding: 7px 5px;
+
+    border: none;
+
+    background: transparent;
+
+    color: white;
+
+    cursor: pointer;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+.main-header.scrolled
+.logout-btn {
+
+    color: #cadfd0;
+}
+
+
+/* =========================================================
+   MOBILE MENU BUTTON
+========================================================= */
+
+.mobile-menu-btn {
+
+    display: none;
+
+    width: 40px;
+
+    height: 40px;
+
+    padding: 7px;
+
+    border: none;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    z-index: 10001;
+}
+
+
+.mobile-menu-btn span {
+
+    display: block;
+
+    width: 100%;
+
+    height: 2px;
+
+    margin: 5px 0;
+
+    border-radius: 3px;
+
+    background: white;
+
+    transition:
+            transform 0.3s ease,
+            opacity 0.2s ease,
+            background-color 0.3s ease;
+}
+
+
+.main-header.scrolled
+.mobile-menu-btn span {
+
+    background: #cadfd0;
+}
+
+
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+
+.mobile-menu {
+
+    display: none;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media screen and (max-width: 1100px) {
+
+    .header-container {
+
+        max-width:
+                calc(100% - 30px);
+
+        gap: 20px;
+    }
+
+
+    .main-nav ul {
+
+        gap: 20px;
+    }
+
+
+    .main-nav a {
+
+        font-size: 14px;
+    }
+
+
+    .header-search form {
+
+        width: 170px;
+    }
+
+
+    .header-search form:focus-within {
+
+        width: 185px;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media screen and (max-width: 768px) {
+
+    .main-header {
+
+        height: 65px;
+    }
+
+
+    .header-container {
+
+        width: 100%;
+
+        max-width: none;
+
+        height: 65px;
+
+        margin: 0;
+
+        padding:
+                0 55px 0 12px;
+
+        gap: 8px;
+    }
+
+
+    /* PC 메뉴 숨기기 */
+
+    .main-nav {
+
+        display: none;
+    }
+
+
+    /* 로고 */
+
+    .header-logo {
+
+        width: 100px;
+
+        height: 42px;
+    }
+
+
+    .logo {
+
+        height: 36px;
+    }
+
+
+    /* 오른쪽 */
+
+    .header-right {
+
+        margin-left: auto;
+
+        gap: 6px;
+    }
+
+
+    /* 검색 */
+
+    .header-search form {
+
+        width: 125px;
+
+        height: 35px;
+    }
+
+
+    .header-search form:focus-within {
+
+        width: 140px;
+    }
+
+
+    .header-search input {
+
+        font-size: 12px;
+    }
+
+
+    /* 로그인 */
+
+    .login-btn {
+
+        font-size: 12px;
+    }
+
+
+    /* 회원가입 */
+
+    .signup-btn {
+
+        min-width: auto;
+
+        padding: 7px 8px;
+
+        font-size: 12px;
+    }
+
+
+    /* 로그인 후 닉네임 */
+
+    .user-nickname {
+
+        display: none;
+    }
+
+
+    .profile-image {
+
+        width: 32px;
+
+        height: 32px;
+    }
+
+
+    .logout-btn {
+
+        font-size: 11px;
+    }
+
+
+    /* 햄버거 */
+
+    .mobile-menu-btn {
+
+        display: block;
+
+        position: absolute;
+
+        top: 50%;
+
+        right: 8px;
+
+        transform:
+                translateY(-50%);
+    }
+
+
+    /* 모바일 메뉴 */
+
+    .mobile-menu {
+
+        display: block;
+
+        position: absolute;
+
+        top: 65px;
+
+        left: 0;
+
+        width: 100%;
+
+        max-height: 0;
+
+        overflow: hidden;
+
+        opacity: 0;
+
+        visibility: hidden;
+
+        background:
+                rgba(255, 255, 255, 0.97);
+
+        backdrop-filter: blur(12px);
+
+        box-shadow:
+                0 8px 20px rgba(0, 0, 0, 0.08);
+
+        transition:
+                max-height 0.4s ease,
+                opacity 0.3s ease,
+                visibility 0.4s ease;
+    }
+
+
+    .mobile-menu.active {
+
+        max-height: 600px;
+
+        opacity: 1;
+
+        visibility: visible;
+    }
+
+
+    .mobile-menu nav {
+
+        display: flex;
+
+        flex-direction: column;
+
+        padding: 12px 20px 20px;
+    }
+
+
+    .mobile-menu nav > a {
+
+        padding: 14px 5px;
+
+        color: #2E4033;
+
+        text-decoration: none;
+
+        font-size: 15px;
+
+        font-weight: 600;
+
+        opacity: 0;
+
+        transform:
+                translateY(-10px);
+
+        transition:
+                opacity 0.3s ease,
+                transform 0.3s ease;
+    }
+
+
+    .mobile-menu.active
+    nav > a {
+
+        opacity: 1;
+
+        transform:
+                translateY(0);
+    }
+
+
+    .mobile-menu-divider {
+
+        height: 1px;
+
+        margin: 8px 0;
+
+        background: #eeeeee;
+    }
+
+
+    .mobile-member {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 15px;
+
+        padding: 10px 5px;
+    }
+
+
+    .mobile-member a {
+
+        color: #2E4033;
+
+        text-decoration: none;
+
+        font-size: 14px;
+
+        font-weight: 600;
+    }
+
+
+    .mobile-member button {
+
+        border: none;
+
+        background: transparent;
+
+        color: #2E4033;
+
+        font-size: 14px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+    }
+
+}
+
+
+/* =========================================================
+   햄버거 → X
+========================================================= */
+
+.mobile-menu-btn.active
+span:nth-child(1) {
+
+    transform:
+            translateY(7px)
+            rotate(45deg);
+}
+
+
+.mobile-menu-btn.active
+span:nth-child(2) {
+
+    opacity: 0;
+}
+
+
+.mobile-menu-btn.active
+span:nth-child(3) {
+
+    transform:
+            translateY(-7px)
+            rotate(-45deg);
+}
+
+
+/* =========================================================
+   작은 모바일
+========================================================= */
+
+@media screen and (max-width: 480px) {
+
+    .header-container {
+
+        padding-left: 8px;
+
+        padding-right: 48px;
+    }
+
+
+    .header-logo {
+
+        width: 85px;
+    }
+
+
+    .logo {
+
+        height: 31px;
+    }
+
+
+    .header-search form {
+
+        width: 100px;
+    }
+
+
+    .header-search form:focus-within {
+
+        width: 110px;
+    }
+
+
+    .header-search input {
+
+        font-size: 11px;
+
+        padding: 0 8px;
+    }
+
+
+    .header-search button {
+
+        width: 34px;
+    }
+
+
+    .login-btn {
+
+        font-size: 11px;
+    }
+
+
+    .signup-btn {
+
+        padding: 6px 7px;
+
+        font-size: 11px;
+    }
+
+}

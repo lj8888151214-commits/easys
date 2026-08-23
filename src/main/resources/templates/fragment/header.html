@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<body>
+
+<header th:fragment="header" class="main-header">
+
+    <div class="header-container">
+
+        <!-- ==============================
+             로고
+        =============================== -->
+        <div class="header-logo">
+
+            <!-- 기본 로고 -->
+            <img
+                    th:src="@{/images/logo.png}"
+                    alt="이지스"
+                    class="logo logo-primary">
+
+            <!-- 스크롤 후 로고 -->
+            <img
+                    th:src="@{/images/logo_second.png}"
+                    alt="이지스"
+                    class="logo logo-secondary">
+
+        </div>
+
+
+        <!-- ==============================
+             PC 메뉴
+        =============================== -->
+        <nav class="main-nav">
+
+            <ul>
+
+                <li>
+                    <a th:href="@{/streaming}">
+                        스트리밍
+                    </a>
+                </li>
+
+                <li>
+                    <a th:href="@{/mentor}">
+                        멘토링
+                    </a>
+                </li>
+
+                <li>
+                    <a th:href="@{/calendar}">
+                        캘린더
+                    </a>
+                </li>
+
+                <li>
+                    <a th:href="@{/study}">
+                        스터디 예약/결제
+                    </a>
+                </li>
+
+                <li>
+                    <a th:href="@{/cam}">
+                        커뮤니티
+                    </a>
+                </li>
+
+            </ul>
+
+        </nav>
+
+
+        <!-- ==============================
+             오른쪽 영역
+        =============================== -->
+        <div class="header-right">
+
+            <!-- 검색 -->
+            <div class="header-search">
+
+                <form
+                        th:action="@{/search}"
+                        method="get">
+
+                    <input
+                            type="text"
+                            name="keyword"
+                            placeholder="검색어를 입력하세요">
+
+                    <button type="submit">
+                        🔍
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <!-- ==========================
+                 로그인하지 않은 경우
+            =========================== -->
+
+            <div
+                    class="header-member guest-member"
+                    sec:authorize="isAnonymous()">
+
+                <a
+                        th:href="@{/login}"
+                        class="login-btn">
+
+                    로그인
+
+                </a>
+
+                <a
+                        th:href="@{/member}"
+                        class="signup-btn">
+
+                    회원가입
+
+                </a>
+
+            </div>
+
+
+            <!-- ==========================
+                 로그인한 경우
+            =========================== -->
+
+            <div
+                    class="header-member user-member"
+                    sec:authorize="isAuthenticated()">
+
+                <!-- 프로필 -->
+                <a
+                        th:href="@{/mypage}"
+                        class="profile-link">
+
+                    <img
+                            th:src="@{/images/default-profile.png}"
+                            alt="프로필"
+                            class="profile-image">
+
+                </a>
+
+
+                <!-- 닉네임 -->
+                <a
+                        th:href="@{/mypage}"
+                        class="user-nickname"
+                        sec:authentication="name">
+
+                    사용자
+
+                </a>
+
+
+                <!-- 로그아웃 -->
+                <form
+                        th:action="@{/logout}"
+                        method="post"
+                        class="logout-form">
+
+                    <button
+                            type="submit"
+                            class="logout-btn">
+
+                        로그아웃
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==============================
+             모바일 메뉴 버튼
+        =============================== -->
+
+        <button
+                type="button"
+                class="mobile-menu-btn"
+                id="mobileMenuBtn"
+                aria-label="메뉴 열기"
+                aria-expanded="false">
+
+            <span></span>
+            <span></span>
+            <span></span>
+
+        </button>
+
+    </div>
+
+
+    <!-- ==============================
+         모바일 메뉴
+    =============================== -->
+
+    <div
+            class="mobile-menu"
+            id="mobileMenu">
+
+        <nav>
+
+            <a th:href="@{/streaming}">
+                스트리밍
+            </a>
+
+            <a th:href="@{/mentor}">
+                멘토링
+            </a>
+
+            <a th:href="@{/calendar}">
+                캘린더
+            </a>
+
+            <a th:href="@{/study}">
+                스터디 예약/결제
+            </a>
+
+            <a th:href="@{/community}">
+                커뮤니티
+            </a>
+
+
+            <div class="mobile-menu-divider"></div>
+
+
+            <!-- 로그인 전 -->
+
+            <div
+                    class="mobile-member"
+                    sec:authorize="isAnonymous()">
+
+                <a th:href="@{/login}">
+                    로그인
+                </a>
+
+                <a th:href="@{/member}">
+                    회원가입
+                </a>
+
+            </div>
+
+
+            <!-- 로그인 후 -->
+
+            <div
+                    class="mobile-member"
+                    sec:authorize="isAuthenticated()">
+
+                <a th:href="@{/mypage}">
+                    마이페이지
+                </a>
+
+                <form
+                        th:action="@{/logout}"
+                        method="post">
+
+                    <button type="submit">
+                        로그아웃
+                    </button>
+
+                </form>
+
+            </div>
+
+        </nav>
+
+    </div>
+
+</header>
+
+</body>
+</html>

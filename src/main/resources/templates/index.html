@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>이지스 - 메인 화면</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/index.css}">
+    <link rel="stylesheet" th:href="@{/css/footer.css}">
+</head>
+
+<body>
+
+<!-- =================================================
+     공통 헤더
+================================================== -->
+<div th:replace="~{fragment/header :: header}"></div>
+
+
+<main class="main-content">
+
+    <!-- =================================================
+         1. HERO
+    ================================================== -->
+    <section class="hero-section">
+
+        <div class="hero-slider">
+
+            <img
+                    th:src="@{/images/banner1.png}"
+                    alt="이지스 메인 배너"
+                    class="hero-slide active">
+
+            <img
+                    th:src="@{/images/banner2.png}"
+                    alt="이지스 메인 배너"
+                    class="hero-slide">
+
+            <img
+                    th:src="@{/images/banner3.png}"
+                    alt="이지스 메인 배너"
+                    class="hero-slide">
+
+        </div>
+
+
+        <!-- 아래로 이동 버튼 -->
+        <button
+                type="button"
+                class="hero-scroll-btn"
+                id="heroScrollBtn">
+
+            <span>SCROLL</span>
+            <span class="scroll-arrow">↓</span>
+
+        </button>
+
+    </section>
+
+
+    <!-- =================================================
+         2. 개발 공부 소개
+    ================================================== -->
+    <section
+            class="content-section intro-section"
+            id="intro">
+
+        <h2 class="section-title">
+            개발 공부가 어렵나요?
+        </h2>
+
+        <p class="section-subtitle">
+            혼자 고민하지 말고, 함께 시작해보세요.
+        </p>
+
+
+        <div class="card-grid-4">
+
+            <div class="info-card">
+
+                <h3>💻 개발 공부</h3>
+
+                <p>
+                    혼자 공부하기 어려운 개발을
+                    함께 시작해보세요.
+                </p>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <h3>👨‍💻 멘토링</h3>
+
+                <p>
+                    막히는 부분을 멘토에게
+                    질문해보세요.
+                </p>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <h3>📚 스터디</h3>
+
+                <p>
+                    같은 목표를 가진 사람들과
+                    함께 공부해보세요.
+                </p>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <h3 >💬 커뮤니티</h3>
+
+                <p>
+                    공부한 내용을 공유하고
+                    질문해보세요.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         3. 멘토링
+    ================================================== -->
+    <section class="content-section qna-section">
+
+        <h2 class="section-title">
+            혼자서 공부하셨나요?
+        </h2>
+
+
+        <div class="qna-container">
+
+            <div class="speech-bubble student">
+                "이거 무서워요 ㅠㅠ"
+            </div>
+
+            <div class="speech-bubble mentor">
+                "멘토 : 너무 쉬워요!"
+            </div>
+
+        </div>
+
+
+        <div class="center-btn-area">
+
+            <a
+                    th:href="@{/mentor}"
+                    class="sub-action-btn">
+
+                멘토 찾아보기 →
+
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         4. 스터디
+    ================================================== -->
+    <section class="content-section schedule-section">
+
+        <h2 class="section-title">
+            이번 주 스터디 일정
+        </h2>
+
+        <p class="section-subtitle">
+            📅 일정 확인 후 관심 있는 스터디를 신청하세요.
+        </p>
+
+
+        <div class="schedule-grid-3">
+
+            <div class="schedule-card">
+
+                <h3>
+                    Spring Boot 스터디
+                </h3>
+
+                <p>
+                    월요일 19:00
+                </p>
+
+            </div>
+
+
+            <div class="schedule-card">
+
+                <h3>
+                    Java 기초 스터디
+                </h3>
+
+                <p>
+                    수요일 19:00
+                </p>
+
+            </div>
+
+
+            <div class="schedule-card">
+
+                <h3>
+                    SQL 스터디
+                </h3>
+
+                <p>
+                    금요일 20:00
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         5. 커뮤니티
+    ================================================== -->
+    <section class="content-section community-section">
+
+        <h2 class="section-title">
+            커뮤니티
+        </h2>
+
+
+        <div class="community-tabs">
+
+            <span class="tab active">
+                전체
+            </span>
+
+            <span class="tab">
+                🔥 공부인증
+            </span>
+
+            <span class="tab">
+                ❓ 질문
+            </span>
+
+            <span class="tab">
+                🚀 스터디 모집
+            </span>
+
+        </div>
+
+
+        <div class="community-grid-2">
+
+            <div class="community-box">
+
+                <h3>
+                    🔥 공부 인증
+                </h3>
+
+                <p>
+                    오늘도 한 줄 코딩 완료!
+                </p>
+
+            </div>
+
+
+            <div class="community-box">
+
+                <h3>
+                    ❓ 개발 질문
+                </h3>
+
+                <p>
+                    Spring Security 질문있어요!
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         6. 마지막 배너
+    ================================================== -->
+    <section class="bottom-banner-section">
+
+        <div class="bottom-banner-box">
+
+            <h2>
+                이제 같이 공부해 볼까요?
+            </h2>
+
+            <p>
+                혼자 고민하지 말고, 함께 시작해보세요.
+            </p>
+
+
+            <a
+                    th:href="@{/study}"
+                    class="hero-btn">
+
+                스터디 바로가기 →
+
+            </a>
+
+
+            <div class="stats-row">
+
+                <div class="stat-item">
+
+                    <span>
+                        누적 스터디
+                    </span>
+
+                    <strong>
+                        28
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-item">
+
+                    <span>
+                        총 멘토링
+                    </span>
+
+                    <strong>
+                        45
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-item">
+
+                    <span>
+                        완료된 스터디
+                    </span>
+
+                    <strong>
+                        66
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-item">
+
+                    <span>
+                        가입 회원 수
+                    </span>
+
+                    <strong>
+                        12,526
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- =================================================
+     공통 푸터
+================================================== -->
+<div th:replace="~{fragment/footer :: footer}"></div>
+
+
+<!-- =================================================
+     JavaScript
+================================================== -->
+<script th:src="@{/js/header.js}"></script>
+<script th:src="@{/js/index.js}"></script>
+
+</body>
+</html>

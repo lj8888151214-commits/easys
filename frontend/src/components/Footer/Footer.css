@@ -1,0 +1,190 @@
+/* =========================================
+   FOOTER
+========================================= */
+
+.main-footer {
+
+  width: 100%;
+
+  background-color: #E8ECE8;
+
+  border-top:
+    1px solid #D2DDD2;
+
+  padding: 50px 0;
+
+  color: #4A6050;
+
+  font-size: 14px;
+}
+
+
+/* =========================================
+   CONTAINER
+========================================= */
+
+.footer-container {
+
+  max-width: 1200px;
+
+  margin: 0 auto;
+
+  padding: 0 20px;
+}
+
+
+/* =========================================
+   FOOTER TOP
+========================================= */
+
+.footer-top {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  border-bottom:
+    1px solid #D5E0D5;
+
+  padding-bottom: 25px;
+
+  margin-bottom: 25px;
+
+  flex-wrap: wrap;
+
+  gap: 20px;
+}
+
+
+/* =========================================
+   LOGO
+========================================= */
+
+.footer-logo {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.footer-logo-text {
+
+  font-size: 20px;
+
+  font-weight: bold;
+
+  color: #2E4033;
+}
+
+.footer-tagline {
+
+  font-size: 13px;
+
+  color: #789078;
+}
+
+
+/* =========================================
+   LINKS
+========================================= */
+
+.footer-links {
+
+  display: flex;
+
+  list-style: none;
+
+  gap: 25px;
+
+  margin: 0;
+
+  padding: 0;
+}
+
+.footer-links a {
+
+  text-decoration: none;
+
+  color: #4A6050;
+
+  font-weight: 500;
+
+  transition:
+    color 0.2s ease;
+}
+
+.footer-links a:hover {
+
+  color: #2E4033;
+}
+
+
+/* =========================================
+   BOTTOM
+========================================= */
+
+.footer-bottom {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+
+  color: #617A66;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+}
+
+.footer-bottom p {
+
+  margin: 0;
+}
+
+.copyright {
+
+  margin-top: 10px !important;
+
+  color: #8A9E8F;
+
+  font-size: 12px;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media screen and (max-width: 768px) {
+
+  .main-footer {
+
+    padding: 40px 0;
+  }
+
+  .footer-top {
+
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+  .footer-links {
+
+    flex-wrap: wrap;
+
+    gap: 12px 20px;
+  }
+
+  .footer-bottom {
+
+    font-size: 12px;
+  }
+
+}

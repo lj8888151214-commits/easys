@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>NeoShip 로그인</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            width: 400px;
+            margin: 100px auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        /* 버튼 영역 */
+        .button-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .button-area button,
+        .button-area a {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* 로그인 버튼 */
+        .login-button {
+            border: none;
+            background: #222;
+            color: white;
+        }
+
+        /* 회원가입 버튼 */
+        .signup-button {
+            border: 1px solid #ddd;
+            background: white;
+            color: #333;
+        }
+
+        .error {
+            color: red;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<h1>NeoShip 로그인</h1>
+
+
+<div
+        id="errorMessage"
+        class="error"
+        style="display: none;"
+>
+    이메일 또는 비밀번호가 잘못되었습니다.
+</div>
+
+
+<form method="post" action="/login">
+
+
+    <!-- 이메일 -->
+
+    <div class="input-group">
+
+        <label>
+            이메일
+        </label>
+
+        <input
+                type="email"
+                name="username"
+                placeholder="example@gmail.com"
+                required
+        >
+
+    </div>
+
+
+    <!-- 비밀번호 -->
+
+    <div class="input-group">
+
+        <label>
+            비밀번호
+        </label>
+
+        <input
+                type="password"
+                name="password"
+                placeholder="비밀번호"
+                required
+        >
+
+    </div>
+
+
+    <!-- 버튼 -->
+
+    <div class="button-area">
+
+        <button
+                type="submit"
+                class="login-button"
+        >
+            로그인
+        </button>
+
+
+        <a
+                href="/member.html"
+                class="signup-button"
+        >
+            회원가입
+        </a>
+
+    </div>
+
+
+</form>
+
+
+<script>
+
+    // 로그인 실패 여부 확인
+
+    const params =
+        new URLSearchParams(window.location.search);
+
+
+    if (params.has("error")) {
+
+        document.getElementById("errorMessage")
+            .style.display = "block";
+
+    }
+
+</script>
+
+
+</body>
+
+</html>
