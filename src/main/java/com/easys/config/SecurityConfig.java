@@ -92,10 +92,21 @@ public class SecurityConfig {
     }
 
     // React(5173 포트) 통신을 위한 CORS 설정
+    // React 통신을 위한 CORS 설정
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
+
+        // setAllowedOrigins 대신 setAllowedOriginPatterns 사용
+        // 모든 IP 대역 및 localhost의 5173(또는 모든 포트) 허용
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://192.168.*.*:*",   // 같은 공유기 내부망 IP 허용
+                "http://10.*.*.*:*"       // 사설 IP 대역 허용
+                // 개발 중 완전히 다 열어두고 싶다면: "*"
+        ));
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
