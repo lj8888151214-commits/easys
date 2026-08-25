@@ -1,22 +1,16 @@
 package com.easys.config;
 
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 public class SecurityConfig {
 
+    // 비밀번호 암호화 도구
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -25,94 +19,36 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. CSRF 비활성화 (React 비동기 요청 필수)
                 .csrf(csrf -> csrf.disable())
-
-                // 2. CORS 허용
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // 3. 요청 URL 권한 제어
                 .authorizeHttpRequests(auth -> auth
-                        // Preflight(OPTIONS) 통과
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 로그인, 회원가입, 메일인증 전체 허용
+                        // 1. 로그인 없이 접근 가능한 공개 URL (컨트롤러 매핑 경로 + 정적 리소스)
                         .requestMatchers(
-                                "/",
-                                "/login",
-                                "/member",
-                                "/member/**",
-                                "/api/member",
-                                "/api/member/**",
-                                "/email/**",
-                                "/api/email/**",
-                                "/auth/**",
-                                "/api/auth/**",
-                                "/css/**",
-                                "/js/**",
-                                "/images/**",
-                                "/error"
+                                "/",                // 메인 홈 화면 (GET /)
+                                "/login",            // 로그인 화면 (GET /login)
+                                "/member/join",      // 회원가입 화면 (GET /member/join)
+                                "/member",           // 회원가입 API (POST /member)
+                                "/email/**",         // 이메일 인증 API
+                                "/css/**",           // static/css 폴더
+                                "/js/**",            // static/js 폴더
+                                "/images/**"         // static/images 폴더 (jpg, png 등)
                         ).permitAll()
 
-                        // 스터디 조회는 비로그인도 가능
-                        .requestMatchers(HttpMethod.GET, "/study", "/study/**", "/api/study/**").permitAll()
-
-                        // 나머지는 인증 필요
+                        // 2. 그 외 모든 요청(예: /cam, /member/me 등)은 로그인 필수
                         .anyRequest().authenticated()
                 )
-
-                // 4. Spring Security 기본 로그인 핸들러 (200 OK / 401 JSON 응답)
                 .formLogin(form -> form
-                        .loginProcessingUrl("/login")
-                        .usernameParameter("username") // "email" -> "username" 으로 변경 (프론트와 일치)
-                        .passwordParameter("password")
-                        .successHandler((request, response, authentication) -> {
-                            response.setStatus(HttpServletResponse.SC_OK);
-                            response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"message\":\"로그인 성공\"}");
-                        })
-                        .failureHandler((request, response, exception) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write("{\"message\":\"이메일 또는 비밀번호가 일치하지 않습니다.\"}");
-                        })
+                        .loginPage("/login")                 // 컨트롤러 매핑된 로그인 페이지 URL
+                        .loginProcessingUrl("/login")        // 로그인 form의 action 경로 (Spring Security 처리)
+                        .defaultSuccessUrl("/", true)        // 로그인 성공 시 이동 경로
+                        .failureUrl("/login?error=true")     // 로그인 실패 시 이동 경로
                         .permitAll()
                 )
-
-                // 5. 로그아웃 핸들러
                 .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessHandler((request, response, authentication) -> {
-                            response.setStatus(HttpServletResponse.SC_OK);
-                        })
+                        .logoutUrl("/logout")                // 로그아웃 요청 URL
+                        .logoutSuccessUrl("/")               // 로그아웃 성공 시 메인 화면으로 이동
                         .permitAll()
                 );
 
         return http.build();
-    }
-
-    // React(5173 포트) 통신을 위한 CORS 설정
-    // React 통신을 위한 CORS 설정
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-
-        // setAllowedOrigins 대신 setAllowedOriginPatterns 사용
-        // 모든 IP 대역 및 localhost의 5173(또는 모든 포트) 허용
-        configuration.setAllowedOriginPatterns(List.of(
-                "http://localhost:5173",
-                "http://127.0.0.1:5173",
-                "http://192.168.*.*:*",   // 같은 공유기 내부망 IP 허용
-                "http://10.*.*.*:*"       // 사설 IP 대역 허용
-                // 개발 중 완전히 다 열어두고 싶다면: "*"
-        ));
-
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
     }
 }

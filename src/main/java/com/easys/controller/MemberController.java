@@ -37,18 +37,21 @@ public class MemberController {
 
 
 
-    @GetMapping("/me") // 또는 @GetMapping("")
-    public ResponseEntity<?> getMyInfo(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        // 비로그인 상태일 때 500 NPE 방지
-        if (userDetails == null) {
-            return ResponseEntity.ok(null); // 또는 ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    // 내 정보 조회 GET /member/me
+    @GetMapping("/me")
+    public ResponseEntity<MemberResponseDto> getMyInfo(
+            // Spring Security가 현재 로그인한 사용자를 CustomUserDetails로 넣어준다.
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
 
+        // CustomUserDetails 안에 들어있는 실제 Member Entity를 가져온다.
         Member member = userDetails.getMember();
-        return ResponseEntity.ok(new MemberResponseDto(member));
+
+        //Member Entity를 MemberResponseDto로 변환한다.
+        return ResponseEntity.ok(
+                new MemberResponseDto(member)
+        );
     }
-
-
     @PutMapping("/me")
     public ResponseEntity<MemberResponseDto> updateMyInfo(
 
@@ -98,6 +101,4 @@ public class MemberController {
         return ResponseEntity.ok("비밀번호가 변경되었습니다."
         );
     }
-
-
 }

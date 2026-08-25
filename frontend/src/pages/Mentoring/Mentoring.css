@@ -33,12 +33,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(
-    90deg,
-    rgba(20, 35, 26, 0.82),
-    rgba(20, 35, 26, 0.45),
-    rgba(20, 35, 26, 0.2)
-  );
+  background: linear-gradient(90deg, rgba(20, 35, 26, 0.82), rgba(20, 35, 26, 0.45), rgba(20, 35, 26, 0.2));
 }
 
 .mentoring-hero-content {
@@ -216,35 +211,15 @@
 
 .mentor-card-top {
   display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.mentor-profile {
-  flex-shrink: 0;
-}
-
-.mentor-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 62px;
-  height: 62px;
-  border-radius: 50%;
-  background: #edf3ee;
-  color: #243329;
-  font-size: 22px;
-  font-weight: 800;
-}
-
-.mentor-avatar.large {
-  width: 75px;
-  height: 75px;
-  font-size: 27px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
 }
 
 .mentor-basic {
   min-width: 0;
+  flex: 1;
+  padding-top: 3px;
 }
 
 .mentor-basic > span {
@@ -264,6 +239,37 @@
   margin: 0;
   color: #7b857e;
   font-size: 12px;
+}
+
+.mentor-profile {
+  flex-shrink: 0;
+}
+
+.mentor-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #edf3ee;
+  color: #243329;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.mentor-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mentor-avatar.large {
+  width: 75px;
+  height: 75px;
+  font-size: 27px;
 }
 
 /* ================================
@@ -348,27 +354,46 @@
   font-size: 18px;
 }
 
-.mentor-card-bottom button {
-  padding: 9px 15px;
+.mentor-card-bottom button,
+.mentor-request-button {
   border: 0;
   border-radius: 20px;
   background: #243329;
   color: white;
-  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: 0.2s ease;
 }
 
-.mentor-card-bottom button:hover {
+.mentor-card-bottom button {
+  padding: 9px 15px;
+  font-size: 11px;
+}
+
+.mentor-card-bottom button:hover,
+.mentor-request-button:hover {
   transform: translateY(-2px);
+}
+
+/* ================================
+   EMPTY
+================================ */
+
+.mentor-empty {
+  padding: 60px 20px;
+  border: 1px dashed #dce4dd;
+  border-radius: 20px;
+  background: #fbfcfb;
+  color: #8a938d;
+  text-align: center;
 }
 
 /* ================================
    MODAL BACKGROUND
 ================================ */
 
-.mentor-modal-background {
+.mentor-modal-background,
+.reservation-modal-background {
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -382,7 +407,7 @@
 }
 
 /* ================================
-   MODAL
+   DETAIL MODAL
 ================================ */
 
 .mentor-modal {
@@ -394,11 +419,12 @@
   padding: 40px;
   box-sizing: border-box;
   border-radius: 25px;
-  background: #ffffff;
+  background: white;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
 }
 
-.mentor-modal-close {
+.mentor-modal-close,
+.reservation-modal-close {
   position: absolute;
   top: 18px;
   right: 20px;
@@ -421,11 +447,12 @@
   border-bottom: 1px solid #edf0ed;
 }
 
-.mentor-modal-profile span {
+.mentor-modal-profile span,
+.mentor-modal-section > span {
   color: #78907d;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
 }
 
 .mentor-modal-profile h2 {
@@ -440,19 +467,8 @@
   font-size: 13px;
 }
 
-/* ================================
-   MODAL SECTION
-================================ */
-
 .mentor-modal-section {
   margin-top: 28px;
-}
-
-.mentor-modal-section > span {
-  color: #78907d;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 2px;
 }
 
 .mentor-modal-section h3 {
@@ -469,10 +485,11 @@
 }
 
 /* ================================
-   MODAL BOTTOM
+   MENTOR MODAL BOTTOM
 ================================ */
 
-.mentor-modal-bottom {
+.mentor-modal-bottom,
+.reservation-bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -482,23 +499,118 @@
   border-top: 1px solid #edf0ed;
 }
 
-.mentor-modal-bottom div {
+.mentor-modal-bottom div,
+.reservation-bottom div {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.mentor-modal-bottom small {
+.mentor-modal-bottom small,
+.reservation-bottom small {
   color: #8a938d;
   font-size: 10px;
 }
 
-.mentor-modal-bottom strong {
+.mentor-modal-bottom strong,
+.reservation-bottom strong {
   color: #243329;
   font-size: 20px;
 }
 
 .mentor-request-button {
+  padding: 13px 20px;
+  font-size: 12px;
+}
+
+/* ================================
+   RESERVATION MODAL
+================================ */
+
+.reservation-modal {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 35px;
+  box-sizing: border-box;
+  border-radius: 25px;
+  background: white;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+}
+
+.reservation-modal h2 {
+  margin: 0 0 25px;
+  color: #243329;
+  font-size: 28px;
+}
+
+.reservation-mentor {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 25px;
+  padding: 18px;
+  border-radius: 15px;
+  background: #edf3ee;
+}
+
+.reservation-mentor strong {
+  color: #243329;
+  font-size: 17px;
+}
+
+.reservation-mentor span {
+  color: #6f7d73;
+  font-size: 12px;
+}
+
+.reservation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reservation-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #49564d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.reservation-form input,
+.reservation-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #dfe5df;
+  border-radius: 10px;
+  outline: none;
+  background: #fafcf9;
+  color: #243329;
+  font-family: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.reservation-form input:focus,
+.reservation-form textarea:focus {
+  border-color: #78907d;
+  background: white;
+}
+
+.reservation-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.reservation-bottom {
+  margin-top: 25px;
+}
+
+.reservation-submit-button {
   padding: 13px 20px;
   border: 0;
   border-radius: 24px;
@@ -510,7 +622,7 @@
   transition: 0.2s ease;
 }
 
-.mentor-request-button:hover {
+.reservation-submit-button:hover {
   transform: translateY(-2px);
 }
 
@@ -567,14 +679,22 @@
     width: 100%;
   }
 
+  .mentoring-filter {
+    padding-bottom: 10px;
+  }
+
   .mentor-card {
     padding: 22px;
     border-radius: 20px;
   }
 
+  .mentor-card-top {
+    gap: 15px;
+  }
+
   .mentor-avatar {
-    width: 55px;
-    height: 55px;
+    width: 58px;
+    height: 58px;
     font-size: 19px;
   }
 
@@ -607,12 +727,23 @@
     align-items: flex-start;
   }
 
-  .mentor-modal-bottom {
+  .mentor-modal-bottom,
+  .reservation-bottom {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .mentor-request-button {
+  .mentor-request-button,
+  .reservation-submit-button {
     width: 100%;
+  }
+
+  .reservation-modal {
+    padding: 30px 22px;
+    border-radius: 22px;
+  }
+
+  .reservation-modal h2 {
+    font-size: 24px;
   }
 }

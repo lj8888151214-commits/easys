@@ -26,7 +26,7 @@ public class StudyResponseDto {
         this.maxMembers = study.getMaxMembers();
         this.currentMembers = study.getCurrentMembers();
         this.status = study.getStatus();
-        this.nickname = study.getMember().getNickname();
+        this.nickname = study.getAuthor().getNickname();
         this.createdAt = study.getCreatedAt();
     }
 
