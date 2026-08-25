@@ -5,6 +5,7 @@ import com.easys.entity.PersonalSchedule;
 import com.easys.security.CustomUserDetails;
 import com.easys.service.PersonalScheduleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -20,8 +21,13 @@ public class PersonalScheduleController {
     private final PersonalScheduleService personalScheduleService;
 
     @GetMapping
-    public ResponseEntity<List<PersonalSchedule>> getMySchedules(
+    public ResponseEntity<?> getMySchedules(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("로그인 정보가 없습니다.");
+        }
 
         Member member = userDetails.getMember();
 
@@ -31,47 +37,64 @@ public class PersonalScheduleController {
     }
 
     @PostMapping
-    public ResponseEntity<PersonalSchedule> createSchedule(
+    public ResponseEntity<?> createSchedule(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody ScheduleRequest request) {
 
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("로그인 정보가 없습니다.");
+        }
+
         Member member = userDetails.getMember();
 
-        PersonalSchedule schedule = personalScheduleService.createSchedule(
-                member,
-                request.title(),
-                request.content(),
-                request.startAt(),
-                request.endAt()
-        );
+        PersonalSchedule schedule =
+                personalScheduleService.createSchedule(
+                        member,
+                        request.title(),
+                        request.content(),
+                        request.startAt(),
+                        request.endAt()
+                );
 
         return ResponseEntity.ok(schedule);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PersonalSchedule> updateSchedule(
+    public ResponseEntity<?> updateSchedule(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long id,
             @RequestBody ScheduleRequest request) {
 
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("로그인 정보가 없습니다.");
+        }
+
         Member member = userDetails.getMember();
 
-        PersonalSchedule schedule = personalScheduleService.updateSchedule(
-                id,
-                member,
-                request.title(),
-                request.content(),
-                request.startAt(),
-                request.endAt()
-        );
+        PersonalSchedule schedule =
+                personalScheduleService.updateSchedule(
+                        id,
+                        member,
+                        request.title(),
+                        request.content(),
+                        request.startAt(),
+                        request.endAt()
+                );
 
         return ResponseEntity.ok(schedule);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSchedule(
+    public ResponseEntity<?> deleteSchedule(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long id) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("로그인 정보가 없습니다.");
+        }
 
         Member member = userDetails.getMember();
 

@@ -1,0 +1,616 @@
+.study-detail-page {
+  min-height: 100vh;
+  background: #f7f8fa;
+  padding: 60px 20px 100px;
+  color: #17191c;
+}
+
+.study-detail-container {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+}
+
+.study-detail-back {
+  border: none;
+  background: transparent;
+  color: #777;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.study-detail-back:hover {
+  color: #111;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.study-detail-header {
+  background: #fff;
+  border-radius: 24px;
+  padding: 42px;
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+}
+
+.study-detail-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.study-detail-category {
+  background: #eef2ff;
+  color: #4f46e5;
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.study-detail-status {
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.study-detail-status.recruiting {
+  background: #ecfdf3;
+  color: #16a34a;
+}
+
+.study-detail-status.closed {
+  background: #f1f1f1;
+  color: #777;
+}
+
+.study-detail-header h1 {
+  font-size: 36px;
+  line-height: 1.3;
+  margin: 0 0 20px;
+  letter-spacing: -1px;
+}
+
+.study-detail-author {
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.study-detail-author strong {
+  color: #222;
+}
+
+.study-detail-owner-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.study-detail-owner-buttons button {
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.study-detail-owner-buttons button:hover {
+  background: #f7f7f7;
+}
+
+.study-detail-owner-buttons button.danger {
+  color: #e5484d;
+}
+
+
+/* =====================================================
+   INFO
+===================================================== */
+
+.study-detail-info {
+  margin-top: 18px;
+  background: #fff;
+  border-radius: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+}
+
+.study-detail-info > div {
+  padding: 28px;
+  border-right: 1px solid #eee;
+}
+
+.study-detail-info > div:last-child {
+  border-right: none;
+}
+
+.study-detail-info span {
+  display: block;
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.study-detail-info strong {
+  font-size: 17px;
+}
+
+
+/* =====================================================
+   PROGRESS
+===================================================== */
+
+.study-detail-progress {
+  background: #fff;
+  margin-top: 18px;
+  padding: 28px;
+  border-radius: 20px;
+}
+
+.study-detail-progress-title {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 13px;
+}
+
+.study-detail-progress-title span {
+  color: #777;
+}
+
+.study-detail-progress-title strong {
+  color: #4f46e5;
+}
+
+.study-detail-progress-bar {
+  height: 10px;
+  background: #edf0f3;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.study-detail-progress-bar > div {
+  height: 100%;
+  background: #4f46e5;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+
+/* =====================================================
+   CONTENT
+===================================================== */
+
+.study-detail-content {
+  margin-top: 18px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 42px;
+}
+
+.study-detail-label {
+  display: inline-block;
+  color: #4f46e5;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+
+.study-detail-content h2 {
+  margin: 0 0 25px;
+  font-size: 25px;
+}
+
+.study-detail-content p {
+  white-space: pre-wrap;
+  line-height: 1.8;
+  color: #555;
+  min-height: 150px;
+}
+
+.study-detail-content small {
+  display: block;
+  color: #aaa;
+  margin-top: 30px;
+}
+
+
+/* =====================================================
+   JOIN
+===================================================== */
+
+.study-detail-join {
+  margin-top: 18px;
+  padding: 30px 35px;
+  background: #17191c;
+  color: #fff;
+  border-radius: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+}
+
+.study-detail-join span {
+  display: block;
+  color: #aaa;
+  font-size: 13px;
+  margin-bottom: 7px;
+}
+
+.study-detail-join strong {
+  font-size: 18px;
+}
+
+.study-detail-join-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.study-detail-join button {
+  border: none;
+  background: #fff;
+  color: #17191c;
+  padding: 14px 22px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.study-detail-join button:hover {
+  transform: translateY(-1px);
+}
+
+.study-detail-join button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.study-detail-join button.outline {
+  background: transparent;
+  color: #fff;
+  border: 1px solid #555;
+}
+
+.danger-text {
+  color: #ff7777 !important;
+}
+
+
+/* =====================================================
+   APPLICATION MANAGEMENT
+===================================================== */
+
+.study-applications {
+  margin-top: 18px;
+  background: #fff;
+  border-radius: 24px;
+  padding: 40px;
+}
+
+.study-applications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #eee;
+}
+
+.study-applications-header > div:first-child > span {
+  color: #4f46e5;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.study-applications-header h2 {
+  margin: 8px 0;
+  font-size: 25px;
+}
+
+.study-applications-header p {
+  margin: 0;
+  color: #999;
+  font-size: 14px;
+}
+
+.study-application-count {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #f1f3ff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.study-application-count strong {
+  color: #4f46e5;
+  font-size: 22px;
+}
+
+.study-application-count span {
+  color: #999;
+  font-size: 11px;
+}
+
+
+/* 신청자가 없는 경우 */
+
+.study-applications-empty {
+  text-align: center;
+  padding: 70px 20px;
+  color: #999;
+}
+
+.study-applications-empty > div {
+  font-size: 40px;
+  margin-bottom: 15px;
+}
+
+.study-applications-empty h3 {
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.study-applications-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+
+/* 신청자 리스트 */
+
+.study-application-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.study-application-item {
+  padding: 22px 0;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.study-application-item:last-child {
+  border-bottom: none;
+}
+
+.study-application-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.study-application-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.study-application-user strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.study-application-user span {
+  color: #aaa;
+  font-size: 12px;
+}
+
+.study-application-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.application-status {
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.application-status.pending {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.application-status.approved {
+  background: #ecfdf3;
+  color: #16a34a;
+}
+
+.application-status.rejected {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.application-buttons {
+  display: flex;
+  gap: 7px;
+}
+
+.application-buttons button {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.application-buttons .approve {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.application-buttons .reject {
+  background: #f3f4f6;
+  color: #555;
+}
+
+.application-buttons button:disabled {
+  opacity: 0.5;
+}
+
+
+/* =====================================================
+   LOADING
+===================================================== */
+
+.study-detail-loading {
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+}
+
+.study-detail-spinner {
+  width: 35px;
+  height: 35px;
+  border: 3px solid #ddd;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: study-spin 0.8s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes study-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =====================================================
+   ERROR
+===================================================== */
+
+.study-detail-error {
+  background: #fff;
+  border-radius: 24px;
+  padding: 80px 30px;
+  text-align: center;
+}
+
+.study-detail-error h2 {
+  margin-bottom: 10px;
+}
+
+.study-detail-error p {
+  color: #999;
+}
+
+.study-detail-error button {
+  margin-top: 20px;
+  border: none;
+  background: #17191c;
+  color: #fff;
+  padding: 13px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 768px) {
+
+  .study-detail-page {
+    padding: 30px 15px 70px;
+  }
+
+  .study-detail-header {
+    padding: 28px;
+    flex-direction: column;
+  }
+
+  .study-detail-header h1 {
+    font-size: 27px;
+  }
+
+  .study-detail-owner-buttons {
+    width: 100%;
+  }
+
+  .study-detail-owner-buttons button {
+    flex: 1;
+  }
+
+  .study-detail-info {
+    grid-template-columns: 1fr;
+  }
+
+  .study-detail-info > div {
+    border-right: none;
+    border-bottom: 1px solid #eee;
+  }
+
+  .study-detail-info > div:last-child {
+    border-bottom: none;
+  }
+
+  .study-detail-content {
+    padding: 28px;
+  }
+
+  .study-detail-join {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .study-detail-join button {
+    width: 100%;
+  }
+
+  .study-detail-join-buttons {
+    flex-direction: column;
+  }
+
+  .study-applications {
+    padding: 28px 20px;
+  }
+
+  .study-applications-header {
+    align-items: flex-start;
+  }
+
+  .study-application-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .study-application-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+}

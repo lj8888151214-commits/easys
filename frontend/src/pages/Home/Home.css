@@ -10,6 +10,50 @@
 }
 
 /* ================================
+   SCROLL REVEAL
+================================ */
+
+.scroll-reveal {
+  opacity: 0;
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+}
+
+.reveal-left {
+  transform: translateX(-70px);
+}
+
+.reveal-right {
+  transform: translateX(70px);
+}
+
+.reveal-center {
+  transform: translateY(50px);
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+.reveal-delay-1 {
+  transition-delay: 0.1s;
+}
+
+.reveal-delay-2 {
+  transition-delay: 0.2s;
+}
+
+.reveal-delay-3 {
+  transition-delay: 0.3s;
+}
+
+.reveal-delay-4 {
+  transition-delay: 0.4s;
+}
+
+/* ================================
    HERO
 ================================ */
 
@@ -38,7 +82,9 @@
   object-position: center;
   opacity: 0;
   transform: scale(1.04);
-  transition: opacity 1s ease, transform 6s ease;
+  transition:
+    opacity 1s ease,
+    transform 6s ease;
   pointer-events: none;
 }
 
@@ -66,8 +112,8 @@
   z-index: 5;
   top: 50%;
   left: 8%;
-  transform: translateY(-50%);
   color: white;
+  transform: translateY(-50%);
 }
 
 .hero-small-text {
@@ -113,7 +159,9 @@
   text-decoration: none;
   font-size: 16px;
   font-weight: 700;
-  transition: gap 0.3s ease, color 0.3s ease;
+  transition:
+    gap 0.3s ease,
+    color 0.3s ease;
 }
 
 .hero-direct-link span {
@@ -191,7 +239,7 @@
 }
 
 /* ================================
-   COMMON SECTION
+   COMMON
 ================================ */
 
 .content-section {
@@ -299,7 +347,7 @@
 }
 
 /* ================================
-   BACKGROUND PATTERN
+   BACKGROUND
 ================================ */
 
 .intro-section::before,
@@ -399,6 +447,10 @@
 
 .intro-section {
   background: #f8faf8;
+}
+
+.intro-heading {
+  margin-bottom: 50px;
 }
 
 .card-grid-4 {
@@ -568,7 +620,7 @@
 }
 
 /* ================================
-   MENTORING
+   MENTOR
 ================================ */
 
 .mentoring-preview-section {
@@ -663,7 +715,7 @@
 }
 
 /* ================================
-   STUDY
+   SCHEDULE
 ================================ */
 
 .schedule-section {
@@ -741,15 +793,9 @@
   justify-content: center;
   gap: 8px;
   margin-bottom: 28px;
-  overflow-x: auto;
-}
-
-.community-tabs::-webkit-scrollbar {
-  display: none;
 }
 
 .tab {
-  flex-shrink: 0;
   padding: 9px 17px;
   border: 1px solid #e0e7e1;
   border-radius: 30px;
@@ -833,7 +879,7 @@
 }
 
 /* ================================
-   BOTTOM BANNER
+   BOTTOM
 ================================ */
 
 .bottom-banner-section {
@@ -935,6 +981,7 @@
 ================================ */
 
 @media screen and (max-width: 1024px) {
+
   .hero-section {
     min-height: 600px;
   }
@@ -947,12 +994,12 @@
     font-size: clamp(38px, 6vw, 60px);
   }
 
-  .card-grid-4 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .content-section {
     padding: 90px 25px;
+  }
+
+  .card-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .streaming-preview-grid {
@@ -962,6 +1009,10 @@
   .home-mentor-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .schedule-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* ================================
@@ -969,6 +1020,7 @@
 ================================ */
 
 @media screen and (max-width: 768px) {
+
   .hero-section {
     height: 62vh;
     min-height: 460px;
@@ -1018,13 +1070,13 @@
   }
 
   .content-section {
-    padding: 75px 20px;
+    padding: 70px 20px;
   }
 
   .section-heading-row {
     align-items: center;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
     margin-bottom: 35px;
     text-align: center;
   }
@@ -1032,6 +1084,7 @@
   .section-title-left {
     width: 100%;
     text-align: center;
+    font-size: 32px;
   }
 
   .section-description {
@@ -1043,29 +1096,35 @@
     margin-bottom: 0;
   }
 
+  /* 모바일은 카드 하나씩 */
+
   .card-grid-4 {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .streaming-preview-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .home-mentor-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .schedule-grid-3 {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .community-grid-2 {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .community-tabs {
-    justify-content: flex-start;
-    flex-wrap: nowrap;
+    justify-content: center;
   }
 
   .stats-row {
@@ -1073,11 +1132,51 @@
   }
 
   .streaming-thumbnail {
-    height: 180px;
+    height: 175px;
   }
 
   .info-card {
-    min-height: 245px;
+    min-height: 220px;
+    padding: 25px 22px;
+  }
+
+  .info-card-icon {
+    margin-bottom: 20px;
+  }
+
+  .info-card-link {
+    bottom: 20px;
+    left: 22px;
+  }
+
+  .home-mentor-card {
+    padding: 22px;
+  }
+
+  .schedule-card {
+    padding: 25px;
+  }
+
+  .community-box {
+    padding: 24px;
+  }
+
+  /* 모바일에서는 좌우 이동을 줄이고 아래에서 등장 */
+
+  .reveal-left,
+  .reveal-right {
+    transform: translateY(35px);
+  }
+
+  .scroll-reveal.is-visible {
+    transform: translateY(0);
+  }
+
+  .reveal-delay-1,
+  .reveal-delay-2,
+  .reveal-delay-3,
+  .reveal-delay-4 {
+    transition-delay: 0.05s;
   }
 
   .intro-section::before,
@@ -1097,6 +1196,10 @@
     width: 60px;
     height: 60px;
   }
+
+  .bottom-banner-section {
+    padding: 80px 20px;
+  }
 }
 
 /* ================================
@@ -1104,6 +1207,7 @@
 ================================ */
 
 @media screen and (max-width: 480px) {
+
   .hero-section {
     height: 58vh;
     min-height: 430px;
@@ -1133,15 +1237,15 @@
   }
 
   .content-section {
-    padding: 65px 15px;
-  }
-
-  .section-title-left {
-    font-size: 32px;
+    padding: 60px 15px;
   }
 
   .section-title {
     font-size: 32px;
+  }
+
+  .section-title-left {
+    font-size: 30px;
   }
 
   .section-subtitle {
@@ -1153,24 +1257,24 @@
     font-size: 12px;
   }
 
+  .streaming-card-content {
+    padding: 18px;
+  }
+
   .streaming-card-content h3 {
     font-size: 17px;
   }
 
   .home-mentor-card {
-    padding: 22px;
+    padding: 20px;
   }
 
   .schedule-card {
-    padding: 25px;
+    padding: 22px;
   }
 
   .community-box {
-    padding: 24px;
-  }
-
-  .bottom-banner-section {
-    padding: 80px 20px;
+    padding: 22px;
   }
 
   .bottom-banner-box h2 {

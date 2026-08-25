@@ -21,9 +21,24 @@ function Community() {
     <main className="community-page">
 
       {/* ================================
+          BACKGROUND DROPS
+      ================================= */}
+      <div className="community-drops" aria-hidden="true">
+        <span className="community-drop drop-1"></span>
+        <span className="community-drop drop-2"></span>
+        <span className="community-drop drop-3"></span>
+        <span className="community-drop drop-4"></span>
+        <span className="community-drop drop-5"></span>
+        <span className="community-drop drop-6"></span>
+        <span className="community-drop drop-7"></span>
+        <span className="community-drop drop-8"></span>
+        <span className="community-drop drop-9"></span>
+        <span className="community-drop drop-10"></span>
+      </div>
+
+      {/* ================================
           HERO
       ================================= */}
-
       <section className="community-hero">
 
         <div
@@ -52,17 +67,12 @@ function Community() {
 
       </section>
 
-
       {/* ================================
           COMMUNITY CONTENT
       ================================= */}
-
       <section className="community-content">
 
-        {/* 커뮤니티 상단 */}
-
         <div className="community-top">
-
           <div>
             <span className="section-label">
               DEVELOPER COMMUNITY
@@ -78,14 +88,9 @@ function Community() {
           <button className="community-write-button">
             + 글 작성하기
           </button>
-
         </div>
 
-
-        {/* ================================
-            CATEGORY
-        ================================= */}
-
+        {/* CATEGORY */}
         <div className="community-category">
 
           <button className="community-category-button active">
@@ -114,18 +119,10 @@ function Community() {
 
         </div>
 
-
-        {/* ================================
-            MAIN LAYOUT
-        ================================= */}
-
+        {/* MAIN LAYOUT */}
         <div className="community-layout">
 
-
-          {/* ================================
-              FEED
-          ================================= */}
-
+          {/* FEED */}
           <div className="community-feed">
 
             <div className="feed-heading">
@@ -146,22 +143,16 @@ function Community() {
 
             </div>
 
-
             {/* 게시글 1 */}
-
             <article className="community-post">
 
               <div className="post-user">
-
-                <div className="post-avatar">
-                  김
-                </div>
+                <div className="post-avatar">김</div>
 
                 <div>
                   <strong>김개발</strong>
                   <span>10분 전 · Spring</span>
                 </div>
-
               </div>
 
               <span className="post-category question">
@@ -190,29 +181,21 @@ function Community() {
                   <span>👁 142</span>
                 </div>
 
-                <button>
-                  자세히 보기 →
-                </button>
+                <button>자세히 보기 →</button>
               </div>
 
             </article>
 
-
             {/* 게시글 2 */}
-
             <article className="community-post">
 
               <div className="post-user">
-
-                <div className="post-avatar">
-                  이
-                </div>
+                <div className="post-avatar">이</div>
 
                 <div>
                   <strong>이코딩</strong>
                   <span>32분 전 · Java</span>
                 </div>
-
               </div>
 
               <span className="post-category study">
@@ -241,29 +224,21 @@ function Community() {
                   <span>👁 89</span>
                 </div>
 
-                <button>
-                  자세히 보기 →
-                </button>
+                <button>자세히 보기 →</button>
               </div>
 
             </article>
 
-
             {/* 게시글 3 */}
-
             <article className="community-post">
 
               <div className="post-user">
-
-                <div className="post-avatar">
-                  박
-                </div>
+                <div className="post-avatar">박</div>
 
                 <div>
                   <strong>박스터디</strong>
                   <span>1시간 전 · Study</span>
                 </div>
-
               </div>
 
               <span className="post-category recruit">
@@ -280,45 +255,33 @@ function Community() {
               </p>
 
               <div className="post-study-info">
-
                 <span>📅 매주 월요일</span>
                 <span>🕐 19:00</span>
                 <span>👥 6 / 10명</span>
-
               </div>
 
               <div className="post-bottom">
-
                 <div>
                   <span>♡ 21</span>
                   <span>💬 11</span>
                   <span>👁 203</span>
                 </div>
 
-                <button>
-                  스터디 보기 →
-                </button>
-
+                <button>스터디 보기 →</button>
               </div>
 
             </article>
 
-
             {/* 게시글 4 */}
-
             <article className="community-post">
 
               <div className="post-user">
-
-                <div className="post-avatar">
-                  최
-                </div>
+                <div className="post-avatar">최</div>
 
                 <div>
                   <strong>최개발자</strong>
                   <span>2시간 전 · Information</span>
                 </div>
-
               </div>
 
               <span className="post-category info">
@@ -341,32 +304,21 @@ function Community() {
               </div>
 
               <div className="post-bottom">
-
                 <div>
                   <span>♡ 35</span>
                   <span>💬 7</span>
                   <span>👁 316</span>
                 </div>
 
-                <button>
-                  자세히 보기 →
-                </button>
-
+                <button>자세히 보기 →</button>
               </div>
 
             </article>
 
           </div>
 
-
-          {/* ================================
-              SIDEBAR
-          ================================= */}
-
+          {/* SIDEBAR */}
           <aside className="community-sidebar">
-
-
-            {/* 공부 인증 */}
 
             <div className="sidebar-card study-card">
 
@@ -387,9 +339,6 @@ function Community() {
               </button>
 
             </div>
-
-
-            {/* 인기 게시글 */}
 
             <div className="sidebar-card">
 
@@ -427,9 +376,6 @@ function Community() {
 
             </div>
 
-
-            {/* 이번 주 공부 */}
-
             <div className="sidebar-card">
 
               <span className="sidebar-label">
@@ -458,7 +404,6 @@ function Community() {
               </p>
 
             </div>
-
 
           </aside>
 

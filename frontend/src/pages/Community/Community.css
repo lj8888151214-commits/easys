@@ -1,16 +1,139 @@
+/* =====================================================
+   COMMUNITY PAGE
+===================================================== */
+
 .community-page {
+  position: relative;
   width: 100%;
   min-height: 100vh;
   background: #f7f9f7;
   color: #243329;
+  overflow: hidden;
 }
 
-/* ================================
+
+/* =====================================================
+   BACKGROUND DROPS
+   페이지 전체 뒤쪽 장식
+===================================================== */
+
+.community-drops {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.community-drop {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: rgba(204, 224, 209, 0.48);
+  box-shadow:
+    inset -10px -10px 20px rgba(170, 196, 177, 0.12),
+    inset 8px 8px 15px rgba(255, 255, 255, 0.35);
+  filter: blur(1px);
+}
+
+.community-drop::after {
+  content: "";
+  position: absolute;
+  top: 18%;
+  left: 22%;
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  filter: blur(2px);
+}
+
+
+/* =====================================================
+   DROP POSITION
+===================================================== */
+
+.drop-1 {
+  width: 180px;
+  height: 180px;
+  top: 8%;
+  left: -70px;
+}
+
+.drop-2 {
+  width: 110px;
+  height: 110px;
+  top: 18%;
+  right: 5%;
+}
+
+.drop-3 {
+  width: 240px;
+  height: 240px;
+  top: 35%;
+  left: 5%;
+}
+
+.drop-4 {
+  width: 150px;
+  height: 150px;
+  top: 48%;
+  right: -55px;
+}
+
+.drop-5 {
+  width: 90px;
+  height: 90px;
+  top: 60%;
+  left: 43%;
+}
+
+.drop-6 {
+  width: 210px;
+  height: 210px;
+  top: 70%;
+  right: 12%;
+}
+
+.drop-7 {
+  width: 130px;
+  height: 130px;
+  top: 82%;
+  left: -35px;
+}
+
+.drop-8 {
+  width: 75px;
+  height: 75px;
+  top: 88%;
+  left: 28%;
+}
+
+.drop-9 {
+  width: 170px;
+  height: 170px;
+  top: 30%;
+  right: 28%;
+}
+
+.drop-10 {
+  width: 100px;
+  height: 100px;
+  top: 76%;
+  left: 58%;
+}
+
+
+/* =====================================================
    HERO
-================================ */
+===================================================== */
 
 .community-hero {
   position: relative;
+  z-index: 1;
   width: 100%;
   height: 430px;
   overflow: hidden;
@@ -25,6 +148,7 @@
   height: calc(100% + 120px);
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   transform: scale(1.08);
   will-change: transform;
 }
@@ -43,15 +167,17 @@
 .community-hero-content {
   position: relative;
   z-index: 2;
-  width: 100%;
-  max-width: 1200px;
+  width: min(1200px, 100%);
   height: 100%;
   margin: 0 auto;
   padding: 0 30px;
+  box-sizing: border-box;
+
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+
   text-align: center;
   color: white;
 }
@@ -79,21 +205,24 @@
   line-height: 1.7;
 }
 
-/* ================================
+
+/* =====================================================
    CONTENT
-================================ */
+===================================================== */
 
 .community-content {
-  width: 100%;
-  max-width: 1200px;
+  position: relative;
+  z-index: 2;
+  width: min(1200px, 100%);
   margin: 0 auto;
   padding: 85px 30px 120px;
   box-sizing: border-box;
 }
 
-/* ================================
+
+/* =====================================================
    TOP
-================================ */
+===================================================== */
 
 .community-top {
   display: flex;
@@ -126,6 +255,11 @@
   font-size: 15px;
 }
 
+
+/* =====================================================
+   WRITE BUTTON
+===================================================== */
+
 .community-write-button {
   flex-shrink: 0;
   height: 48px;
@@ -137,7 +271,9 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
 }
 
 .community-write-button:hover {
@@ -145,16 +281,17 @@
   transform: translateY(-2px);
 }
 
-/* ================================
+
+/* =====================================================
    CATEGORY
-================================ */
+===================================================== */
 
 .community-category {
   display: flex;
   gap: 8px;
   margin-bottom: 42px;
   padding-bottom: 18px;
-  border-bottom: 1px solid #e1e8e2;
+  border-bottom: 1px solid rgba(225, 232, 226, 0.8);
   overflow-x: auto;
 }
 
@@ -163,7 +300,7 @@
   padding: 10px 17px;
   border: 1px solid #dce5de;
   border-radius: 30px;
-  background: white;
+  background: rgba(255, 255, 255, 0.82);
   color: #617067;
   font-size: 13px;
   font-weight: 600;
@@ -182,9 +319,10 @@
   color: white;
 }
 
-/* ================================
+
+/* =====================================================
    MAIN LAYOUT
-================================ */
+===================================================== */
 
 .community-layout {
   display: grid;
@@ -192,9 +330,10 @@
   gap: 35px;
 }
 
-/* ================================
+
+/* =====================================================
    FEED
-================================ */
+===================================================== */
 
 .feed-heading {
   display: flex;
@@ -214,6 +353,7 @@
 
 .feed-heading h3 {
   margin: 0;
+  color: #243329;
   font-size: 22px;
   letter-spacing: -0.8px;
 }
@@ -222,23 +362,27 @@
   padding: 9px 12px;
   border: 1px solid #dfe7e1;
   border-radius: 9px;
-  background: white;
+  background: rgba(255, 255, 255, 0.88);
   color: #56645b;
   outline: none;
 }
 
-/* ================================
+
+/* =====================================================
    POST
-================================ */
+===================================================== */
 
 .community-post {
   position: relative;
   margin-bottom: 16px;
   padding: 26px 28px;
-  border: 1px solid #e3e9e4;
+  border: 1px solid rgba(227, 233, 228, 0.9);
   border-radius: 18px;
-  background: white;
-  transition: 0.25s ease;
+  background: rgba(255, 255, 255, 0.92);
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .community-post:hover {
@@ -260,6 +404,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   border-radius: 50%;
   background: #dce9df;
   color: #385441;
@@ -372,9 +517,10 @@
   cursor: pointer;
 }
 
-/* ================================
+
+/* =====================================================
    SIDEBAR
-================================ */
+===================================================== */
 
 .community-sidebar {
   display: flex;
@@ -384,9 +530,9 @@
 
 .sidebar-card {
   padding: 25px;
-  border: 1px solid #e3e9e4;
+  border: 1px solid rgba(227, 233, 228, 0.9);
   border-radius: 18px;
-  background: white;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .sidebar-label {
@@ -412,8 +558,13 @@
   line-height: 1.6;
 }
 
+
+/* =====================================================
+   STUDY CARD
+===================================================== */
+
 .study-card {
-  background: #edf4ee;
+  background: rgba(237, 244, 238, 0.94);
   border-color: #d9e6db;
 }
 
@@ -430,9 +581,10 @@
   cursor: pointer;
 }
 
-/* ================================
+
+/* =====================================================
    TRENDING
-================================ */
+===================================================== */
 
 .trending-list {
   margin-top: 20px;
@@ -462,9 +614,10 @@
   line-height: 1.45;
 }
 
-/* ================================
+
+/* =====================================================
    MY STUDY
-================================ */
+===================================================== */
 
 .study-progress {
   margin-top: 20px;
@@ -504,9 +657,10 @@
   font-size: 12px !important;
 }
 
-/* ================================
+
+/* =====================================================
    TABLET
-================================ */
+===================================================== */
 
 @media screen and (max-width: 900px) {
 
@@ -523,11 +677,20 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .drop-3 {
+    left: -80px;
+  }
+
+  .drop-6 {
+    right: -80px;
+  }
+
 }
 
-/* ================================
+
+/* =====================================================
    MOBILE
-================================ */
+===================================================== */
 
 @media screen and (max-width: 600px) {
 
@@ -539,11 +702,18 @@
     padding: 0 15px;
   }
 
+  .community-eyebrow {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+  }
+
   .community-hero-content h1 {
     font-size: 48px;
+    letter-spacing: -3px;
   }
 
   .community-hero-content p {
+    margin-top: 18px;
     font-size: 14px;
   }
 
@@ -557,6 +727,10 @@
 
   .community-top h2 {
     font-size: 25px;
+  }
+
+  .community-top p {
+    font-size: 13px;
   }
 
   .community-write-button {
@@ -583,6 +757,10 @@
     font-size: 16px;
   }
 
+  .community-post > p {
+    font-size: 13px;
+  }
+
   .post-bottom {
     align-items: flex-start;
     gap: 10px;
@@ -594,6 +772,59 @@
 
   .community-sidebar {
     display: flex;
+  }
+
+
+  /* 모바일 물방울 */
+
+  .drop-1 {
+    width: 120px;
+    height: 120px;
+  }
+
+  .drop-2 {
+    width: 75px;
+    height: 75px;
+  }
+
+  .drop-3 {
+    width: 150px;
+    height: 150px;
+  }
+
+  .drop-4 {
+    width: 100px;
+    height: 100px;
+  }
+
+  .drop-5 {
+    width: 65px;
+    height: 65px;
+  }
+
+  .drop-6 {
+    width: 140px;
+    height: 140px;
+  }
+
+  .drop-7 {
+    width: 90px;
+    height: 90px;
+  }
+
+  .drop-8 {
+    width: 55px;
+    height: 55px;
+  }
+
+  .drop-9 {
+    width: 110px;
+    height: 110px;
+  }
+
+  .drop-10 {
+    width: 70px;
+    height: 70px;
   }
 
 }

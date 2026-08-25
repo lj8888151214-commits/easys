@@ -1,0 +1,500 @@
+/* =====================================================
+   STUDY EDIT PAGE
+===================================================== */
+
+.study-edit-page {
+  min-height: 100vh;
+  padding: 90px 20px 120px;
+  background: #f8f9f7;
+  color: #26352b;
+}
+
+
+/* =====================================================
+   CONTAINER
+===================================================== */
+
+.study-edit-container {
+  width: min(820px, 100%);
+  margin: 0 auto;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.study-edit-header {
+  margin-bottom: 38px;
+}
+
+
+.study-edit-header > span {
+  display: inline-block;
+  color: #78917d;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+
+.study-edit-header h1 {
+  margin: 12px 0 12px;
+  color: #26352b;
+  font-size: 42px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+
+.study-edit-header p {
+  margin: 0;
+  color: #7d877f;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+
+/* =====================================================
+   FORM
+===================================================== */
+
+.study-edit-form {
+  padding: 42px;
+  border: 1px solid #e2e8e3;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 18px 50px rgba(45, 65, 52, 0.07);
+}
+
+
+/* =====================================================
+   FIELD
+===================================================== */
+
+.study-edit-field {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+
+.study-edit-field label {
+  display: block;
+  margin-bottom: 10px;
+  color: #334238;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+
+/* =====================================================
+   INPUT / TEXTAREA
+===================================================== */
+
+.study-edit-field input,
+.study-edit-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #dce4de;
+  border-radius: 12px;
+  outline: none;
+  background: #fcfdfc;
+  color: #26352b;
+  font-family: inherit;
+  font-size: 14px;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.study-edit-field input {
+  height: 54px;
+  padding: 0 16px;
+}
+
+
+.study-edit-field textarea {
+  min-height: 230px;
+  padding: 16px;
+  resize: vertical;
+  line-height: 1.75;
+}
+
+
+/* =====================================================
+   PLACEHOLDER
+===================================================== */
+
+.study-edit-field input::placeholder,
+.study-edit-field textarea::placeholder {
+  color: #a5ada7;
+}
+
+
+/* =====================================================
+   FOCUS
+===================================================== */
+
+.study-edit-field input:focus,
+.study-edit-field textarea:focus {
+  border-color: #9ebca6;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 4px rgba(158, 188, 166, 0.14);
+}
+
+
+/* =====================================================
+   DISABLED
+===================================================== */
+
+.study-edit-field input:disabled,
+.study-edit-field textarea:disabled {
+  background: #f3f5f3;
+  color: #929a94;
+  cursor: not-allowed;
+}
+
+
+/* =====================================================
+   TITLE COUNT
+===================================================== */
+
+.study-edit-count {
+  position: absolute;
+  top: 40px;
+  right: 14px;
+  color: #9aa39c;
+  font-size: 12px;
+}
+
+
+/* =====================================================
+   DESCRIPTION
+===================================================== */
+
+.study-edit-field small {
+  display: block;
+  margin-top: 8px;
+  color: #929b95;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+
+/* =====================================================
+   ERROR MESSAGE
+===================================================== */
+
+.study-edit-error-message {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border: 1px solid #ead4d4;
+  border-radius: 12px;
+  background: #fff7f7;
+  color: #bd4b4b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+
+/* =====================================================
+   ACTIONS
+===================================================== */
+
+.study-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 38px;
+  padding-top: 28px;
+  border-top: 1px solid #edf0ed;
+}
+
+
+/* =====================================================
+   BUTTON COMMON
+===================================================== */
+
+.study-edit-cancel,
+.study-edit-submit {
+  min-width: 135px;
+  height: 52px;
+  padding: 0 22px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+/* =====================================================
+   CANCEL
+===================================================== */
+
+.study-edit-cancel {
+  border: 1px solid #d9e1db;
+  background: #ffffff;
+  color: #66716a;
+}
+
+
+.study-edit-cancel:hover {
+  border-color: #c7d2ca;
+  background: #f7f9f7;
+  transform: translateY(-1px);
+}
+
+
+/* =====================================================
+   SUBMIT
+===================================================== */
+
+.study-edit-submit {
+  border: 1px solid #526b59;
+  background: #526b59;
+  color: #ffffff;
+}
+
+
+.study-edit-submit:hover {
+  background: #435b4a;
+  border-color: #435b4a;
+  transform: translateY(-1px);
+}
+
+
+/* =====================================================
+   DISABLED BUTTON
+===================================================== */
+
+.study-edit-cancel:disabled,
+.study-edit-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
+/* =====================================================
+   LOADING
+===================================================== */
+
+.study-edit-loading {
+  padding: 120px 20px;
+  text-align: center;
+  color: #7d877f;
+}
+
+
+.study-edit-loading p {
+  margin: 0;
+  font-size: 14px;
+}
+
+
+/* =====================================================
+   SPINNER
+===================================================== */
+
+.study-edit-spinner {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 18px;
+  border: 3px solid #dfe7e1;
+  border-top-color: #607b68;
+  border-radius: 50%;
+  animation:
+    study-edit-spin 0.8s linear infinite;
+}
+
+
+@keyframes study-edit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =====================================================
+   ERROR PAGE
+===================================================== */
+
+.study-edit-error {
+  padding: 80px 30px;
+  border: 1px solid #e2e8e3;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 15px 45px rgba(45, 65, 52, 0.06);
+  text-align: center;
+}
+
+
+.study-edit-error > div {
+  margin-bottom: 18px;
+  font-size: 36px;
+}
+
+
+.study-edit-error h2 {
+  margin: 0 0 12px;
+  color: #2f3d33;
+  font-size: 22px;
+}
+
+
+.study-edit-error p {
+  margin: 0 0 28px;
+  color: #89928c;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+
+.study-edit-error button {
+  border: 1px solid #526b59;
+  border-radius: 11px;
+  padding: 13px 21px;
+  background: #526b59;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.study-edit-error button:hover {
+  background: #435b4a;
+  transform: translateY(-1px);
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 768px) {
+
+  .study-edit-page {
+    padding: 65px 16px 90px;
+  }
+
+
+  .study-edit-container {
+    width: 100%;
+  }
+
+
+  .study-edit-header {
+    margin-bottom: 28px;
+  }
+
+
+  .study-edit-header h1 {
+    font-size: 34px;
+  }
+
+
+  .study-edit-header p {
+    font-size: 14px;
+  }
+
+
+  .study-edit-form {
+    padding: 30px 24px;
+    border-radius: 20px;
+  }
+
+
+  .study-edit-field {
+    margin-bottom: 25px;
+  }
+
+
+  .study-edit-field input {
+    height: 52px;
+  }
+
+
+  .study-edit-field textarea {
+    min-height: 210px;
+  }
+
+
+  .study-edit-actions {
+    flex-direction: column-reverse;
+    margin-top: 30px;
+    padding-top: 24px;
+  }
+
+
+  .study-edit-cancel,
+  .study-edit-submit {
+    width: 100%;
+  }
+}
+
+
+/* =====================================================
+   SMALL MOBILE
+===================================================== */
+
+@media (max-width: 480px) {
+
+  .study-edit-page {
+    padding:
+      50px 14px 70px;
+  }
+
+
+  .study-edit-header h1 {
+    font-size: 29px;
+  }
+
+
+  .study-edit-form {
+    padding:
+      25px 18px;
+    border-radius: 18px;
+  }
+
+
+  .study-edit-field label {
+    font-size: 13px;
+  }
+
+
+  .study-edit-field input,
+  .study-edit-field textarea {
+    font-size: 13px;
+  }
+
+
+  .study-edit-field textarea {
+    min-height: 190px;
+  }
+
+
+  .study-edit-error {
+    padding: 60px 20px;
+    border-radius: 18px;
+  }
+
+}

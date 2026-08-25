@@ -17,7 +17,7 @@ public class EmailVerification {
     private Long id;
 
     @Column(nullable = false)
-    private String email2;
+    private String email;
 
     @Column(nullable = false, length = 6)
     private String verificationCode;

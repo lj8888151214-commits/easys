@@ -84,11 +84,11 @@ public class EmailService {
         message.setTo(email);
 
         message.setSubject(
-                "[NeoShip] 이메일 인증번호"
+                "[Easys] 이메일 인증번호"
         );
 
         message.setText(
-                "NeoShip 회원가입 인증번호입니다.\n\n"
+                "Easys 회원가입 인증번호입니다.\n\n"
                         + "인증번호 : "
                         + verificationCode
                         + "\n\n"

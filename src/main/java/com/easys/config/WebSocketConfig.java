@@ -17,34 +17,51 @@ import java.util.Set;
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    private final SignalWebSocketHandler signalWebSocketHandler = new SignalWebSocketHandler();
+    private final SignalWebSocketHandler signalWebSocketHandler =
+            new SignalWebSocketHandler();
 
     @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+    public void registerWebSocketHandlers(
+            WebSocketHandlerRegistry registry
+    ) {
         registry.addHandler(signalWebSocketHandler, "/signal")
                 .setAllowedOrigins("*");
     }
 
-    // 내부 핸들러 클래스 정의
-    public static class SignalWebSocketHandler extends TextWebSocketHandler {
-        private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
+    public static class SignalWebSocketHandler
+            extends TextWebSocketHandler {
+
+        private final Set<WebSocketSession> sessions =
+                Collections.synchronizedSet(new HashSet<>());
 
         @Override
-        public void afterConnectionEstablished(WebSocketSession session) {
+        public void afterConnectionEstablished(
+                WebSocketSession session
+        ) {
             sessions.add(session);
         }
 
         @Override
-        protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        protected void handleTextMessage(
+                WebSocketSession session,
+                TextMessage message
+        ) throws Exception {
+
             for (WebSocketSession s : sessions) {
-                if (s.isOpen() && !s.getId().equals(session.getId())) {
+
+                if (s.isOpen() &&
+                        !s.getId().equals(session.getId())) {
+
                     s.sendMessage(message);
                 }
             }
         }
 
         @Override
-        public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        public void afterConnectionClosed(
+                WebSocketSession session,
+                CloseStatus status
+        ) {
             sessions.remove(session);
         }
     }

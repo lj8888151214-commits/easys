@@ -110,16 +110,29 @@ function Calendar() {
       });
 
       if (!response.ok) {
-        throw new Error("일정을 불러오지 못했습니다.");
+        let errorMessage = `일정을 불러오지 못했습니다. (HTTP ${response.status})`;
+
+        try {
+          const errorData = await response.json();
+
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // JSON 형태의 오류 응답이 아닌 경우
+        }
+
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
 
       console.log("내 개인 일정:", data);
 
-      setSchedules(data);
+      setSchedules(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("캘린더 조회 오류:", error);
+      setSchedules([]);
     }
   };
 
@@ -137,6 +150,7 @@ function Calendar() {
   const monthName = `${year}년 ${month + 1}월`;
 
   const firstDay = new Date(year, month, 1).getDay();
+
   const lastDate = new Date(
     year,
     month + 1,
@@ -213,9 +227,11 @@ function Calendar() {
     }
 
     const targetDate = getDateOnly(date);
+
     const startDate = parseScheduleDate(
       schedule.startAt
     );
+
     const endDate = parseScheduleDate(
       schedule.endAt
     );
@@ -387,9 +403,14 @@ function Calendar() {
       return;
     }
 
-    try {
-      const isEdit = Boolean(editingSchedule);
+    /*
+     * 중요:
+     * isEdit를 try 밖에서 선언해야
+     * catch에서도 사용할 수 있다.
+     */
+    const isEdit = Boolean(editingSchedule);
 
+    try {
       const url = isEdit
         ? `${API_URL}/${editingSchedule.id}`
         : API_URL;
@@ -401,28 +422,49 @@ function Calendar() {
         },
         credentials: "include",
         body: JSON.stringify({
-          title: form.title,
-          content: form.content,
+          title: form.title.trim(),
+          content: form.content.trim(),
           startAt: form.startAt,
           endAt: form.endAt,
         }),
       });
 
       if (!response.ok) {
+        let errorMessage = isEdit
+          ? "일정 수정에 실패했습니다."
+          : "일정 등록에 실패했습니다.";
+
+        try {
+          const errorData = await response.json();
+
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch {
+          // JSON 형태의 오류 응답이 아닌 경우
+        }
+
         throw new Error(
-          isEdit
-            ? "일정 수정에 실패했습니다."
-            : "일정 등록에 실패했습니다."
+          `${errorMessage} (HTTP ${response.status})`
         );
       }
 
       const savedSchedule =
         await response.json();
 
-      saveCategory(
-        savedSchedule.id,
-        form.type
+      console.log(
+        isEdit
+          ? "수정된 일정:"
+          : "등록된 일정:",
+        savedSchedule
       );
+
+      if (savedSchedule?.id) {
+        saveCategory(
+          savedSchedule.id,
+          form.type
+        );
+      }
 
       await loadSchedules();
 
@@ -661,8 +703,6 @@ function Calendar() {
                 </button>
               </div>
 
-              {/* 개인 일정 범례 */}
-
               <div className="calendar-legend personal-legend">
                 <span>
                   <i className="legend-dot general" />
@@ -876,8 +916,6 @@ function Calendar() {
 
         {activeTab === "group" && (
           <>
-            {/* 다가오는 모임 */}
-
             <section className="group-section group-upcoming-section">
               <div className="section-heading">
                 <div>
@@ -920,12 +958,14 @@ function Calendar() {
                         <span>
                           {new Date(
                             schedule.startAt
-                          ).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                            }
-                          ).toUpperCase()}
+                          )
+                            .toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                              }
+                            )
+                            .toUpperCase()}
                         </span>
 
                         <strong>
@@ -971,8 +1011,6 @@ function Calendar() {
                   ))}
               </div>
             </section>
-
-            {/* 모임 캘린더 */}
 
             <section className="calendar-section group-calendar-section">
               <div className="calendar-header">
@@ -1081,8 +1119,6 @@ function Calendar() {
                 </div>
               </div>
             </section>
-
-            {/* 모임 일정 추가 버튼 */}
 
             <section className="group-add-section">
               <div className="group-add-card">
@@ -1195,6 +1231,7 @@ function Calendar() {
                         <strong>
                           일반 일정
                         </strong>
+
                         <small>
                           개인적인 일정
                         </small>
@@ -1228,6 +1265,7 @@ function Calendar() {
                         <strong>
                           자격증
                         </strong>
+
                         <small>
                           시험 및 공부 일정
                         </small>
@@ -1272,6 +1310,7 @@ function Calendar() {
                         <strong>
                           멘토링
                         </strong>
+
                         <small>
                           멘토와 함께하는 일정
                         </small>
@@ -1303,6 +1342,7 @@ function Calendar() {
                         <strong>
                           스터디
                         </strong>
+
                         <small>
                           함께 공부하는 일정
                         </small>

@@ -1,5 +1,11 @@
 import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation
+} from "react-router-dom";
 
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
@@ -12,19 +18,119 @@ import Study from "./pages/Study/Study";
 import StudyReservation from "./pages/StudyReservation/StudyReservation";
 import Community from "./pages/Community/Community";
 
+import Login from "./pages/Login/Login";
+import Signup from "./pages/Signup/Signup";
+import Profile from "./pages/Profile/Profile";
+import PasswordChange from "./pages/PasswordChange/PasswordChange";
+
+import StudyCreate from "./pages/StudyCreate/StudyCreate";
+import StudyDetail from "./pages/StudyDetail/StudyDetail";
+import StudyEdit from "./pages/StudyEdit/StudyEdit";
+
+
+// 페이지 이동 시 스크롤 최상단
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
+
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
+
       <Header />
 
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/streaming" element={<Streaming />} />
-        <Route path="/mentor" element={<Mentoring />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/study" element={<Study />} />
-        <Route path="/study-reservation" element={<StudyReservation />} />
-        <Route path="/community" element={<Community />} />
+        {/* 메인 */}
+        <Route
+          path="/"
+          element={<Home />}
+        />
+
+        {/* 스트리밍 */}
+        <Route
+          path="/streaming"
+          element={<Streaming />}
+        />
+
+        {/* 멘토링 */}
+        <Route
+          path="/mentor"
+          element={<Mentoring />}
+        />
+
+        {/* 캘린더 */}
+        <Route
+          path="/calendar"
+          element={<Calendar />}
+        />
+
+        {/* 스터디 목록 */}
+        <Route
+          path="/study"
+          element={<Study />}
+        />
+
+        {/* 스터디 생성 */}
+        <Route
+          path="/study/create"
+          element={<StudyCreate />}
+        />
+
+        {/* 스터디 수정 */}
+        <Route
+          path="/study/:id/edit"
+          element={<StudyEdit />}
+        />
+
+        {/* 스터디 상세 */}
+        <Route
+          path="/study/:id"
+          element={<StudyDetail />}
+        />
+
+        {/* 스터디 예약 */}
+        <Route
+          path="/study-reservation"
+          element={<StudyReservation />}
+        />
+
+        {/* 커뮤니티 */}
+        <Route
+          path="/community"
+          element={<Community />}
+        />
+
+        {/* 로그인 */}
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        {/* 회원가입 */}
+        <Route
+          path="/member"
+          element={<Signup />}
+        />
+
+        {/* 프로필 */}
+        <Route
+          path="/profile"
+          element={<Profile />}
+        />
+
+        {/* 비밀번호 변경 */}
+        <Route
+          path="/profile/password"
+          element={<PasswordChange />}
+        />
       </Routes>
 
       <Footer />
