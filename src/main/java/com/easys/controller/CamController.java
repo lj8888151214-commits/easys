@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/cam")
 public class CamController {
-    int a;
-    int b;
-    int c;
+    String sIhateClass;
+    String sIhateClass2;
 
     // /cam/cam 접속 시 templates/cam/cam.html 렌더링
     @GetMapping("/cam")
