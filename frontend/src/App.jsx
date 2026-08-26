@@ -26,6 +26,7 @@ import PasswordChange from "./pages/PasswordChange/PasswordChange";
 import StudyCreate from "./pages/StudyCreate/StudyCreate";
 import StudyDetail from "./pages/StudyDetail/StudyDetail";
 import StudyEdit from "./pages/StudyEdit/StudyEdit";
+import CamPage from "./pages/Streaming/CamPage";
 
 
 // 페이지 이동 시 스크롤 최상단
@@ -58,6 +59,12 @@ function App() {
         <Route
           path="/streaming"
           element={<Streaming />}
+        />
+
+        {/* 캠 스트리밍 (Routes 안으로 이동) */}
+        <Route
+          path="/streaming/cam"
+          element={<CamPage />}
         />
 
         {/* 멘토링 */}
