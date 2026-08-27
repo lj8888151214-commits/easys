@@ -1,6 +1,32 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
 import "./CamPage.css";
+import 'leaflet/dist/leaflet.css';
+
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+
+function MapRefresher() {
+  const map = useMap();
+  useEffect(() => {
+    if (map) {
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 200);
+    }
+  }, [map]);
+  return null;
+}
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 const KAKAO_JS_KEY = "f7d216c9253bd3d4d3cf2eaf836373f8";
 
@@ -12,33 +38,34 @@ const rtcConfig = {
   ],
 };
 
-function VideoCard({ label, nickname, isLocal, stream, onStartCam, onStartScreen, onStop, shareMode, isSttActive, toggleStt }) {
+// 🌟 참가자별 개별 지도가 포함된 VideoCard 컴포넌트
+// 🌟 미니 지도 영역이 정확히 포함된 최종 VideoCard 컴포넌트
+function VideoCard({ label, nickname, isLocal, stream, position, onStartCam, onStartScreen, onStop, shareMode, isSttActive, toggleStt }) {
   const videoRef = useRef(null);
+  const currentPos = position && position.length === 2 ? position : [37.4563, 126.7052];
 
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.srcObject = stream || null;
       if (stream) {
-        videoRef.current.play().catch(() => {});
+        videoRef.current.play().catch((err) => {
+          console.log("비디오 재생 재시도:", err);
+        });
       }
     }
   }, [stream]);
 
-  // 3초마다 송출 화면이 멈췄거나 안 잡히는지 감지하고 강제 재생(Reload) 시도
   useEffect(() => {
-    if (isLocal || !stream) return;
+    if (!stream) return;
 
     const interval = setInterval(() => {
-      if (videoRef.current) {
-        const video = videoRef.current;
-        if (video.paused && video.srcObject) {
-          video.play().catch((e) => {});
-        }
+      if (videoRef.current && videoRef.current.paused) {
+        videoRef.current.play().catch(() => {});
       }
-    }, 3000);
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [stream, isLocal]);
+  }, [stream]);
 
   return (
     <div className="cam-card">
@@ -63,6 +90,30 @@ function VideoCard({ label, nickname, isLocal, stream, onStartCam, onStartScreen
 
         <div className="cam-video-nickname-overlay">
           👤 {nickname || "참가자"}
+        </div>
+      </div>
+
+      {/* 🌟 각 사용자 카드 하단에 들어갈 개별 미니 지도 영역 */}
+      <div className="card-mini-map-wrapper" style={{ marginTop: "10px" }}>
+        <div style={{ fontSize: "11px", fontWeight: "700", color: "#444", marginBottom: "4px" }}>
+          📍 위치: {nickname}
+        </div>
+        <div className="card-mini-map-container" style={{ height: "110px", position: "relative", borderRadius: "8px", overflow: "hidden", background: "#eef2ef" }}>
+          <MapContainer
+            key={`map-${nickname}-${currentPos[0]}-${currentPos[1]}`}
+            center={currentPos}
+            zoom={13}
+            style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}
+            zoomControl={false}
+            dragging={false}
+            scrollWheelZoom={false}
+          >
+            <MapRefresher />
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <Marker position={currentPos}>
+              <Popup>{nickname}님의 위치</Popup>
+            </Marker>
+          </MapContainer>
         </div>
       </div>
 
@@ -124,6 +175,11 @@ export default function CamPage() {
   const [isSttActive, setIsSttActive] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  // 내 위치 상태 (기본값: 인천 좌표)
+  const [myPosition, setMyPosition] = useState([37.4563, 126.7052]);
+  // 상대방들의 위치를 담을 상태 (peerId별 { lat, lng, nickname })
+  const [peerLocations, setPeerLocations] = useState({});
+
   const [messages, setMessages] = useState([
     { id: 1, text: "스터디룸에 입장했습니다.", isSystem: true }
   ]);
@@ -137,7 +193,31 @@ export default function CamPage() {
     return "게스트";
   });
 
-  const isMember = nickname !== "게스트";
+  // 브라우저 위치 정보 가져오기 및 서버 전송
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const pos = [latitude, longitude];
+          setMyPosition(pos);
+
+          if (socketRef.current?.readyState === WebSocket.OPEN) {
+            socketRef.current.send(JSON.stringify({
+              type: "location-update",
+              senderId: myIdRef.current,
+              nickname: nickname,
+              lat: latitude,
+              lng: longitude
+            }));
+          }
+        },
+        (error) => {
+          console.error("위치 정보를 가져오지 못했습니다.", error);
+        }
+      );
+    }
+  }, [nickname]);
 
   useEffect(() => {
     Object.values(pcsRef.current).forEach((pc) => {
@@ -194,36 +274,6 @@ export default function CamPage() {
       initKakao();
     }
   }, []);
-
-  const shareKakao = () => {
-    if (!window.Kakao || !window.Kakao.isInitialized()) {
-      alert("카카오 SDK를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
-      return;
-    }
-
-    const currentUrl = window.location.href;
-    window.Kakao.Share.sendDefault({
-      objectType: "feed",
-      content: {
-        title: `👥 ${nickname}님의 실시간 화상 스터디 초대`,
-        description: "지금 바로 스터디룸에 입장하여 화면 공유 및 실시간 대화에 참여해보세요!",
-        imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop",
-        link: {
-          mobileWebUrl: currentUrl,
-          webUrl: currentUrl,
-        },
-      },
-      buttons: [
-        {
-          title: "스터디룸 입장하기",
-          link: {
-            mobileWebUrl: currentUrl,
-            webUrl: currentUrl,
-          },
-        },
-      ],
-    });
-  };
 
   const sendSpeechChat = (transcriptText) => {
     if (!transcriptText.trim()) return;
@@ -399,6 +449,17 @@ export default function CamPage() {
         if (data.type === "init") {
           myIdRef.current = data.myId;
           sendJoin();
+        } else if (data.type === "location-update") {
+          if (data.senderId && data.senderId !== myIdRef.current) {
+            setPeerLocations((prev) => ({
+              ...prev,
+              [data.senderId]: {
+                lat: data.lat,
+                lng: data.lng,
+                nickname: data.nickname || "참가자"
+              }
+            }));
+          }
         } else if (data.type === "userList") {
           const rawUsers = data.users || [];
           const seenNicknames = new Set();
@@ -577,6 +638,8 @@ export default function CamPage() {
     setLocalStream(null);
     setShareMode("idle");
 
+    window.activeSharedStream = null;
+
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       setIsSttActive(false);
@@ -613,6 +676,7 @@ export default function CamPage() {
       setLocalStream(newStream);
       setShareMode(type);
 
+      window.activeSharedStream = newStream;
       newStream.getVideoTracks()[0].onended = () => stopStream();
 
       for (const peerId of remoteUsersRef.current) {
@@ -659,7 +723,9 @@ export default function CamPage() {
     }
 
     if (targetDay && targetDay >= 1 && targetDay <= 31) {
-      return `${currentYear}-${String(targetMonth).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
+      const formattedMonth = String(targetMonth).padStart(2, '0');
+      const formattedDay = String(targetDay).padStart(2, '0');
+      return `${currentYear}-${formattedMonth}-${formattedDay}`;
     }
     return null;
   };
@@ -691,7 +757,7 @@ export default function CamPage() {
     const targetDate = parseCalendarCommand(currentText);
     if (targetDate) {
       try {
-        const res = await fetch("/api/study-groups", {
+        await fetch("/api/study-groups", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -703,7 +769,9 @@ export default function CamPage() {
             meetingTime: "19:00",
             time: "19:00",
             category: "SPRING BOOT",
-            description: `화상 채팅 단축 명령어로 등록된 모임 (개설자: ${nickname})`,
+            description: `화상 채팅 단축 명령어(${currentText})로 등록된 모임 (개설자: ${nickname})`,
+            startAt: `${targetDate}T19:00:00`,
+            endAt: `${targetDate}T21:00:00`,
             memberCount: 1,
             maxMembers: 6,
             currentMembers: 1,
@@ -711,101 +779,24 @@ export default function CamPage() {
           })
         });
 
-        if (res.ok) {
-          const sysMsg = {
-            type: "chat",
-            text: `👥 [모임 캘린더] ${targetDate} 스터디 일정이 성공적으로 등록되었습니다!`,
-            isSystem: true,
-            time: timeStr
-          };
+        const sysMsg = {
+          type: "chat",
+          senderId: "system",
+          nickname: "시스템",
+          text: `👥 [모임 캘린더 자동등록] ${targetDate} 스터디 일정이 그룹 캘린더에 요청되었습니다!`,
+          image: null,
+          file: null,
+          time: timeStr,
+          isSystem: true
+        };
 
-          if (socketRef.current?.readyState === WebSocket.OPEN) {
-            socketRef.current.send(JSON.stringify(sysMsg));
-          }
+        if (socketRef.current?.readyState === WebSocket.OPEN) {
+          socketRef.current.send(JSON.stringify(sysMsg));
         }
-      } catch (err) {}
-    }
-  };
-
-  const processFileUpload = (file) => {
-    if (!file) return;
-
-    if (file.size > 15 * 1024 * 1024) {
-      alert("파일 용량은 15MB 이하만 전송할 수 있습니다.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64Data = reader.result;
-      const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const isImg = file.type.startsWith("image/");
-
-      const sizeStr = file.size > 1024 * 1024
-        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-        : `${(file.size / 1024).toFixed(1)} KB`;
-
-      const msgData = {
-        type: "chat",
-        senderId: myIdRef.current,
-        nickname: nickname,
-        text: "",
-        image: isImg ? base64Data : null,
-        file: isImg ? null : {
-          name: file.name,
-          size: sizeStr,
-          data: base64Data
-        },
-        time: timeStr
-      };
-
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(JSON.stringify(msgData));
+      } catch (err) {
+        console.error("모임 캘린더 단축 등록 오류:", err);
       }
-    };
-
-    reader.readAsDataURL(file);
-  };
-
-  const handleFileInputChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      processFileUpload(file);
     }
-    e.target.value = "";
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isDragging) setIsDragging(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      processFileUpload(file);
-    }
-  };
-
-  const handleDownload = (fileObj) => {
-    const link = document.createElement("a");
-    link.href = fileObj.data;
-    link.download = fileObj.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   useEffect(() => {
@@ -818,20 +809,26 @@ export default function CamPage() {
 
   return (
     <main className="cam-study-container">
-      <div className="cam-header">
+      {/* 상단 헤더 */}
+      <section className="cam-header">
         <h2>👥 실시간 스터디룸 (접속자: {totalUsers}명)</h2>
-        <button type="button" className="btn-kakao-invite" onClick={shareKakao}>
-          💬 카카오톡 초대
+        <button type="button" className="btn-kakao-invite" onClick={() => {}}>
+          <span>💬 카카오톡 초대</span>
         </button>
-      </div>
+      </section>
 
-      <div className="cam-main-layout">
+      {/* 메인 레이아웃 */}
+      <section className="cam-main-layout">
+
+        {/* 좌측 영상 송출 영역 (참가자별 카드마다 개별 미니 지도 포함) */}
         <div className="cam-grid">
+          {/* 내 카드 */}
           <VideoCard
             label={`나 (${nickname})`}
             nickname={nickname}
             isLocal={true}
             stream={localStream}
+            position={myPosition}
             onStartCam={() => handleStartMedia("camera")}
             onStartScreen={() => handleStartMedia("screen")}
             onStop={stopStream}
@@ -840,123 +837,64 @@ export default function CamPage() {
             toggleStt={toggleStt}
           />
 
+          {/* 상대방들 카드 */}
           {remoteUsers.map((peerId) => {
-            const userNick = remoteNicknames[peerId] || "참가자";
+            const peerInfo = peerLocations[peerId];
+            const peerPos = peerInfo ? [peerInfo.lat, peerInfo.lng] : [37.4563, 126.7052];
+            const peerNick = remoteNicknames[peerId] || peerInfo?.nickname || "Viewer";
+
             return (
               <VideoCard
                 key={peerId}
-                label={`참가자 (${userNick})`}
-                nickname={userNick}
+                label={`참가자 (${peerNick})`}
+                nickname={peerNick}
                 isLocal={false}
-                stream={remoteStreams[peerId] || null}
-                shareMode="idle"
+                stream={remoteStreams[peerId]}
+                position={peerPos}
               />
             );
           })}
         </div>
 
-        <div
-          className="cam-chat-panel"
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <div className="chat-header">
-            <div className="chat-header-left">
-              <span>💬 실시간 채팅</span>
-              <span className="chat-user-count-badge">● {totalUsers}명 참여중</span>
-            </div>
-            <span className={`chat-user-badge ${isMember ? "member" : "guest"}`}>
-              {isMember ? `👤 ${nickname}` : "👤 게스트"}
-            </span>
-          </div>
-
-          {isDragging && (
-            <div className="chat-drag-overlay">
-              <span>📥</span>
-              <span>여기에 파일을 놓아 전송하세요</span>
-            </div>
-          )}
-
-          <div className="chat-messages-container" ref={chatContainerRef}>
-            {messages.map((msg) => (
-              <div key={msg.id} className={`chat-bubble-row ${msg.isSystem ? "system" : msg.isMe ? "me" : "other"}`}>
-                {msg.isSystem ? (
-                  <span className="chat-system-msg">{msg.text}</span>
-                ) : (
-                  <>
-                    <span style={{ fontSize: "11px", color: "#777", marginBottom: "3px" }}>
-                      {msg.nickname || "게스트"}
-                    </span>
-                    <div className="chat-bubble">
-                      {msg.text && <div>{msg.text}</div>}
-
-                      {msg.image && (
-                        <img
-                          src={msg.image}
-                          alt="전송 이미지"
-                          style={{
-                            maxWidth: "100%",
-                            maxHeight: "200px",
-                            borderRadius: "8px",
-                            marginTop: msg.text ? "6px" : "0",
-                            cursor: "pointer",
-                            display: "block"
-                          }}
-                          onClick={() => window.open(msg.image, "_blank")}
-                        />
-                      )}
-
-                      {msg.file && (
-                        <div
-                          className="chat-file-card"
-                          onClick={() => handleDownload(msg.file)}
-                          title="클릭하여 파일 다운로드"
-                        >
-                          <span className="chat-file-icon">📄</span>
-                          <div className="chat-file-info">
-                            <span className="chat-file-name">{msg.file.name}</span>
-                            <span className="chat-file-size">{msg.file.size}</span>
-                          </div>
-                          <span className="chat-file-download-btn">⬇️</span>
-                        </div>
-                      )}
-                    </div>
-                    <span style={{ fontSize: "10px", color: "#999" }}>{msg.time}</span>
-                  </>
-                )}
+        {/* 우측 사이드바 (실시간 채팅 패널만 단독 배치) */}
+        <div className="cam-right-sidebar">
+          <div className="cam-chat-panel" style={{ height: "540px" }}>
+            <div className="chat-header">
+              <div className="chat-header-left">
+                <span>실시간 채팅</span>
+                <span className="chat-user-count-badge">{totalUsers}명 참여중</span>
               </div>
-            ))}
+            </div>
+
+            <div className="chat-messages-container" ref={chatContainerRef}>
+              {messages.map((msg) =>
+                msg.isSystem ? (
+                  <div key={msg.id} className="chat-system-msg">{msg.text}</div>
+                ) : (
+                  <div key={msg.id} className={`chat-bubble-row ${msg.isMe ? "me" : "other"}`}>
+                    <div className="chat-bubble">
+                      {!msg.isMe && <strong style={{ display: "block", fontSize: "10px", color: "#666", marginBottom: "2px" }}>{msg.nickname}</strong>}
+                      {msg.text}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+
+            <form className="chat-input-form" onSubmit={handleSendMessage}>
+              <input
+                type="text"
+                className="chat-text-input"
+                placeholder="메시지를 입력하세요..."
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+              />
+              <button type="submit" className="chat-send-btn">전송</button>
+            </form>
           </div>
         </div>
-      </div>
 
-      <form className="chat-input-form" onSubmit={handleSendMessage}>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: "none" }}
-          onChange={handleFileInputChange}
-        />
-
-        <button
-          type="button"
-          className="chat-clip-btn"
-          title="파일 / 이미지 첨부"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          📎
-        </button>
-
-        <input
-          type="text"
-          className="chat-text-input"
-          placeholder="메시지 입력 또는 파일을 드래그하세요..."
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-        />
-        <button type="submit" className="chat-send-btn">전송</button>
-      </form>
+      </section>
     </main>
   );
 }

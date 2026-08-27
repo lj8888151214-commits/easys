@@ -3,6 +3,7 @@
   min-height: 100vh;
   background: #f7f9f7;
   color: #243329;
+  overflow-x: hidden; /* 가로 스크롤 시 전체 페이지 흔들림 방지 */
 }
 
 /* =================================
@@ -84,7 +85,7 @@
 }
 
 /* =================================
-   CONTENT
+   CONTENT (기본 레이아웃 통제)
 ================================= */
 
 .streaming-content {
@@ -93,6 +94,8 @@
   margin: 0 auto;
   padding: 90px 30px 120px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 /* =================================
@@ -378,24 +381,63 @@
 }
 
 /* =================================
-   현재 방송
+   현재 방송 (파노라마 가로 스크롤 풀블리드 뷰)
 ================================= */
 
 .stream-list-section {
   margin-top: 120px;
+  width: 100vw; /* 화면 전체 너비 확장 */
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  padding: 0 0 20px 0;
+  box-sizing: border-box;
 }
 
+/* 제목과 더보기 링크는 기존 중앙 정렬 영역 유지용 패딩 추가 */
+.stream-list-section .stream-section-heading {
+  max-width: 1200px;
+  margin: 0 auto 30px auto;
+  padding: 0 30px;
+}
+
+/* 가로 스크롤 그리드 본체 */
 .stream-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-left: max(30px, calc((100vw - 1200px) / 2 + 30px)); /* 왼쪽 여백 맞춤 */
+  padding-right: 30px;
+  padding-bottom: 25px;
+  scrollbar-width: thin;
+}
+
+.stream-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.stream-grid::-webkit-scrollbar-track {
+  background: #edf3ee;
+  border-radius: 4px;
+  margin-left: max(30px, calc((100vw - 1200px) / 2 + 30px));
+  margin-right: 30px;
+}
+
+.stream-grid::-webkit-scrollbar-thumb {
+  background: #cbdacf;
+  border-radius: 4px;
 }
 
 /* =================================
-   방송 카드
+   방송 카드 (파노라마 고정 너비)
 ================================= */
 
-.stream-card {
+.stream-grid .stream-card {
+  flex: 0 0 380px;
+  scroll-snap-align: start;
   overflow: hidden;
   border: 1px solid #dfe7e1;
   border-radius: 20px;
@@ -408,7 +450,7 @@
     border-color 0.3s ease;
 }
 
-.stream-card:hover {
+.stream-grid .stream-card:hover {
   transform: translateY(-5px);
   border-color: #cbdacf;
   box-shadow: 0 20px 45px rgba(36, 51, 41, 0.1);
@@ -755,11 +797,6 @@
 ================================= */
 
 @media screen and (min-width: 1200px) {
-  .stream-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-  }
-
   .stream-thumbnail {
     height: 280px;
   }
@@ -792,10 +829,6 @@
     grid-template-columns: 1fr;
   }
 
-  .stream-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
   .stream-feature-section,
   .stream-list-section,
   .stream-upcoming-section,
@@ -803,11 +836,11 @@
     margin-top: 90px;
   }
 
-  .stream-card:hover {
+  .stream-grid .stream-card:hover {
     transform: translateY(-3px);
   }
 
-  .stream-card:hover .stream-video {
+  .stream-grid .stream-card:hover .stream-video {
     transform: scale(1.02);
   }
 }
@@ -911,23 +944,41 @@
     border-radius: 18px;
   }
 
-  /* 현재 방송 */
+  /* 현재 방송 (모바일 파노라마 여백 조정) */
 
-  .stream-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
+  .stream-list-section {
+    width: 100vw;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    left: 50%;
+    right: 50%;
   }
 
-  .stream-card {
+  .stream-list-section .stream-section-heading {
+    padding: 0 15px;
+  }
+
+  .stream-grid {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .stream-grid::-webkit-scrollbar-track {
+    margin-left: 15px;
+    margin-right: 15px;
+  }
+
+  .stream-grid .stream-card {
+    flex: 0 0 280px;
     border-radius: 18px;
   }
 
-  .stream-card:hover {
+  .stream-grid .stream-card:hover {
     transform: none;
     box-shadow: 0 8px 28px rgba(36, 51, 41, 0.04);
   }
 
-  .stream-card:hover .stream-video {
+  .stream-grid .stream-card:hover .stream-video {
     transform: scale(1.01);
   }
 
