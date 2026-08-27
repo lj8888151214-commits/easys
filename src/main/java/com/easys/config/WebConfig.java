@@ -13,20 +13,37 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${file.profile-image-dir:uploads/profile-images}")
     private String profileImageDirectory;
 
+
     @Override
     public void addResourceHandlers(
             ResourceHandlerRegistry registry
     ) {
 
-        String location =
+        // 프로필 이미지 경로
+        String profileLocation =
                 Paths.get(profileImageDirectory)
                         .toAbsolutePath()
                         .normalize()
                         .toUri()
                         .toString();
 
+
         registry
                 .addResourceHandler("/profile-images/**")
-                .addResourceLocations(location);
+                .addResourceLocations(profileLocation);
+
+
+        // 커뮤니티 이미지 경로
+        String communityLocation =
+                Paths.get("uploads/community/")
+                        .toAbsolutePath()
+                        .normalize()
+                        .toUri()
+                        .toString();
+
+
+        registry
+                .addResourceHandler("/uploads/community/**")
+                .addResourceLocations(communityLocation);
     }
 }

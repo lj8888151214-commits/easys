@@ -119,7 +119,7 @@ function Header() {
   const profileImage =
     user?.profileImageUrl
       ? `/api${user.profileImageUrl}`
-      : "/default-profile.png";
+      : "/default-profile.svg";
 
   return (
     <header className={`main-header ${scrolled ? "scrolled" : ""}`}>
@@ -197,7 +197,7 @@ function Header() {
                     className="header-profile-image"
                     onError={(e) => {
                       e.currentTarget.src =
-                        "/default-profile.png";
+                        "/default-profile.svg";
                     }}
                   />
                 </Link>
@@ -297,7 +297,7 @@ function Header() {
                   className="mobile-profile-image"
                   onError={(e) => {
                     e.currentTarget.src =
-                      "/default-profile.png";
+                      "/default-profile.svg";
                   }}
                 />
 

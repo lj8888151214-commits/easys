@@ -1,57 +1,488 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./Community.css";
 import communityBg from "../../assets/images/community-bg.jpg";
+import CommunityWrite from "../CommunityWrite/CommunityWrite";
+import CommunityDetail from "../CommunityDetail/CommunityDetail";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 function Community() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id: routePostId } = useParams();
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [scrollY, setScrollY] = useState(0);
+
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [showWritePage, setShowWritePage] = useState(false);
+
+  const [selectedCategory, setSelectedCategory] =
+    useState("전체");
+
+  const [sortType, setSortType] = useState("latest");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const POSTS_PER_PAGE = 10;
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [checkingLogin, setCheckingLogin] = useState(true);
+
+  const categories = [
+    { name: "전체", icon: "" },
+    { name: "공부인증", icon: "🔥" },
+    { name: "질문", icon: "❓" },
+    { name: "정보공유", icon: "💡" },
+    { name: "취업", icon: "💼" },
+  ];
+
+  /* =====================================================
+     로그인 상태 확인
+  ===================================================== */
+
+  const checkLoginStatus = async () => {
+    try {
+      setCheckingLogin(true);
+
+      const response = await fetch(
+        `${API_BASE_URL}/member/me`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        setIsLoggedIn(false);
+        setCurrentUser(null);
+        return;
+      }
+
+      const data = await response.json();
+
+      setIsLoggedIn(true);
+      setCurrentUser(data);
+    } catch (error) {
+      console.error("로그인 상태 확인 오류:", error);
+
+      setIsLoggedIn(false);
+      setCurrentUser(null);
+    } finally {
+      setCheckingLogin(false);
+    }
+  };
+
+  /* =====================================================
+     게시글 목록 조회
+  ===================================================== */
+
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(
+        `${API_BASE_URL}/community/posts`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "게시글을 불러오지 못했습니다."
+        );
+      }
+
+      const data = await response.json();
+
+      setPosts(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("게시글 조회 오류:", err);
+
+      setError(
+        err.message ||
+          "게시글을 불러오는 중 오류가 발생했습니다."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* =====================================================
+     글쓰기 버튼
+  ===================================================== */
+
+  const handleWriteClick = () => {
+    if (checkingLogin) {
+      return;
+    }
+
+    if (!isLoggedIn) {
+      alert("로그인 후 이용 가능합니다.");
+      return;
+    }
+
+    navigate("/community/write");
+  };
+
+  /* =====================================================
+     게시글 상세 조회
+  ===================================================== */
+
+  const fetchPostDetail = async (postId) => {
+    if (!postId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/community/posts/${postId}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "게시글을 불러오지 못했습니다."
+        );
+      }
+
+      const data = await response.json();
+
+      setSelectedPost(data);
+
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === data.id
+            ? {
+                ...post,
+                ...data,
+              }
+            : post
+        )
+      );
+    } catch (err) {
+      console.error(
+        "게시글 상세 조회 오류:",
+        err
+      );
+
+      alert(
+        err.message ||
+          "게시글을 불러오지 못했습니다."
+      );
+    }
+  };
+
+  /* =====================================================
+     날짜
+  ===================================================== */
+
+  const formatDate = (date) => {
+    if (!date) {
+      return "";
+    }
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "";
+    }
+
+    return parsedDate.toLocaleDateString(
+      "ko-KR"
+    );
+  };
+
+  /* =====================================================
+     이미지 URL
+  ===================================================== */
+
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) {
+      return "";
+    }
+
+    if (
+      imageUrl.startsWith("http://") ||
+      imageUrl.startsWith("https://") ||
+      imageUrl.startsWith("data:")
+    ) {
+      return imageUrl;
+    }
+
+    if (imageUrl.startsWith("/")) {
+      return `${API_BASE_URL}${imageUrl}`;
+    }
+
+    return `${API_BASE_URL}/${imageUrl}`;
+  };
+
+  /* =====================================================
+     카테고리
+  ===================================================== */
+
+  const getCategory = (post) => {
+    return (
+      post?.category ||
+      post?.categoryName ||
+      "정보공유"
+    );
+  };
+
+  const getCategoryClass = (category) => {
+    const categoryClassMap = {
+      공부인증: "study-cert",
+      질문: "question",
+      정보공유: "info",
+      취업: "job",
+    };
+
+    return (
+      categoryClassMap[category] ||
+      "info"
+    );
+  };
+
+  /* =====================================================
+     필터 + 정렬
+  ===================================================== */
+
+  const filteredPosts = useMemo(() => {
+    return [...posts]
+      .filter((post) => {
+        if (selectedCategory === "전체") {
+          return true;
+        }
+
+        return (
+          getCategory(post) ===
+          selectedCategory
+        );
+      })
+      .sort((a, b) => {
+        if (sortType === "popular") {
+          return (
+            Number(b.likeCount || 0) -
+            Number(a.likeCount || 0)
+          );
+        }
+
+        if (sortType === "comments") {
+          return (
+            Number(b.commentCount || 0) -
+            Number(a.commentCount || 0)
+          );
+        }
+
+        return (
+          new Date(b.createdAt || 0) -
+          new Date(a.createdAt || 0)
+        );
+      });
+  }, [
+    posts,
+    selectedCategory,
+    sortType,
+  ]);
+
+  /* =====================================================
+     페이지네이션
+  ===================================================== */
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredPosts.length / POSTS_PER_PAGE)
+  );
+
+  const paginatedPosts = useMemo(() => {
+    const start = (currentPage - 1) * POSTS_PER_PAGE;
+
+    return filteredPosts.slice(
+      start,
+      start + POSTS_PER_PAGE
+    );
+  }, [filteredPosts, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, sortType]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  /* =====================================================
+     인기 게시글
+  ===================================================== */
+
+  const trendingPosts = useMemo(() => {
+    return [...posts]
+      .sort(
+        (a, b) =>
+          Number(b.likeCount || 0) -
+          Number(a.likeCount || 0)
+      )
+      .slice(0, 4);
+  }, [posts]);
+
+  /* =====================================================
+     최초 실행
+  ===================================================== */
+
+  useEffect(() => {
+    fetchPosts();
+    checkLoginStatus();
+  }, []);
+
+  useEffect(() => {
+    if (routePostId) {
+      fetchPostDetail(routePostId);
+      return;
+    }
+
+    setSelectedPost(null);
+    setShowWritePage(location.pathname === "/community/write");
+  }, [routePostId, location.pathname]);
+
+  /* =====================================================
+     스크롤
+  ===================================================== */
 
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener(
+      "scroll",
+      handleScroll,
+      {
+        passive: true,
+      }
+    );
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener(
+        "scroll",
+        handleScroll
+      );
     };
   }, []);
+
+  /* =====================================================
+     글쓰기 화면
+  ===================================================== */
+
+  if (showWritePage) {
+    return (
+      <CommunityWrite
+        currentUser={currentUser}
+        onClose={async () => {
+          navigate("/community");
+        }}
+        onCreated={async () => {
+          navigate("/community");
+        }}
+      />
+    );
+  }
+
+  /* =====================================================
+     상세 화면
+  ===================================================== */
+
+  if (selectedPost) {
+    return (
+      <CommunityDetail
+        post={selectedPost}
+        currentUser={currentUser}
+        isLoggedIn={isLoggedIn}
+        getImageUrl={getImageUrl}
+        onClose={async () => {
+          navigate("/community");
+        }}
+        onUpdated={async (updatedPost) => {
+          if (updatedPost) {
+            setPosts((prevPosts) =>
+              prevPosts.map((post) =>
+                post.id === updatedPost.id
+                  ? {
+                      ...post,
+                      ...updatedPost,
+                    }
+                  : post
+              )
+            );
+
+            setSelectedPost((prevPost) =>
+              prevPost
+                ? {
+                    ...prevPost,
+                    ...updatedPost,
+                  }
+                : updatedPost
+            );
+          } else {
+            await fetchPosts();
+          }
+        }}
+        onDeleted={async () => {
+          navigate("/community");
+        }}
+      />
+    );
+  }
 
   return (
     <main className="community-page">
 
-      {/* ================================
-          BACKGROUND DROPS
-      ================================= */}
-      <div className="community-drops" aria-hidden="true">
-        <span className="community-drop drop-1"></span>
-        <span className="community-drop drop-2"></span>
-        <span className="community-drop drop-3"></span>
-        <span className="community-drop drop-4"></span>
-        <span className="community-drop drop-5"></span>
-        <span className="community-drop drop-6"></span>
-        <span className="community-drop drop-7"></span>
-        <span className="community-drop drop-8"></span>
-        <span className="community-drop drop-9"></span>
-        <span className="community-drop drop-10"></span>
+      {/* BACKGROUND */}
+
+      <div
+        className="community-drops"
+        aria-hidden="true"
+      >
+        <span className="community-drop drop-1" />
+        <span className="community-drop drop-2" />
+        <span className="community-drop drop-3" />
+        <span className="community-drop drop-4" />
+        <span className="community-drop drop-5" />
+        <span className="community-drop drop-6" />
+        <span className="community-drop drop-7" />
+        <span className="community-drop drop-8" />
+        <span className="community-drop drop-9" />
+        <span className="community-drop drop-10" />
       </div>
 
-      {/* ================================
-          HERO
-      ================================= */}
+      {/* HERO */}
+
       <section className="community-hero">
 
         <div
           className="community-hero-bg"
           style={{
             backgroundImage: `url(${communityBg})`,
-            transform: `scale(1.08) translateY(${scrollY * 0.15}px)`,
+            transform:
+              `scale(1.08) translateY(${scrollY * 0.15}px)`,
           }}
-        ></div>
+        />
 
-        <div className="community-hero-overlay"></div>
+        <div className="community-hero-overlay" />
 
         <div className="community-hero-content">
+
           <span className="community-eyebrow">
             EASYS COMMUNITY
           </span>
@@ -63,261 +494,390 @@ function Community() {
             <br />
             지식을 나눠보세요.
           </p>
+
         </div>
 
       </section>
 
-      {/* ================================
-          COMMUNITY CONTENT
-      ================================= */}
+      {/* CONTENT */}
+
       <section className="community-content">
 
         <div className="community-top">
+
           <div>
             <span className="section-label">
               DEVELOPER COMMUNITY
             </span>
 
-            <h2>개발자들과 함께 이야기해보세요.</h2>
+            <h2>
+              개발자들과 함께 이야기해보세요.
+            </h2>
 
             <p>
-              공부한 내용을 공유하고 궁금한 점을 질문해보세요.
+              공부한 내용을 공유하고 궁금한 점을
+              질문해보세요.
             </p>
           </div>
 
-          <button className="community-write-button">
-            + 글 작성하기
-          </button>
+          {!checkingLogin && isLoggedIn && (
+            <button
+              type="button"
+              className="community-write-button"
+              onClick={handleWriteClick}
+            >
+              + 글 작성하기
+            </button>
+          )}
+
         </div>
 
         {/* CATEGORY */}
+
         <div className="community-category">
 
-          <button className="community-category-button active">
-            전체
-          </button>
+          {categories.map((category) => (
+            <button
+              type="button"
+              key={category.name}
+              className={
+                `community-category-button ${
+                  selectedCategory === category.name
+                    ? "active"
+                    : ""
+                }`
+              }
+              onClick={() =>
+                setSelectedCategory(
+                  category.name
+                )
+              }
+            >
+              {category.icon && (
+                <span className="category-icon">
+                  {category.icon}
+                </span>
+              )}
 
-          <button className="community-category-button">
-            🔥 공부인증
-          </button>
-
-          <button className="community-category-button">
-            ❓ 질문
-          </button>
-
-          <button className="community-category-button">
-            🚀 스터디 모집
-          </button>
-
-          <button className="community-category-button">
-            💡 정보공유
-          </button>
-
-          <button className="community-category-button">
-            💼 취업
-          </button>
+              {category.name}
+            </button>
+          ))}
 
         </div>
 
-        {/* MAIN LAYOUT */}
+        {/* LAYOUT */}
+
         <div className="community-layout">
 
           {/* FEED */}
+
           <div className="community-feed">
 
             <div className="feed-heading">
 
               <div>
+
                 <span className="feed-label">
                   COMMUNITY FEED
                 </span>
 
-                <h3>최근 이야기</h3>
+                <h3>
+                  {selectedCategory === "전체"
+                    ? "최근 이야기"
+                    : `${selectedCategory} 이야기`}
+                </h3>
+
               </div>
 
-              <select className="feed-sort">
-                <option>최신순</option>
-                <option>인기순</option>
-                <option>댓글순</option>
+              <select
+                className="feed-sort"
+                value={sortType}
+                onChange={(event) =>
+                  setSortType(
+                    event.target.value
+                  )
+                }
+              >
+                <option value="latest">
+                  최신순
+                </option>
+
+                <option value="popular">
+                  인기순
+                </option>
+
+                <option value="comments">
+                  댓글순
+                </option>
               </select>
 
             </div>
 
-            {/* 게시글 1 */}
-            <article className="community-post">
+            {/* LOADING */}
 
-              <div className="post-user">
-                <div className="post-avatar">김</div>
-
-                <div>
-                  <strong>김개발</strong>
-                  <span>10분 전 · Spring</span>
-                </div>
-              </div>
-
-              <span className="post-category question">
-                ❓ 질문
-              </span>
-
-              <h3>
-                Spring Security 로그인 부분이 이해가 안됩니다.
-              </h3>
-
-              <p>
-                SecurityFilterChain을 공부하고 있는데 인증 과정이
-                생각보다 어렵네요. 혹시 쉽게 이해할 수 있는 방법이 있을까요?
-              </p>
-
-              <div className="post-tags">
-                <span>#Spring</span>
-                <span>#SpringSecurity</span>
-                <span>#Java</span>
-              </div>
-
-              <div className="post-bottom">
-                <div>
-                  <span>♡ 12</span>
-                  <span>💬 8</span>
-                  <span>👁 142</span>
+            {loading && (
+              <div className="community-message">
+                <div className="message-icon">
+                  ⏳
                 </div>
 
-                <button>자세히 보기 →</button>
+                게시글을 불러오는 중...
               </div>
+            )}
 
-            </article>
+            {/* ERROR */}
 
-            {/* 게시글 2 */}
-            <article className="community-post">
+            {!loading && error && (
+              <div className="community-message error">
 
-              <div className="post-user">
-                <div className="post-avatar">이</div>
-
-                <div>
-                  <strong>이코딩</strong>
-                  <span>32분 전 · Java</span>
-                </div>
-              </div>
-
-              <span className="post-category study">
-                🔥 공부인증
-              </span>
-
-              <h3>
-                오늘도 Java 공부 완료했습니다 🔥
-              </h3>
-
-              <p>
-                오늘은 객체지향 개념과 상속 부분을 공부했습니다.
-                아직 어려운 부분이 많지만 조금씩 이해되는 것 같아요.
-              </p>
-
-              <div className="post-tags">
-                <span>#오늘도공부완료</span>
-                <span>#Java</span>
-                <span>#개발공부</span>
-              </div>
-
-              <div className="post-bottom">
-                <div>
-                  <span>♡ 18</span>
-                  <span>💬 4</span>
-                  <span>👁 89</span>
+                <div className="message-icon">
+                  ⚠️
                 </div>
 
-                <button>자세히 보기 →</button>
+                <p>{error}</p>
+
+                <button
+                  type="button"
+                  onClick={fetchPosts}
+                >
+                  다시 시도
+                </button>
+
               </div>
+            )}
 
-            </article>
+            {/* EMPTY */}
 
-            {/* 게시글 3 */}
-            <article className="community-post">
+            {!loading &&
+              !error &&
+              filteredPosts.length === 0 && (
+                <div className="community-message">
 
-              <div className="post-user">
-                <div className="post-avatar">박</div>
+                  <div className="message-icon">
+                    📝
+                  </div>
 
-                <div>
-                  <strong>박스터디</strong>
-                  <span>1시간 전 · Study</span>
+                  <p>
+                    작성된 게시글이 없습니다.
+                  </p>
+
+                  {isLoggedIn && (
+                    <button
+                      type="button"
+                      onClick={handleWriteClick}
+                    >
+                      첫 글 작성하기
+                    </button>
+                  )}
+
                 </div>
-              </div>
+              )}
 
-              <span className="post-category recruit">
-                🚀 스터디 모집
-              </span>
+            {/* POSTS */}
 
-              <h3>
-                Spring Boot 같이 공부하실 분 모집합니다.
-              </h3>
+            {!loading &&
+              !error &&
+              paginatedPosts.map((post) => {
 
-              <p>
-                Spring Boot를 처음부터 공부하면서 간단한 프로젝트까지
-                같이 만들어보려고 합니다. 초보자분들도 환영합니다.
-              </p>
+                const category =
+                  getCategory(post);
 
-              <div className="post-study-info">
-                <span>📅 매주 월요일</span>
-                <span>🕐 19:00</span>
-                <span>👥 6 / 10명</span>
-              </div>
+                const categoryClass =
+                  getCategoryClass(category);
 
-              <div className="post-bottom">
-                <div>
-                  <span>♡ 21</span>
-                  <span>💬 11</span>
-                  <span>👁 203</span>
+                const author =
+                  post.author ||
+                  post.nickname ||
+                  "알 수 없음";
+
+                return (
+                  <article
+                    className="community-post"
+                    key={post.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(`/community/${post.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(`/community/${post.id}`);
+                      }
+                    }}
+                  >
+
+                    <div className="post-user">
+
+                      <div className="post-avatar">
+                        {author.charAt(0)}
+                      </div>
+
+                      <div>
+
+                        <strong>
+                          {author}
+                        </strong>
+
+                        <span>
+                          {formatDate(
+                            post.createdAt
+                          )}
+                        </span>
+
+                      </div>
+
+                    </div>
+
+                    <span
+                      className={
+                        `post-category ${categoryClass}`
+                      }
+                    >
+                      {category}
+                    </span>
+
+                    <h3>
+                      {post.title ||
+                        "제목 없음"}
+                    </h3>
+
+                    <p>
+                      {post.content ||
+                        "내용이 없습니다."}
+                    </p>
+
+                    {Array.isArray(post.images) &&
+                      post.images.length > 0 && (
+                        <div className="post-image-preview">
+
+                          {post.images
+                            .slice(0, 3)
+                            .map(
+                              (image, index) => (
+                                <img
+                                  key={`${post.id}-${index}`}
+                                  src={getImageUrl(image)}
+                                  alt={
+                                    `${post.title || "게시글"} 이미지 ${
+                                      index + 1
+                                    }`
+                                  }
+                                  loading="lazy"
+                                />
+                              )
+                            )}
+
+                        </div>
+                      )}
+
+                    <div className="post-bottom">
+
+                      <div className="post-stats">
+
+                        <span className="post-like-count">
+                          ♡{" "}
+                          {Number(
+                            post.likeCount || 0
+                          )}
+                        </span>
+
+                        <span>
+                          💬{" "}
+                          {Number(
+                            post.commentCount || 0
+                          )}
+                        </span>
+
+                        <span>
+                          👁{" "}
+                          {Number(
+                            post.viewCount || 0
+                          )}
+                        </span>
+
+                      </div>
+
+                      <button
+                        type="button"
+                        className="post-detail-button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          navigate(`/community/${post.id}`);
+                        }}
+                      >
+                        자세히 보기 →
+                      </button>
+
+                    </div>
+
+                  </article>
+                );
+              })}
+
+            {/* PAGINATION */}
+
+            {!loading &&
+              !error &&
+              filteredPosts.length > 0 &&
+              totalPages > 1 && (
+                <div className="community-pagination">
+
+                  <button
+                    type="button"
+                    className="pagination-arrow"
+                    onClick={() =>
+                      setCurrentPage((page) =>
+                        Math.max(1, page - 1)
+                      )
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    ← 이전
+                  </button>
+
+                  <div className="pagination-numbers">
+                    {Array.from(
+                      { length: totalPages },
+                      (_, index) => index + 1
+                    ).map((page) => (
+                      <button
+                        type="button"
+                        key={page}
+                        className={
+                          `pagination-number ${
+                            currentPage === page
+                              ? "active"
+                              : ""
+                          }`
+                        }
+                        onClick={() =>
+                          setCurrentPage(page)
+                        }
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="pagination-arrow"
+                    onClick={() =>
+                      setCurrentPage((page) =>
+                        Math.min(totalPages, page + 1)
+                      )
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    다음 →
+                  </button>
+
                 </div>
-
-                <button>스터디 보기 →</button>
-              </div>
-
-            </article>
-
-            {/* 게시글 4 */}
-            <article className="community-post">
-
-              <div className="post-user">
-                <div className="post-avatar">최</div>
-
-                <div>
-                  <strong>최개발자</strong>
-                  <span>2시간 전 · Information</span>
-                </div>
-              </div>
-
-              <span className="post-category info">
-                💡 정보공유
-              </span>
-
-              <h3>
-                개발 공부할 때 사용하기 좋은 사이트 정리했습니다.
-              </h3>
-
-              <p>
-                Java, Spring, SQL 공부하면서 자주 사용하는 사이트들을
-                정리해봤습니다. 초보자분들에게 도움이 되었으면 좋겠습니다.
-              </p>
-
-              <div className="post-tags">
-                <span>#개발공부</span>
-                <span>#추천사이트</span>
-                <span>#Java</span>
-              </div>
-
-              <div className="post-bottom">
-                <div>
-                  <span>♡ 35</span>
-                  <span>💬 7</span>
-                  <span>👁 316</span>
-                </div>
-
-                <button>자세히 보기 →</button>
-              </div>
-
-            </article>
+              )}
 
           </div>
 
           {/* SIDEBAR */}
+
           <aside className="community-sidebar">
 
             <div className="sidebar-card study-card">
@@ -331,12 +891,18 @@ function Community() {
               </h3>
 
               <p>
-                오늘 공부한 내용을 기록해보세요.
+                오늘 공부한 내용을
+                기록해보세요.
               </p>
 
-              <button>
-                공부 인증하기 →
-              </button>
+              {isLoggedIn && (
+                <button
+                  type="button"
+                  onClick={handleWriteClick}
+                >
+                  공부 인증하기 →
+                </button>
+              )}
 
             </div>
 
@@ -352,56 +918,40 @@ function Community() {
 
               <div className="trending-list">
 
-                <div className="trending-item">
-                  <strong>01</strong>
-                  <span>Spring Boot 공부 순서가 궁금합니다.</span>
-                </div>
+                {trendingPosts.length === 0 ? (
+                  <div className="trending-empty">
+                    아직 게시글이 없습니다.
+                  </div>
+                ) : (
+                  trendingPosts.map(
+                    (post, index) => (
+                      <button
+                        type="button"
+                        className="trending-item"
+                        key={post.id}
+                        onClick={() =>
+                          fetchPostDetail(post.id)
+                        }
+                      >
 
-                <div className="trending-item">
-                  <strong>02</strong>
-                  <span>Java 초보자 스터디 모집합니다.</span>
-                </div>
+                        <strong>
+                          {String(index + 1).padStart(
+                            2,
+                            "0"
+                          )}
+                        </strong>
 
-                <div className="trending-item">
-                  <strong>03</strong>
-                  <span>SQLD 준비하시는 분 있나요?</span>
-                </div>
+                        <span>
+                          {post.title ||
+                            "제목 없음"}
+                        </span>
 
-                <div className="trending-item">
-                  <strong>04</strong>
-                  <span>React 프로젝트 같이 만들어봐요.</span>
-                </div>
-
-              </div>
-
-            </div>
-
-            <div className="sidebar-card">
-
-              <span className="sidebar-label">
-                MY STUDY
-              </span>
-
-              <h3>
-                이번 주 공부 기록
-              </h3>
-
-              <div className="study-progress">
-
-                <div className="progress-top">
-                  <span>공부한 날</span>
-                  <strong>4 / 7일</strong>
-                </div>
-
-                <div className="progress-bar">
-                  <span></span>
-                </div>
+                      </button>
+                    )
+                  )
+                )}
 
               </div>
-
-              <p className="progress-message">
-                이번 주도 꾸준히 공부하고 있어요! 🔥
-              </p>
 
             </div>
 
