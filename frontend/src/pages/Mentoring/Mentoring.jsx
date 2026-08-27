@@ -12,6 +12,11 @@ function Mentoring() {
   const [selectedMentor, setSelectedMentor] = useState(null);
   const [reservationMentor, setReservationMentor] = useState(null);
   const [reviewMentor, setReviewMentor] = useState(null);
+  // 예약 상세보기 모달: { item, role } (role: "mentor" | "applicant")
+  const [detailReservation, setDetailReservation] = useState(null);
+  // 거절 사유 입력 모달 대상 예약
+  const [rejectingReservation, setRejectingReservation] = useState(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState("");
   const [showRegister, setShowRegister] = useState(false);
   const [isEditingMentor, setIsEditingMentor] = useState(false);
   // registerMode: "profile" = 멘토 등록/수정, "offering" = 멘토링 등록/수정
@@ -253,6 +258,109 @@ function Mentoring() {
     if (status === "REJECTED") return "거절";
     if (status === "COMPLETED") return "완료";
     return "대기";
+  };
+
+  // 예약 날짜(YYYY-MM-DD) 기준으로 오늘까지 남은 일수를 계산한다.
+  const getDaysUntil = (dateString) => {
+    if (!dateString) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const target = new Date(`${dateString}T00:00:00`);
+    if (Number.isNaN(target.getTime())) return null;
+    target.setHours(0, 0, 0, 0);
+
+    const diffMs = target.getTime() - today.getTime();
+    return Math.round(diffMs / (1000 * 60 * 60 * 24));
+  };
+
+  // "나의 멘토링 기록"에서 보여줄 상태(이모지/라벨/안내 문구)를
+  // 예약 상태 + 예약 날짜를 기준으로 계산한다.
+  //
+  // PENDING    → 🟡 예약중
+  // APPROVED   → 🟢 멘토링 예정 (D-day) / 오늘이면 🔵 멘토링 진행
+  // COMPLETED  → ✓ 멘토링 완료
+  // REJECTED   → ✕ 거절됨
+  // role: "applicant" (B, 신청자) | "mentor" (A, 멘토)
+  const getReservationPhase = (item, role = "applicant") => {
+    if (item.status === "PENDING") {
+      return {
+        key: "pending",
+        emoji: "🟡",
+        label: "예약중",
+        message:
+          role === "mentor"
+            ? "신청을 확인하고 승인 또는 거절해주세요."
+            : "멘토의 승인을 기다리고 있습니다."
+      };
+    }
+
+    if (item.status === "REJECTED") {
+      const reasonText = item.rejectReason?.trim();
+
+      return {
+        key: "rejected",
+        emoji: "🔴",
+        label: "예약 거절",
+        message:
+          role === "mentor"
+            ? reasonText
+              ? `이 신청을 거절했습니다.\n사유: ${reasonText}`
+              : "이 신청을 거절했습니다."
+            : reasonText
+            ? `멘토 사정으로 해당 예약이 거절되었습니다.\n사유: ${reasonText}`
+            : "멘토 사정으로 해당 예약이 거절되었습니다."
+      };
+    }
+
+    if (item.status === "APPROVED") {
+      const daysLeft = getDaysUntil(item.reservationDate);
+
+      if (daysLeft === 0) {
+        return {
+          key: "ongoing",
+          emoji: "🔵",
+          label: "멘토링 진행",
+          message: "오늘 멘토링이 진행됩니다."
+        };
+      }
+
+      if (daysLeft !== null && daysLeft > 0) {
+        return {
+          key: "upcoming",
+          emoji: "🟢",
+          label: "멘토링 예정",
+          message: `멘토링까지 ${daysLeft}일 남았습니다.`
+        };
+      }
+
+      return {
+        key: "ongoing",
+        emoji: "🔵",
+        label: "멘토링 진행",
+        message:
+          role === "mentor"
+            ? "멘토링 일정이 지났습니다. 수업 완료 처리를 확인해주세요."
+            : "멘토링 일정을 확인하고 수업 완료를 진행해주세요."
+      };
+    }
+
+    if (item.status === "COMPLETED") {
+      return {
+        key: "completed",
+        emoji: "✓",
+        label: "멘토링 완료",
+        message: ""
+      };
+    }
+
+    return {
+      key: (item.status || "").toLowerCase(),
+      emoji: "",
+      label: reservationStatusLabel(item.status),
+      message: ""
+    };
   };
 
   const isPastDate = (date) => {
@@ -1604,13 +1712,15 @@ function Mentoring() {
     }
   };
 
-  const handleReservationDecision = async (reservationId, action) => {
+  const handleReservationDecision = async (reservationId, action, body) => {
     try {
       const response = await fetch(
         `/api/mentor/reservation/${reservationId}/${action}`,
         {
           method: "PUT",
-          credentials: "include"
+          headers: body ? { "Content-Type": "application/json" } : undefined,
+          credentials: "include",
+          body: body ? JSON.stringify(body) : undefined
         }
       );
       const data = await response.json().catch(() => null);
@@ -1625,6 +1735,41 @@ function Mentoring() {
       console.error("멘토링 신청 처리 오류:", error);
       alert("서버와 통신하는 중 오류가 발생했습니다.");
     }
+  };
+
+  // =====================================================
+  // 예약 거절 (사유 입력)
+  // =====================================================
+
+  const openRejectModal = (item) => {
+    setDetailReservation(null);
+    setRejectReasonInput("");
+    setRejectingReservation(item);
+  };
+
+  const closeRejectModal = () => {
+    setRejectingReservation(null);
+    setRejectReasonInput("");
+  };
+
+  const submitRejectReservation = async () => {
+    if (!rejectingReservation) return;
+
+    await handleReservationDecision(
+      rejectingReservation.id,
+      "reject",
+      { reason: rejectReasonInput.trim() }
+    );
+
+    closeRejectModal();
+  };
+
+  // =====================================================
+  // 예약 상세보기
+  // =====================================================
+
+  const openReservationDetail = (item, role) => {
+    setDetailReservation({ item, role });
   };
 
   const handleReviewSubmit = async (e) => {
@@ -1770,6 +1915,9 @@ function Mentoring() {
     setReviewMentor(null);
     setReservationMentor(null);
     setShowRegister(false);
+    setDetailReservation(null);
+    setRejectingReservation(null);
+    setRejectReasonInput("");
   };
 
   const calendarDays = getCalendarDays();
@@ -2064,33 +2212,57 @@ function Mentoring() {
                   <span className="section-label">MY REQUESTS</span>
                   <h3>내가 신청한 멘토링</h3>
                   <ul>
-                    {activeMyReservations.map((item) => (
-                      <li key={item.id}>
-                        <div>
-                          <strong>{item.mentorName}</strong>
-                          <span>
-                            {item.reservationDate} {item.reservationTime}
-                          </span>
-                        </div>
+                    {activeMyReservations.map((item) => {
+                      const phase = getReservationPhase(item);
 
-                        {item.status === "APPROVED" ? (
-                          <div className="reservation-board-actions">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleReservationDecision(item.id, "complete")
-                              }
-                            >
-                              수업 완료
-                            </button>
+                      return (
+                        <li key={item.id} className="reservation-history-item">
+                          <div>
+                            <strong>
+                              {item.mentorName}
+                              {item.offeringTitle ? ` · ${item.offeringTitle}` : ""}
+                            </strong>
+                            <span>
+                              {item.reservationDate} {item.reservationTime}
+                            </span>
                           </div>
-                        ) : (
-                          <em className={`reservation-status ${item.status?.toLowerCase()}`}>
-                            {reservationStatusLabel(item.status)}
-                          </em>
-                        )}
-                      </li>
-                    ))}
+
+                          <div className="reservation-complete-info">
+                            <em className={`reservation-status ${phase.key}`}>
+                              {phase.emoji} {phase.label}
+                            </em>
+
+                            {phase.message && (
+                              <span className="reservation-phase-message">
+                                {phase.message}
+                              </span>
+                            )}
+
+                            <div className="reservation-board-actions">
+                              {item.status === "APPROVED" && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleReservationDecision(item.id, "complete")
+                                  }
+                                >
+                                  수업 완료
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="reservation-detail-button"
+                                onClick={() =>
+                                  openReservationDetail(item, "applicant")
+                                }
+                              >
+                                상세보기
+                              </button>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
@@ -2100,41 +2272,89 @@ function Mentoring() {
                   <span className="section-label">RECEIVED REQUESTS</span>
                   <h3>받은 멘토링 신청</h3>
                   <ul>
-                    {visibleReceivedReservations.map((item) => (
-                      <li key={item.id}>
-                        <div>
-                          <strong>{item.memberNickname}</strong>
-                          <span>
-                            {item.reservationDate} {item.reservationTime}
-                          </span>
-                        </div>
-                        {item.status === "PENDING" ? (
-                          <div className="reservation-board-actions">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleReservationDecision(item.id, "approve")
-                              }
-                            >
-                              승인
-                            </button>
-                            <button
-                              type="button"
-                              className="reject"
-                              onClick={() =>
-                                handleReservationDecision(item.id, "reject")
-                              }
-                            >
-                              거절
-                            </button>
+                    {visibleReceivedReservations.map((item) => {
+                      const phase = getReservationPhase(item, "mentor");
+                      const consultationTags = item.consultationTypes
+                        ? item.consultationTypes
+                            .split(",")
+                            .map((tag) => tag.trim())
+                            .filter(Boolean)
+                        : [];
+
+                      return (
+                        <li key={item.id} className="reservation-history-item">
+                          <div>
+                            <strong>
+                              {item.offeringTitle ||
+                                (item.skills ? `${item.skills} 멘토링` : "멘토링")}
+                            </strong>
+                            <span>
+                              신청자 {item.memberNickname}
+                            </span>
+                            <span>
+                              {item.reservationDate} {item.reservationTime}
+                            </span>
+                            {consultationTags.length > 0 && (
+                              <span className="reservation-tag-row">
+                                {consultationTags.slice(0, 3).map((tag) => (
+                                  <em key={tag} className="reservation-tag">
+                                    {tag}
+                                  </em>
+                                ))}
+                              </span>
+                            )}
+                            {item.problem && (
+                              <span className="reservation-problem-preview">
+                                {item.problem}
+                              </span>
+                            )}
                           </div>
-                        ) : (
-                          <em className={`reservation-status ${item.status?.toLowerCase()}`}>
-                            {reservationStatusLabel(item.status)}
-                          </em>
-                        )}
-                      </li>
-                    ))}
+
+                          <div className="reservation-complete-info">
+                            <em className={`reservation-status ${phase.key}`}>
+                              {phase.emoji} {phase.label}
+                            </em>
+
+                            {phase.message && (
+                              <span className="reservation-phase-message">
+                                {phase.message}
+                              </span>
+                            )}
+
+                            <div className="reservation-board-actions">
+                              {item.status === "PENDING" && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleReservationDecision(item.id, "approve")
+                                    }
+                                  >
+                                    승인
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="reject"
+                                    onClick={() => openRejectModal(item)}
+                                  >
+                                    거절
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                type="button"
+                                className="reservation-detail-button"
+                                onClick={() =>
+                                  openReservationDetail(item, "mentor")
+                                }
+                              >
+                                상세보기
+                              </button>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
@@ -2159,9 +2379,19 @@ function Mentoring() {
                           </span>
                         </div>
 
-                        <em className="reservation-status completed">
-                          ✓ 수업 완료
-                        </em>
+                        <div className="reservation-complete-info">
+                          <em className="reservation-status completed">
+                            ✓ 멘토링 완료
+                          </em>
+
+                          <button
+                            type="button"
+                            className="reservation-detail-button"
+                            onClick={() => openReservationDetail(item, "mentor")}
+                          >
+                            상세보기
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -2194,7 +2424,7 @@ function Mentoring() {
 
                           <div className="reservation-complete-info">
                             <em className="reservation-status completed">
-                              ✓ 수업 완료
+                              ✓ 멘토링 완료
                             </em>
 
                             {reviewNotWritten ? (
@@ -2222,6 +2452,16 @@ function Mentoring() {
                                 ✓ 후기 작성 완료
                               </span>
                             )}
+
+                            <button
+                              type="button"
+                              className="reservation-detail-button"
+                              onClick={() =>
+                                openReservationDetail(item, "applicant")
+                              }
+                            >
+                              상세보기
+                            </button>
                           </div>
                         </li>
                       );
@@ -3144,7 +3384,7 @@ function Mentoring() {
 
             <div className="reservation-section">
               <label htmlFor="problem">
-                현재 문제를 알려주세요.
+                멘토에게 전달할 내용을 작성해주세요.
               </label>
 
               <textarea
@@ -3811,6 +4051,188 @@ function Mentoring() {
               취소
             </button>
           </form>
+        </div>
+      )}
+
+      {detailReservation && (
+        <div
+          className="modal-background"
+          onClick={() => setDetailReservation(null)}
+        >
+          <div
+            className="reservation-detail-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="modal-close"
+              onClick={() => setDetailReservation(null)}
+            >
+              ×
+            </button>
+
+            <span className="section-label">RESERVATION DETAIL</span>
+            <h2>멘토링 상세</h2>
+
+            {(() => {
+              const { item, role } = detailReservation;
+              const phase = getReservationPhase(item, role);
+              const consultationTags = item.consultationTypes
+                ? item.consultationTypes
+                    .split(",")
+                    .map((tag) => tag.trim())
+                    .filter(Boolean)
+                : [];
+              const skillTags = item.skills
+                ? item.skills
+                    .split(",")
+                    .map((tag) => tag.trim())
+                    .filter(Boolean)
+                : [];
+
+              return (
+                <>
+                  <div className="reservation-detail-row">
+                    <span>{role === "mentor" ? "신청자" : "멘토"}</span>
+                    <strong>
+                      {role === "mentor" ? item.memberNickname : item.mentorName}
+                    </strong>
+                  </div>
+
+                  <div className="reservation-detail-row">
+                    <span>멘토링</span>
+                    <strong>
+                      {item.offeringTitle ||
+                        (item.skills ? `${item.skills} 멘토링` : "멘토링")}
+                    </strong>
+                  </div>
+
+                  {consultationTags.length > 0 && (
+                    <div className="reservation-detail-row">
+                      <span>상담 분야</span>
+                      <div className="reservation-tag-row">
+                        {consultationTags.map((tag) => (
+                          <em key={tag} className="reservation-tag">
+                            {tag}
+                          </em>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {skillTags.length > 0 && (
+                    <div className="reservation-detail-row">
+                      <span>관련 기술</span>
+                      <div className="reservation-tag-row">
+                        {skillTags.map((tag) => (
+                          <em key={tag} className="reservation-tag">
+                            {tag}
+                          </em>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="reservation-detail-row">
+                    <span>예약 날짜</span>
+                    <strong>{item.reservationDate}</strong>
+                  </div>
+
+                  <div className="reservation-detail-row">
+                    <span>시간</span>
+                    <strong>{item.reservationTime}</strong>
+                  </div>
+
+                  {item.createdAt && (
+                    <div className="reservation-detail-row">
+                      <span>신청 날짜</span>
+                      <strong>
+                        {item.createdAt.slice(0, 10).replaceAll("-", ".")}
+                      </strong>
+                    </div>
+                  )}
+
+                  <div className="reservation-detail-row">
+                    <span>상태</span>
+                    <em className={`reservation-status ${phase.key}`}>
+                      {phase.emoji} {phase.label}
+                    </em>
+                  </div>
+
+                  {phase.message && (
+                    <p className="reservation-detail-message">
+                      {phase.message}
+                    </p>
+                  )}
+
+                  {role === "mentor" && item.problem && (
+                    <div className="reservation-detail-block">
+                      <span>신청 내용</span>
+                      <p>{item.problem}</p>
+                    </div>
+                  )}
+
+                  {role === "applicant" && item.problem && (
+                    <div className="reservation-detail-block">
+                      <span>내가 전달한 내용</span>
+                      <p>{item.problem}</p>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {rejectingReservation && (
+        <div className="modal-background" onClick={closeRejectModal}>
+          <div
+            className="reject-reason-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="modal-close"
+              onClick={closeRejectModal}
+            >
+              ×
+            </button>
+
+            <span className="section-label">REJECT REQUEST</span>
+            <h2>예약 거절</h2>
+
+            <p className="reject-reason-guide">
+              {rejectingReservation.memberNickname}님의 신청을 거절합니다.
+              간단한 사유를 입력하면 신청자에게 함께 전달됩니다.
+            </p>
+
+            <label htmlFor="reject-reason">거절 사유 (선택)</label>
+            <textarea
+              id="reject-reason"
+              value={rejectReasonInput}
+              onChange={(e) => setRejectReasonInput(e.target.value)}
+              placeholder="예) 해당 시간에는 상담이 어렵습니다."
+              maxLength={500}
+            />
+
+            <div className="reject-reason-actions">
+              <button
+                type="button"
+                className="mentor-cancel-button"
+                onClick={closeRejectModal}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="reject-confirm-button"
+                onClick={submitRejectReservation}
+              >
+                거절하기
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </main>

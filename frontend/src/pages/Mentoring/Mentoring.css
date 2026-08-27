@@ -416,6 +416,24 @@
   color: #2f4937;
 }
 
+.reservation-status.upcoming {
+  background: #e6f0e8;
+  color: #3d7a4d;
+}
+
+.reservation-status.ongoing {
+  background: #e3edf7;
+  color: #315e8c;
+}
+
+.reservation-phase-message {
+  max-width: 220px;
+  color: #6f7d73;
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: right;
+}
+
 .reservation-complete-info {
   display: flex;
   flex-shrink: 0;
@@ -446,6 +464,199 @@
 .reservation-review-link:hover {
   color: #243329;
   text-decoration: underline;
+}
+
+/* 받은 신청 카드: 멘토링명/신청자/상담분야/신청내용 미리보기 */
+
+.reservation-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.reservation-tag {
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: #edf3ee;
+  color: #4a6352;
+  font-size: 10px;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.reservation-problem-preview {
+  display: -webkit-box;
+  max-width: 260px;
+  overflow: hidden;
+  color: #8a938d;
+  font-size: 11px;
+  line-height: 1.5;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.reservation-detail-button {
+  padding: 8px 14px;
+  border: 1px solid #dfe5df;
+  border-radius: 16px;
+  background: white;
+  color: #526358;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.reservation-detail-button:hover {
+  border-color: #9eb8a4;
+  background: #edf5ef;
+}
+
+/* =====================================================
+   예약 상세보기 모달
+   ===================================================== */
+
+.reservation-detail-modal h2 {
+  margin: 4px 0 22px;
+  color: #243329;
+  font-size: 26px;
+  letter-spacing: -1px;
+}
+
+.reservation-detail-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf0ed;
+  font-size: 13px;
+}
+
+.reservation-detail-row > span:first-child {
+  flex-shrink: 0;
+  color: #8a938d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.reservation-detail-row strong {
+  color: #243329;
+  text-align: right;
+}
+
+.reservation-detail-row .reservation-tag-row {
+  justify-content: flex-end;
+}
+
+.reservation-detail-message {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #f4f8f4;
+  color: #526358;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.reservation-detail-block {
+  margin-top: 18px;
+}
+
+.reservation-detail-block > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #78907d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.reservation-detail-block p {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fafcf9;
+  color: #49564d;
+  font-size: 13px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* =====================================================
+   거절 사유 입력 모달
+   ===================================================== */
+
+.reject-reason-modal h2 {
+  margin: 4px 0 14px;
+  color: #243329;
+  font-size: 24px;
+  letter-spacing: -1px;
+}
+
+.reject-reason-guide {
+  margin: 0 0 18px;
+  color: #7b857e;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.reject-reason-modal label {
+  display: block;
+  margin-bottom: 9px;
+  color: #49564d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.reject-reason-modal textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px 14px;
+  border: 1px solid #dfe5df;
+  border-radius: 11px;
+  outline: none;
+  background: #fafcf9;
+  color: #243329;
+  font-family: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: 0.2s ease;
+}
+
+.reject-reason-modal textarea:focus {
+  border-color: #78907d;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(120, 144, 125, 0.08);
+}
+
+.reject-reason-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.reject-reason-actions .mentor-cancel-button {
+  margin-top: 0;
+}
+
+.reject-confirm-button {
+  flex: 1;
+  padding: 14px 20px;
+  border: 1px solid #d8a5a5;
+  border-radius: 10px;
+  background: #b85c5c;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.reject-confirm-button:hover {
+  background: #a94c4c;
 }
 
 /* =====================================================
@@ -779,7 +990,9 @@
 .mentor-modal,
 .review-modal,
 .reservation-modal,
-.register-modal {
+.register-modal,
+.reservation-detail-modal,
+.reject-reason-modal {
   position: relative;
   width: 100%;
   max-height: 90vh;
@@ -808,6 +1021,16 @@
 .register-modal {
   max-width: 650px;
   padding: 40px;
+}
+
+.reservation-detail-modal {
+  max-width: 520px;
+  padding: 40px;
+}
+
+.reject-reason-modal {
+  max-width: 460px;
+  padding: 36px;
 }
 
 .modal-close {
@@ -2444,7 +2667,9 @@
   .mentor-modal,
   .review-modal,
   .reservation-modal,
-  .register-modal {
+  .register-modal,
+  .reservation-detail-modal,
+  .reject-reason-modal {
     max-height: 92vh;
     padding: 30px 22px;
     border-radius: 22px;
@@ -2476,9 +2701,29 @@
     width: 100%;
   }
 
-  .reservation-complete-guide {
+  .reservation-complete-guide,
+  .reservation-phase-message {
     max-width: 100%;
     text-align: left;
+  }
+
+  .reservation-problem-preview {
+    max-width: 100%;
+  }
+
+  .reservation-detail-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .reservation-detail-row strong,
+  .reservation-detail-row .reservation-tag-row {
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .reject-reason-actions {
+    flex-direction: column;
   }
 
   .review-form-actions {
