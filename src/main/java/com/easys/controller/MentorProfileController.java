@@ -30,7 +30,8 @@ public class MentorProfileController {
     ) {
 
         if (authentication == null ||
-                !authentication.isAuthenticated()) {
+                !authentication.isAuthenticated() ||
+                "anonymousUser".equals(authentication.getName())) {
 
             throw new IllegalArgumentException(
                     "로그인이 필요합니다."

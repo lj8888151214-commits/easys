@@ -21,6 +21,13 @@ public class MentoringReservation {
     @JoinColumn(name = "mentor_id", nullable = false)
     private MentorProfile mentor;
 
+    // 멘토가 등록한 여러 멘토링(Java/Spring/React 등) 중
+    // 구체적으로 어떤 멘토링을 신청했는지.
+    // offeringId 없이(과거 방식으로) 신청한 예약과의 호환을 위해 nullable로 둔다.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "offering_id")
+    private MentoringOffering offering;
+
     // 누가 신청했는지
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
@@ -65,6 +72,7 @@ public class MentoringReservation {
 
     public MentoringReservation(
             MentorProfile mentor,
+            MentoringOffering offering,
             Member member,
             String consultationTypes,
             String skills,
@@ -75,6 +83,7 @@ public class MentoringReservation {
             String filePath
     ) {
         this.mentor = mentor;
+        this.offering = offering;
         this.member = member;
         this.consultationTypes = consultationTypes;
         this.skills = skills;
@@ -95,5 +104,10 @@ public class MentoringReservation {
     // 거절
     public void reject() {
         this.status = MentoringReservationStatus.REJECTED;
+    }
+
+    // 수업 완료
+    public void complete() {
+        this.status = MentoringReservationStatus.COMPLETED;
     }
 }
