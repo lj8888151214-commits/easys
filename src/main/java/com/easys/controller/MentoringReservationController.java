@@ -1,6 +1,7 @@
 package com.easys.controller;
 
 import com.easys.dto.MentoringReservationCreateDto;
+import com.easys.dto.MentoringReservationRejectDto;
 import com.easys.entity.Member;
 import com.easys.repository.MemberRepository;
 import com.easys.service.MentoringReservationService;
@@ -210,7 +211,8 @@ public class MentoringReservationController {
     @PutMapping("/{reservationId}/reject")
     public ResponseEntity<?> rejectReservation(
             Authentication authentication,
-            @PathVariable Long reservationId
+            @PathVariable Long reservationId,
+            @RequestBody(required = false) MentoringReservationRejectDto request
     ) {
 
         try {
@@ -221,7 +223,8 @@ public class MentoringReservationController {
             mentoringReservationService
                     .rejectReservation(
                             reservationId,
-                            member
+                            member,
+                            request == null ? null : request.getReason()
                     );
 
             return ResponseEntity.ok(

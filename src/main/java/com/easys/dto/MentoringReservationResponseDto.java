@@ -22,6 +22,7 @@ public class MentoringReservationResponseDto {
     private final String problem;
     private final String fileName;
     private final String status;
+    private final String rejectReason;
     private final LocalDateTime createdAt;
 
     public MentoringReservationResponseDto(MentoringReservation reservation) {
@@ -39,6 +40,7 @@ public class MentoringReservationResponseDto {
         this.problem = reservation.getProblem();
         this.fileName = reservation.getFileName();
         this.status = reservation.getStatus().name();
+        this.rejectReason = reservation.getRejectReason();
         this.createdAt = reservation.getCreatedAt();
     }
 }

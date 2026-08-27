@@ -66,6 +66,10 @@ public class MentoringReservation {
     @Column(nullable = false, length = 20)
     private MentoringReservationStatus status;
 
+    // 거절 사유 (멘토가 거절할 때 선택적으로 입력)
+    @Column(length = 500)
+    private String rejectReason;
+
     // 신청 날짜
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -101,9 +105,10 @@ public class MentoringReservation {
         this.status = MentoringReservationStatus.APPROVED;
     }
 
-    // 거절
-    public void reject() {
+    // 거절 (사유는 선택 입력)
+    public void reject(String rejectReason) {
         this.status = MentoringReservationStatus.REJECTED;
+        this.rejectReason = rejectReason;
     }
 
     // 수업 완료

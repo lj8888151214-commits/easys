@@ -6,8 +6,10 @@ import com.easys.dto.MentoringOfferingResponseDto;
 import com.easys.entity.Member;
 import com.easys.entity.MentorProfile;
 import com.easys.entity.MentoringOffering;
+import com.easys.entity.MentoringReservationStatus;
 import com.easys.repository.MentorProfileRepository;
 import com.easys.repository.MentoringOfferingRepository;
+import com.easys.repository.MentoringReservationRepository;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ public class MentoringOfferingService {
 
     private final MentoringOfferingRepository mentoringOfferingRepository;
     private final MentorProfileRepository mentorProfileRepository;
+    private final MentoringReservationRepository mentoringReservationRepository;
 
     // =====================================================
     // 새로운 멘토링 등록 (기존 멘토링에는 영향 없음)
@@ -78,15 +81,42 @@ public class MentoringOfferingService {
     }
 
     // =====================================================
-    // 특정 멘토가 등록한 멘토링 목록 (다른 사용자의 멘토 찾기 화면)
+    // 특정 멘토가 등록한 멘토링 목록 (다른 사용자의 멘토 찾기 화면 = 공개 목록)
+    //
+    // 이미 신청(거절 제외)이 들어온 멘토링은 여기서 제외한다.
+    // - DB에서 지우는 것이 아니라 "공개 목록 조회"에서만 걸러낸다.
+    // - 같은 멘토가 등록한 다른 멘토링에는 영향을 주지 않는다.
+    // - 예약이 거절(REJECTED)되면 다시 공개 목록에 노출된다.
     // =====================================================
 
     @Transactional(readOnly = true)
     public List<MentoringOfferingResponseDto> getOfferingsByMentor(Long mentorId) {
-        return mentoringOfferingRepository.findByMentorIdOrderByCreatedAtDesc(mentorId)
-                .stream()
+        List<MentoringOffering> offerings =
+                mentoringOfferingRepository.findByMentorIdOrderByCreatedAtDesc(mentorId);
+
+        Set<Long> reservedOfferingIds = getReservedOfferingIds(offerings);
+
+        return offerings.stream()
+                .filter(offering -> !reservedOfferingIds.contains(offering.getId()))
                 .map(MentoringOfferingResponseDto::new)
                 .toList();
+    }
+
+    private Set<Long> getReservedOfferingIds(List<MentoringOffering> offerings) {
+        if (offerings.isEmpty()) {
+            return Set.of();
+        }
+
+        List<Long> offeringIds = offerings.stream()
+                .map(MentoringOffering::getId)
+                .toList();
+
+        return new HashSet<>(
+                mentoringReservationRepository.findOfferingIdsWithActiveReservation(
+                        offeringIds,
+                        MentoringReservationStatus.REJECTED
+                )
+        );
     }
 
     // =====================================================

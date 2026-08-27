@@ -91,6 +91,21 @@ public class MentoringReservationService {
             if (!offering.getMentor().getId().equals(mentor.getId())) {
                 throw new IllegalArgumentException("해당 멘토가 등록한 멘토링이 아닙니다.");
             }
+
+            // =============================================
+            // 이미 신청(거절 제외)이 들어온 멘토링인지 확인
+            //
+            // 공개 목록에서는 이미 숨겨지지만, API를 직접 호출하는
+            // 경우에도 동일한 멘토링에 중복으로 신청할 수 없도록
+            // 서버에서도 한 번 더 막는다.
+            // =============================================
+
+            if (mentoringReservationRepository.existsByOfferingIdAndStatusNot(
+                    offering.getId(),
+                    MentoringReservationStatus.REJECTED
+            )) {
+                throw new IllegalArgumentException("이미 다른 사용자가 신청한 멘토링입니다.");
+            }
         }
 
         String targetAvailableSchedules = offering != null ? offering.getAvailableSchedules() : mentor.getAvailableSchedules();
@@ -269,7 +284,8 @@ public class MentoringReservationService {
 
     public void rejectReservation(
             Long reservationId,
-            Member member
+            Member member,
+            String reason
     ) {
 
         MentoringReservation reservation =
@@ -278,7 +294,9 @@ public class MentoringReservationService {
                         member
                 );
 
-        reservation.reject();
+        String trimmedReason = reason == null ? null : reason.trim();
+
+        reservation.reject(trimmedReason == null || trimmedReason.isEmpty() ? null : trimmedReason);
         updatePaymentStatus(reservation.getId(), PaymentStatus.CANCELLED);
     }
 

@@ -81,6 +81,10 @@ public class EmailService {
                 new SimpleMailMessage();
 
 
+        message.setFrom(
+                "yeunjun37@gmail.com"
+        );
+
         message.setTo(email);
 
         message.setSubject(
