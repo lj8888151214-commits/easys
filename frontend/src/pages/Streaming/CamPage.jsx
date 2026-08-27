@@ -39,7 +39,6 @@ const rtcConfig = {
 };
 
 // 🌟 참가자별 개별 지도가 포함된 VideoCard 컴포넌트
-// 🌟 미니 지도 영역이 정확히 포함된 최종 VideoCard 컴포넌트
 function VideoCard({ label, nickname, isLocal, stream, position, onStartCam, onStartScreen, onStop, shareMode, isSttActive, toggleStt }) {
   const videoRef = useRef(null);
   const currentPos = position && position.length === 2 ? position : [37.4563, 126.7052];
@@ -274,6 +273,38 @@ export default function CamPage() {
       initKakao();
     }
   }, []);
+
+  // 🌟 카카오톡 초대 메시지 공유 함수 추가
+  const handleKakaoInvite = () => {
+    if (!window.Kakao) {
+      alert("카카오 SDK가 초기화되지 않았습니다.");
+      return;
+    }
+
+    const inviteUrl = `${window.location.origin}/login?redirect=${encodeURIComponent("/streaming/cam")}`;
+
+    window.Kakao.Share.sendDefault({
+      objectType: "feed",
+      content: {
+        title: "👥 [이지스] 실시간 화상 스터디 초대",
+        description: `${nickname}님이 화상 스터디룸으로 초대했습니다. 로그인 후 참여해 주세요!`,
+        imageUrl: "https://t1.daumcdn.net/kakaotalk/resource/tmpl/default/friends.png",
+        link: {
+          mobileWebUrl: inviteUrl,
+          webUrl: inviteUrl,
+        },
+      },
+      buttons: [
+        {
+          title: "스터디룸 입장하기",
+          link: {
+            mobileWebUrl: inviteUrl,
+            webUrl: inviteUrl,
+          },
+        },
+      ],
+    });
+  };
 
   const sendSpeechChat = (transcriptText) => {
     if (!transcriptText.trim()) return;
@@ -812,7 +843,8 @@ export default function CamPage() {
       {/* 상단 헤더 */}
       <section className="cam-header">
         <h2>👥 실시간 스터디룸 (접속자: {totalUsers}명)</h2>
-        <button type="button" className="btn-kakao-invite" onClick={() => {}}>
+        {/* 🌟 카카오톡 초대 버튼에 handleKakaoInvite 함수 연결 완료 */}
+        <button type="button" className="btn-kakao-invite" onClick={handleKakaoInvite}>
           <span>💬 카카오톡 초대</span>
         </button>
       </section>
