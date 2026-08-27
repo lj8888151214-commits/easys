@@ -20,70 +20,46 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-    // =====================================================
     // 비밀번호 암호화
-    // =====================================================
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // =====================================================
     // Spring Security 설정
-    // =====================================================
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
 
-                // =====================================================
-                // CSRF
-                // =====================================================
-
+                // CSRF 비활성화
                 .csrf(csrf -> csrf.disable())
 
-                // =====================================================
-                // CORS
-                // =====================================================
-
+                // CORS 설정
                 .cors(cors -> cors
                         .configurationSource(corsConfigurationSource())
                 )
 
-                // =====================================================
-                // URL 접근 권한
-                // =====================================================
-
+                // URL 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
 
-                        // React에서 발생하는 OPTIONS 요청 허용
+                        // React의 OPTIONS 요청 허용
                         .requestMatchers(
                                 HttpMethod.OPTIONS,
                                 "/**"
                         ).permitAll()
 
-                        // =================================================
                         // 메인
-                        // =================================================
-
                         .requestMatchers(
                                 "/"
                         ).permitAll()
 
-                        // =================================================
                         // 로그인
-                        // =================================================
-
                         .requestMatchers(
                                 "/login"
                         ).permitAll()
 
-                        // =================================================
                         // 회원가입
-                        // =================================================
-
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/member"
@@ -93,120 +69,70 @@ public class SecurityConfig {
                                 "/member/join"
                         ).permitAll()
 
-                        // =================================================
                         // 이메일 인증
-                        // =================================================
-
                         .requestMatchers(
                                 "/email/**"
                         ).permitAll()
 
-                        // =================================================
                         // 인증 관련 API
-                        // =================================================
-
                         .requestMatchers(
                                 "/auth/**"
                         ).permitAll()
 
-                        // =================================================
                         // 정적 리소스
-                        // =================================================
-
                         .requestMatchers(
                                 "/css/**",
                                 "/js/**",
                                 "/images/**"
                         ).permitAll()
 
-                        // =================================================
                         // 프로필 이미지
-                        // =================================================
-
                         .requestMatchers(
                                 "/profile-images/**"
                         ).permitAll()
 
-                        // =================================================
                         // 오류 페이지
-                        // =================================================
-
                         .requestMatchers(
                                 "/error"
                         ).permitAll()
 
-                        // =================================================
-                        // 내 회원 정보
-                        // =================================================
-                        //
-                        // GET    /member/me
-                        // PUT    /member/me
-                        // PUT    /member/me/password
-                        //
-                        // 로그인한 사용자만 접근
-                        // =================================================
-
+                        // 로그인한 사용자의 회원 정보
                         .requestMatchers(
                                 "/member/me",
                                 "/member/me/**"
                         ).authenticated()
 
-                        // =================================================
                         // 스터디 조회
-                        // =================================================
-                        //
-                        // 스터디 목록/상세는 로그인 없이 조회 가능
-                        // =================================================
-
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/study",
                                 "/study/**"
                         ).permitAll()
 
-                        // =================================================
-                        // 그 외 모든 요청
-                        // =================================================
+                        // 커뮤니티 게시글 조회
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/community/posts",
+                                "/community/posts/**"
+                        ).permitAll()
 
+                        // 그 외 모든 요청은 로그인 필요
                         .anyRequest().authenticated()
                 )
 
-                // =====================================================
-                // 로그인
-                // =====================================================
-
+                // 로그인 설정
                 .formLogin(form -> form
 
-                        // React의 로그인 처리 요청
-                        //
-                        // React:
-                        // POST /api/login
-                        //
-                        // Vite Proxy:
-                        // POST /login
-                        //
-                        // Spring Security:
-                        // POST /login
+                        // 로그인 처리 URL
                         .loginProcessingUrl("/login")
 
-                        // React에서 username이라는 이름으로
-                        // 이메일을 보내므로 username 유지
+                        // 로그인 이메일 파라미터
                         .usernameParameter("username")
 
-                        // 비밀번호
+                        // 로그인 비밀번호 파라미터
                         .passwordParameter("password")
 
-                        // =================================================
                         // 로그인 성공
-                        // =================================================
-                        //
-                        // 기존:
-                        // /로 redirect
-                        //
-                        // 변경:
-                        // React에게 200 응답만 전달
-                        // =================================================
-
                         .successHandler(
                                 (request, response, authentication) -> {
 
@@ -224,10 +150,7 @@ public class SecurityConfig {
                                 }
                         )
 
-                        // =================================================
                         // 로그인 실패
-                        // =================================================
-
                         .failureHandler(
                                 (request, response, exception) -> {
 
@@ -248,20 +171,13 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
-                // =====================================================
-                // 로그아웃
-                // =====================================================
-
+                // 로그아웃 설정
                 .logout(logout -> logout
 
-                        // React:
-                        // POST /api/logout
-                        //
-                        // Vite Proxy:
-                        // POST /logout
+                        // 로그아웃 처리 URL
                         .logoutUrl("/logout")
 
-                        // 로그아웃 성공 시 React에게 200 응답
+                        // 로그아웃 성공
                         .logoutSuccessHandler(
                                 (request, response, authentication) -> {
 
@@ -285,33 +201,24 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // =====================================================
     // CORS 설정
-    // =====================================================
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration configuration =
                 new CorsConfiguration();
 
-        // =================================================
         // React 개발 서버 허용
-        // =================================================
-
         configuration.setAllowedOriginPatterns(
                 List.of(
-                        "http://localhost:5173",
-                        "http://127.0.0.1:5173",
+                        "http://localhost:*",
+                        "http://127.0.0.1:*",
                         "http://192.168.*.*:*",
                         "http://10.*.*.*:*"
                 )
         );
 
-        // =================================================
         // 허용 HTTP Method
-        // =================================================
-
         configuration.setAllowedMethods(
                 List.of(
                         "GET",
@@ -323,24 +230,15 @@ public class SecurityConfig {
                 )
         );
 
-        // =================================================
         // 허용 Header
-        // =================================================
-
         configuration.setAllowedHeaders(
                 List.of("*")
         );
 
-        // =================================================
-        // Session / Cookie 허용
-        // =================================================
-
+        // Cookie / Session 허용
         configuration.setAllowCredentials(true);
 
-        // =================================================
-        // CORS 적용
-        // =================================================
-
+        // 모든 URL에 CORS 적용
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
