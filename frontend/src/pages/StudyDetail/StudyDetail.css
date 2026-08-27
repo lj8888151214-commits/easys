@@ -115,6 +115,77 @@
 
 
 /* =====================================================
+   🌟 6:4 가로 배치 그리드 레이아웃 (완벽한 라인 정렬 및 높이 고정)
+===================================================== */
+
+.study-detail-grid-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start; /* 상단 라인을 정확히 일치시킴 */
+  width: 100%;
+  margin-top: 18px;
+}
+
+.study-detail-main-section {
+  width: 100%;
+  transition: width 0.3s ease;
+}
+
+.study-detail-grid-layout.with-chat .study-detail-main-section {
+  width: calc(60% - 12px); /* 60% 비율 및 갭 보정 */
+}
+
+.study-detail-chat-wrapper {
+  display: none;
+  width: calc(40% - 12px); /* 40% 비율 및 갭 보정 */
+  position: sticky;
+  top: 100px;
+}
+
+.study-detail-grid-layout.with-chat .study-detail-chat-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🌟 스터디 소개 박스와 높이를 정확히 맞추기 위한 고정 패널 설정 */
+.study-detail-grid-layout .cam-chat-panel {
+  width: 100% !important;
+  height: 380px !important; /* 스터디 소개 박스의 기본 세로 폭에 맞춤 */
+  max-height: 380px !important;
+  min-height: 380px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #fff;
+  border: 1px solid #e1e7e2;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+}
+
+/* 🌟 메시지 영역 스크롤 처리 */
+.study-detail-grid-layout .chat-messages-container {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8faf8;
+}
+
+/* 🌟 입력 폼 고정 */
+.study-detail-grid-layout .chat-input-form {
+  flex-shrink: 0 !important;
+  display: flex;
+  gap: 8px;
+  background: #fff;
+  border-top: 1px solid #eee;
+  padding: 12px 16px;
+  align-items: center;
+}
+
+
+/* =====================================================
    INFO
 ===================================================== */
 
@@ -193,10 +264,13 @@
 ===================================================== */
 
 .study-detail-content {
-  margin-top: 18px;
+  margin-top: 0 !important;
   background: #fff;
   border-radius: 20px;
   padding: 42px;
+  min-height: 380px; /* 🌟 스터디 소개 박스의 최소 높이를 채팅창과 일치시킴 */
+  display: flex;
+  flex-direction: column;
 }
 
 .study-detail-label {
@@ -217,7 +291,7 @@
   white-space: pre-wrap;
   line-height: 1.8;
   color: #555;
-  min-height: 150px;
+  flex: 1;
 }
 
 .study-detail-content small {
@@ -539,8 +613,24 @@
 
 
 /* =====================================================
-   MOBILE
+   MOBILE & RESPONSIVE
 ===================================================== */
+
+@media (max-width: 1024px) {
+  .study-detail-grid-layout.with-chat {
+    flex-direction: column;
+  }
+  .study-detail-grid-layout.with-chat .study-detail-main-section,
+  .study-detail-grid-layout.with-chat .study-detail-chat-wrapper {
+    width: 100%;
+    position: static;
+  }
+  .study-detail-grid-layout .cam-chat-panel {
+    height: 400px !important;
+    max-height: 400px !important;
+    min-height: 400px !important;
+  }
+}
 
 @media (max-width: 768px) {
 

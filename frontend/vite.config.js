@@ -19,6 +19,14 @@ export default defineConfig({
 
       //  autoRewrite: true,
       },
+
+      '/streams': {
+              target: 'http://localhost:8080',
+              changeOrigin: true,
+              secure: false,
+              ws: true, // 만약 /streams도 웹소켓이라면 true로 설정
+            },
+
     // 🌟 웹소켓 시그널링 프록시 필수 추가
         '/signal': {
           target: 'http://localhost:8080',

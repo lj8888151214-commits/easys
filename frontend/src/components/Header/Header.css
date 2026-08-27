@@ -130,7 +130,7 @@
 }
 
 .main-header.scrolled .main-nav a {
-  color: #cadfd0;
+  color: #000000;
 }
 
 .main-nav a::after {
@@ -144,6 +144,10 @@
   background: currentColor;
   transform: translateX(-50%);
   transition: width 0.25s ease;
+}
+.campage .main-header .main-nav a,
+.campage .main-header.scrolled .main-nav a {
+  color: #ffffff;
 }
 
 .main-nav a:hover {
