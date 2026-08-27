@@ -27,6 +27,7 @@ import PasswordChange from "./pages/PasswordChange/PasswordChange";
 import StudyCreate from "./pages/StudyCreate/StudyCreate";
 import StudyDetail from "./pages/StudyDetail/StudyDetail";
 import StudyEdit from "./pages/StudyEdit/StudyEdit";
+import CamPage from "./pages/Streaming/CamPage";
 
 
 // =====================================================
@@ -76,12 +77,17 @@ function App() {
           path="/streaming"
           element={<Streaming />}
         />
-
+{/* =================================================
+            캠 스트리밍
+        ================================================= */}
+        <Route
+          path="/streaming/cam"
+          element={<CamPage />}
+        />
 
         {/* =================================================
             멘토링
         ================================================= */}
-
         <Route
           path="/mentor"
           element={<Mentoring />}

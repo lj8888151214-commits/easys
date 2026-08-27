@@ -4,6 +4,7 @@ import calendarBg from "../../assets/images/calendar-bg.jpg";
 
 const API_URL = "http://localhost:8080/api/calendar/personal";
 const CATEGORY_STORAGE_KEY = "easys-calendar-categories";
+const GROUP_API_URL = "/api/study-groups"; // 🌟 모임 캘린더 조회/등록 API
 
 const groupSchedules = [
   {

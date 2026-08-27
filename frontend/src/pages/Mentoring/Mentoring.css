@@ -2,10 +2,10 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
+  overflow-x: hidden;
+  isolation: isolate;
   background: #f7f9f7;
   color: #243329;
-  overflow: hidden;
-  isolation: isolate;
 }
 
 .mentoring-page::before {
@@ -34,9 +34,9 @@
     radial-gradient(circle at 5% 65%, rgba(202, 223, 208, 0.25) 0, rgba(202, 223, 208, 0.25) 45px, transparent 46px);
 }
 
-/* ================================
+/* =====================================================
    HERO
-================================ */
+   ===================================================== */
 
 .mentoring-hero {
   position: relative;
@@ -53,8 +53,8 @@
   left: 0;
   width: 100%;
   height: calc(100% + 120px);
-  background-size: cover;
   background-position: center;
+  background-size: cover;
   background-repeat: no-repeat;
   will-change: transform;
 }
@@ -63,29 +63,24 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(
-    90deg,
-    rgba(20, 35, 26, 0.82),
-    rgba(20, 35, 26, 0.45),
-    rgba(20, 35, 26, 0.2)
-  );
+  background: linear-gradient(90deg, rgba(20, 35, 26, 0.82), rgba(20, 35, 26, 0.45), rgba(20, 35, 26, 0.2));
 }
 
 .mentoring-hero-content {
   position: relative;
   z-index: 2;
+  display: flex;
   width: 100%;
   max-width: 1200px;
   height: 100%;
   margin: 0 auto;
   padding: 0 30px;
   box-sizing: border-box;
-  display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  text-align: center;
+  justify-content: center;
   color: white;
+  text-align: center;
 }
 
 .mentoring-eyebrow {
@@ -111,9 +106,9 @@
   line-height: 1.7;
 }
 
-/* ================================
+/* =====================================================
    CONTENT
-================================ */
+   ===================================================== */
 
 .mentoring-content {
   position: relative;
@@ -125,18 +120,6 @@
   box-sizing: border-box;
 }
 
-/* ================================
-   INTRO
-================================ */
-
-.mentoring-intro {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 30px;
-  margin-bottom: 45px;
-}
-
 .section-label {
   display: block;
   margin-bottom: 10px;
@@ -144,6 +127,18 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 3px;
+}
+
+/* =====================================================
+   INTRO
+   ===================================================== */
+
+.mentoring-intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 45px;
 }
 
 .mentoring-intro h2 {
@@ -163,9 +158,9 @@
 
 .mentor-register-button {
   flex-shrink: 0;
-  padding: 14px 22px;
+  padding: 15px 23px;
   border: 0;
-  border-radius: 25px;
+  border-radius: 30px;
   background: #243329;
   color: white;
   font-size: 13px;
@@ -176,12 +171,12 @@
 
 .mentor-register-button:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(36, 51, 41, 0.15);
+  box-shadow: 0 12px 28px rgba(36, 51, 41, 0.16);
 }
 
-/* ================================
+/* =====================================================
    FILTER
-================================ */
+   ===================================================== */
 
 .mentoring-filter {
   display: flex;
@@ -219,9 +214,9 @@
   color: white;
 }
 
-/* ================================
+/* =====================================================
    MENTOR GRID
-================================ */
+   ===================================================== */
 
 .mentor-grid {
   display: grid;
@@ -233,7 +228,7 @@
   padding: 28px;
   border: 1px solid rgba(227, 233, 227, 0.9);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(5px);
   transition: 0.25s ease;
 }
@@ -242,10 +237,6 @@
   transform: translateY(-5px);
   box-shadow: 0 18px 40px rgba(30, 50, 38, 0.08);
 }
-
-/* ================================
-   PROFILE
-================================ */
 
 .mentor-card-top {
   display: flex;
@@ -285,11 +276,11 @@
 
 .mentor-avatar {
   display: flex;
-  align-items: center;
-  justify-content: center;
   width: 68px;
   height: 68px;
   overflow: hidden;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
   background: #edf3ee;
   color: #243329;
@@ -305,14 +296,20 @@
 }
 
 .mentor-avatar.large {
-  width: 75px;
-  height: 75px;
-  font-size: 27px;
+  width: 78px;
+  height: 78px;
+  font-size: 28px;
 }
 
-/* ================================
+.mentor-avatar.small {
+  width: 48px;
+  height: 48px;
+  font-size: 17px;
+}
+
+/* =====================================================
    RATING
-================================ */
+   ===================================================== */
 
 .mentor-rating {
   display: flex;
@@ -326,14 +323,23 @@
   font-size: 14px;
 }
 
-.mentor-rating span {
+.mentor-rating button {
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: #8a938d;
   font-size: 11px;
+  cursor: pointer;
 }
 
-/* ================================
+.mentor-rating button:hover {
+  color: #243329;
+  text-decoration: underline;
+}
+
+/* =====================================================
    DESCRIPTION
-================================ */
+   ===================================================== */
 
 .mentor-description {
   min-height: 48px;
@@ -343,9 +349,29 @@
   line-height: 1.7;
 }
 
-/* ================================
+/* =====================================================
+   CONSULTATION TAG
+   ===================================================== */
+
+.mentor-consultation-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.mentor-consultation-tags span {
+  padding: 6px 9px;
+  border-radius: 15px;
+  background: #f1f5f1;
+  color: #647269;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* =====================================================
    SKILLS
-================================ */
+   ===================================================== */
 
 .mentor-skills {
   display: flex;
@@ -356,15 +382,15 @@
 .mentor-skills span {
   padding: 6px 10px;
   border-radius: 15px;
-  background: #edf3ee;
+  background: #e6f0e8;
   color: #53665a;
   font-size: 10px;
   font-weight: 700;
 }
 
-/* ================================
+/* =====================================================
    CARD BOTTOM
-================================ */
+   ===================================================== */
 
 .mentor-card-bottom {
   display: flex;
@@ -392,30 +418,25 @@
   font-size: 18px;
 }
 
-.mentor-card-bottom button,
-.mentor-request-button {
+.mentor-card-bottom button {
+  padding: 10px 16px;
   border: 0;
   border-radius: 20px;
   background: #243329;
   color: white;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: 0.2s ease;
 }
 
-.mentor-card-bottom button {
-  padding: 9px 15px;
-  font-size: 11px;
-}
-
-.mentor-card-bottom button:hover,
-.mentor-request-button:hover {
+.mentor-card-bottom button:hover {
   transform: translateY(-2px);
 }
 
-/* ================================
+/* =====================================================
    EMPTY
-================================ */
+   ===================================================== */
 
 .mentor-empty {
   padding: 60px 20px;
@@ -426,12 +447,60 @@
   text-align: center;
 }
 
-/* ================================
-   MODAL BACKGROUND
-================================ */
+/* =====================================================
+   VALUE
+   ===================================================== */
 
-.mentor-modal-background,
-.reservation-modal-background {
+.mentoring-value-section {
+  margin-top: 120px;
+  padding-top: 80px;
+  border-top: 1px solid rgba(210, 220, 212, 0.8);
+}
+
+.mentoring-value-section h2 {
+  margin: 0;
+  color: #243329;
+  font-size: clamp(30px, 4vw, 45px);
+  line-height: 1.25;
+  letter-spacing: -2px;
+}
+
+.mentoring-value-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 45px;
+}
+
+.mentoring-value-grid article {
+  padding: 30px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.mentoring-value-grid article > span {
+  color: #91a495;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mentoring-value-grid h3 {
+  margin: 25px 0 10px;
+  font-size: 18px;
+}
+
+.mentoring-value-grid p {
+  margin: 0;
+  color: #747e77;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* =====================================================
+   MODAL
+   ===================================================== */
+
+.modal-background {
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -440,34 +509,51 @@
   justify-content: center;
   padding: 20px;
   box-sizing: border-box;
-  background: rgba(20, 30, 24, 0.65);
-  backdrop-filter: blur(5px);
+  background: rgba(20, 30, 24, 0.68);
+  backdrop-filter: blur(7px);
 }
 
-/* ================================
-   DETAIL MODAL
-================================ */
-
-.mentor-modal {
+.mentor-modal,
+.review-modal,
+.reservation-modal,
+.register-modal {
   position: relative;
   width: 100%;
-  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  padding: 40px;
   box-sizing: border-box;
-  border-radius: 25px;
-  background: white;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.24);
 }
 
-.mentor-modal-close,
-.reservation-modal-close {
+.mentor-modal {
+  max-width: 650px;
+  padding: 42px;
+}
+
+.review-modal {
+  max-width: 560px;
+  padding: 40px;
+}
+
+.reservation-modal {
+  max-width: 620px;
+  padding: 40px;
+}
+
+.register-modal {
+  max-width: 650px;
+  padding: 40px;
+}
+
+.modal-close {
   position: absolute;
   top: 18px;
   right: 20px;
-  width: 35px;
-  height: 35px;
+  z-index: 5;
+  width: 36px;
+  height: 36px;
   border: 0;
   border-radius: 50%;
   background: #f1f4f1;
@@ -475,7 +561,17 @@
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
+  transition: 0.2s ease;
 }
+
+.modal-close:hover {
+  transform: rotate(90deg);
+  background: #e5ece6;
+}
+
+/* =====================================================
+   DETAIL
+   ===================================================== */
 
 .mentor-modal-profile {
   display: flex;
@@ -485,8 +581,7 @@
   border-bottom: 1px solid #edf0ed;
 }
 
-.mentor-modal-profile span,
-.mentor-modal-section > span {
+.mentor-modal-profile > div:last-child > span {
   color: #78907d;
   font-size: 10px;
   font-weight: 800;
@@ -496,7 +591,7 @@
 .mentor-modal-profile h2 {
   margin: 5px 0;
   color: #243329;
-  font-size: 26px;
+  font-size: 28px;
 }
 
 .mentor-modal-profile p {
@@ -505,8 +600,34 @@
   font-size: 13px;
 }
 
+.detail-rating {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  color: #566d5c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.detail-rating button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7e8881;
+  font-size: 11px;
+  cursor: pointer;
+}
+
 .mentor-modal-section {
   margin-top: 28px;
+}
+
+.mentor-modal-section > span {
+  color: #78907d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
 }
 
 .mentor-modal-section h3 {
@@ -522,12 +643,42 @@
   line-height: 1.8;
 }
 
-/* ================================
-   MENTOR MODAL BOTTOM
-================================ */
+.certificate-list,
+.consultation-list,
+.mentor-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
 
-.mentor-modal-bottom,
-.reservation-bottom {
+.certificate-list span,
+.consultation-list span {
+  padding: 8px 11px;
+  border-radius: 15px;
+  background: #edf3ee;
+  color: #526358;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mentor-links a {
+  padding: 9px 13px;
+  border: 1px solid #dfe6df;
+  border-radius: 18px;
+  color: #526358;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+
+.mentor-links a:hover {
+  border-color: #243329;
+  background: #243329;
+  color: white;
+}
+
+.mentor-modal-bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -537,119 +688,24 @@
   border-top: 1px solid #edf0ed;
 }
 
-.mentor-modal-bottom div,
-.reservation-bottom div {
+.mentor-modal-bottom div {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
 
-.mentor-modal-bottom small,
-.reservation-bottom small {
+.mentor-modal-bottom small {
   color: #8a938d;
   font-size: 10px;
 }
 
-.mentor-modal-bottom strong,
-.reservation-bottom strong {
+.mentor-modal-bottom strong {
   color: #243329;
-  font-size: 20px;
+  font-size: 21px;
 }
 
 .mentor-request-button {
-  padding: 13px 20px;
-  font-size: 12px;
-}
-
-/* ================================
-   RESERVATION MODAL
-================================ */
-
-.reservation-modal {
-  position: relative;
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 35px;
-  box-sizing: border-box;
-  border-radius: 25px;
-  background: white;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
-}
-
-.reservation-modal h2 {
-  margin: 0 0 25px;
-  color: #243329;
-  font-size: 28px;
-}
-
-.reservation-mentor {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-bottom: 25px;
-  padding: 18px;
-  border-radius: 15px;
-  background: #edf3ee;
-}
-
-.reservation-mentor strong {
-  color: #243329;
-  font-size: 17px;
-}
-
-.reservation-mentor span {
-  color: #6f7d73;
-  font-size: 12px;
-}
-
-.reservation-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.reservation-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  color: #49564d;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.reservation-form input,
-.reservation-form textarea {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #dfe5df;
-  border-radius: 10px;
-  outline: none;
-  background: #fafcf9;
-  color: #243329;
-  font-family: inherit;
-  font-size: 14px;
-  box-sizing: border-box;
-}
-
-.reservation-form input:focus,
-.reservation-form textarea:focus {
-  border-color: #78907d;
-  background: white;
-}
-
-.reservation-form textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-.reservation-bottom {
-  margin-top: 25px;
-}
-
-.reservation-submit-button {
-  padding: 13px 20px;
+  padding: 14px 21px;
   border: 0;
   border-radius: 24px;
   background: #243329;
@@ -660,13 +716,845 @@
   transition: 0.2s ease;
 }
 
-.reservation-submit-button:hover {
+.mentor-request-button:hover {
   transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(36, 51, 41, 0.16);
 }
 
-/* ================================
+/* =====================================================
+   REVIEW
+   ===================================================== */
+
+.review-modal h2 {
+  margin: 0;
+  color: #243329;
+  font-size: 28px;
+  letter-spacing: -1px;
+}
+
+.review-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  padding: 18px;
+  border-radius: 16px;
+  background: #edf3ee;
+}
+
+.review-summary strong {
+  color: #566d5c;
+  font-size: 20px;
+}
+
+.review-summary span {
+  color: #7b857e;
+  font-size: 12px;
+}
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.review-item {
+  padding: 18px;
+  border: 1px solid #edf0ed;
+  border-radius: 16px;
+}
+
+.review-item > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.review-item strong {
+  color: #667d6b;
+  font-size: 12px;
+}
+
+.review-item span {
+  color: #9aa19c;
+  font-size: 10px;
+}
+
+.review-item p {
+  margin: 12px 0 0;
+  color: #68736c;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.review-close-button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 13px;
+  border: 0;
+  border-radius: 20px;
+  background: #243329;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* =====================================================
+   RESERVATION
+   ===================================================== */
+
+.reservation-modal h2,
+.register-modal h2 {
+  margin: 0;
+  color: #243329;
+  font-size: 30px;
+  letter-spacing: -1.5px;
+}
+
+.reservation-mentor {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 25px 0;
+  padding: 16px;
+  border-radius: 17px;
+  background: #edf3ee;
+}
+
+.reservation-mentor > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.reservation-mentor strong {
+  color: #243329;
+  font-size: 16px;
+}
+
+.reservation-mentor span {
+  color: #6f7d73;
+  font-size: 11px;
+}
+
+.reservation-section {
+  margin-top: 22px;
+}
+
+.reservation-section > label,
+.reservation-row label,
+.register-section > label {
+  display: block;
+  margin-bottom: 9px;
+  color: #49564d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.skills-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.check-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 13px;
+  box-sizing: border-box;
+  border: 1px solid #dfe5df;
+  border-radius: 12px;
+  background: #fafcf9;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.check-item:hover {
+  border-color: #b9c8bc;
+}
+
+.check-item.selected {
+  border-color: #78907d;
+  background: #edf3ee;
+  color: #34483b;
+}
+
+.check-item input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.check-item span {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.reservation-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.reservation-row label {
+  margin-bottom: 0;
+}
+
+.reservation-modal input,
+.reservation-modal textarea,
+.register-modal input,
+.register-modal textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #dfe5df;
+  border-radius: 11px;
+  outline: none;
+  background: #fafcf9;
+  color: #243329;
+  font-family: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+  transition: 0.2s ease;
+}
+
+.reservation-modal input:focus,
+.reservation-modal textarea:focus,
+.register-modal input:focus,
+.register-modal textarea:focus {
+  border-color: #78907d;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(120, 144, 125, 0.08);
+}
+
+.reservation-section textarea {
+  min-height: 135px;
+  resize: vertical;
+}
+
+.input-guide {
+  display: block;
+  margin-top: 7px;
+  color: #949d96;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+/* =====================================================
+   RESERVATION CALENDAR
+   ===================================================== */
+
+.reservation-calendar {
+  margin-top: 12px;
+  padding: 18px;
+  border: 1px solid #e3e9e4;
+  border-radius: 18px;
+  background: #fafcf9;
+}
+
+.reservation-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.reservation-calendar-header strong {
+  color: #243329;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.calendar-month-button {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dfe6df;
+  border-radius: 50%;
+  background: white;
+  color: #526358;
+  font-size: 23px;
+  line-height: 1;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.calendar-month-button:hover {
+  border-color: #78907d;
+  background: #edf3ee;
+  color: #243329;
+}
+
+.reservation-calendar-week,
+.reservation-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.reservation-calendar-week {
+  margin-bottom: 7px;
+}
+
+.reservation-calendar-week span {
+  padding: 7px 0;
+  color: #8a938d;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.reservation-calendar-grid {
+  gap: 5px;
+}
+
+.reservation-calendar-empty {
+  min-height: 43px;
+}
+
+.reservation-calendar-day {
+  display: flex;
+  min-height: 43px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: #b5bcb7;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: default;
+  transition: 0.2s ease;
+}
+
+.reservation-calendar-day.available {
+  border-color: #dfe8e1;
+  background: white;
+  color: #53665a;
+  cursor: pointer;
+}
+
+.reservation-calendar-day.available:hover {
+  border-color: #78907d;
+  background: #edf3ee;
+  transform: translateY(-1px);
+}
+
+.reservation-calendar-day.selected {
+  border-color: #243329;
+  background: #243329;
+  color: white;
+  font-weight: 800;
+}
+
+.reservation-calendar-day:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.reservation-calendar-guide {
+  display: block;
+  margin-top: 8px;
+  color: #949d96;
+  font-size: 10px;
+}
+
+/* =====================================================
+   FILE
+   ===================================================== */
+
+.file-upload-box {
+  padding: 17px;
+  border: 1px dashed #cbd6cd;
+  border-radius: 14px;
+  background: #fafcf9;
+}
+
+.file-upload-button {
+  padding: 9px 13px;
+  border: 1px solid #d8e1da;
+  border-radius: 18px;
+  background: white;
+  color: #526358;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.file-upload-box > small {
+  display: block;
+  margin-top: 9px;
+  color: #949d96;
+  font-size: 10px;
+}
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.selected-file span {
+  min-width: 0;
+  overflow: hidden;
+  color: #526358;
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected-file button {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: #a35f5f;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+/* =====================================================
+   PRICE
+   ===================================================== */
+
+.reservation-price {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 25px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #f3f6f3;
+}
+
+.reservation-price div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reservation-price small {
+  color: #8a938d;
+  font-size: 10px;
+}
+
+.reservation-price strong {
+  color: #243329;
+  font-size: 20px;
+}
+
+.reservation-price > span {
+  color: #8a938d;
+  font-size: 10px;
+  text-align: right;
+}
+
+.reservation-submit-button,
+.register-submit-button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 15px;
+  border: 0;
+  border-radius: 24px;
+  background: #243329;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.reservation-submit-button:hover,
+.register-submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(36, 51, 41, 0.16);
+}
+
+/* =====================================================
+   REGISTER
+   ===================================================== */
+
+.register-description {
+  margin: 12px 0 25px;
+  color: #7b857e;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.register-profile-preview {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  padding: 18px;
+  border-radius: 17px;
+  background: #edf3ee;
+}
+
+.register-profile-preview > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.register-profile-preview strong {
+  color: #243329;
+  font-size: 15px;
+}
+
+.register-profile-preview span {
+  color: #758078;
+  font-size: 10px;
+}
+
+.register-section {
+  margin-top: 20px;
+}
+
+.register-section small {
+  display: block;
+  margin-top: 6px;
+  color: #929b95;
+  font-size: 10px;
+}
+
+.price-input {
+  position: relative;
+}
+
+.price-input input {
+  padding-right: 45px;
+}
+
+.price-input span {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  color: #758078;
+  font-size: 12px;
+  transform: translateY(-50%);
+}
+
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 7px;
+}
+
+.day-grid button {
+  padding: 10px 5px;
+  border: 1px solid #dfe5df;
+  border-radius: 10px;
+  background: #fafcf9;
+  color: #69746d;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.day-grid button:hover {
+  border-color: #b9c8bc;
+}
+
+.day-grid button.active {
+  border-color: #243329;
+  background: #243329;
+  color: white;
+}
+
+.register-notice {
+  margin-top: 25px;
+  padding: 16px;
+  border-radius: 15px;
+  background: #f4f7f4;
+}
+
+.register-notice strong {
+  color: #526358;
+  font-size: 11px;
+}
+
+.register-notice p {
+  margin: 7px 0 0;
+  color: #818b84;
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+/* =====================================================
+   MENTOR REGISTER CALENDAR
+   상담 가능 날짜 선택
+   ===================================================== */
+
+.register-calendar-description {
+  display: block;
+  margin-top: -4px;
+  margin-bottom: 12px;
+  color: #89958c;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.mentor-register-calendar {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 12px;
+  padding: 22px;
+  border: 1px solid #dce7df;
+  border-radius: 18px;
+  background: #f8fbf9;
+}
+
+.mentor-register-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.mentor-register-calendar-header strong {
+  color: #243329;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.mentor-register-calendar-header button {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #d8e3db;
+  border-radius: 10px;
+  background: #fff;
+  color: #33473a;
+  font-size: 23px;
+  line-height: 1;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentor-register-calendar-header button:hover {
+  background: #d4e4d7;
+  border-color: #bfd2c3;
+}
+
+.mentor-register-calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.mentor-register-calendar-week span {
+  padding: 7px 0;
+  color: #718078;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.mentor-register-calendar-week .saturday {
+  color: #68839a;
+}
+
+.mentor-register-calendar-week .sunday {
+  color: #a87373;
+}
+
+.mentor-register-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.mentor-register-calendar-empty {
+  width: 100%;
+  aspect-ratio: 1;
+  min-height: 42px;
+}
+
+.mentor-register-calendar-day {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 0;
+  box-sizing: border-box;
+  border: 1px solid #e0e8e2;
+  border-radius: 11px;
+  background: #fff;
+  color: #35453b;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentor-register-calendar-day:hover:not(:disabled) {
+  border-color: #abc2b0;
+  background: #edf5ef;
+  transform: translateY(-1px);
+}
+
+.mentor-register-calendar-day.today {
+  border-color: #9db9a3;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(120, 144, 125, 0.15);
+}
+
+.mentor-register-calendar-day.selected {
+  border-color: #718e78;
+  background: #d4e4d7;
+  color: #263a2b;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(80, 110, 88, 0.08);
+}
+
+.mentor-register-calendar-day.selected::after {
+  content: "";
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5e7b65;
+}
+
+.mentor-register-calendar-day.past {
+  border-color: #e5e9e6;
+  background: #f1f3f1;
+  color: #b6beb8;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.mentor-register-calendar-day:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.mentor-register-calendar-selected {
+  margin-top: 18px;
+  padding-top: 17px;
+  border-top: 1px solid #dce7df;
+}
+
+.mentor-register-calendar-selected > span {
+  display: block;
+  margin-bottom: 10px;
+  color: #5c6c61;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mentor-register-calendar-selected p {
+  margin: 0;
+  color: #929d95;
+  font-size: 12px;
+}
+
+.mentor-register-selected-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.mentor-register-selected-dates button {
+  padding: 7px 10px;
+  border: 1px solid #c5d7c9;
+  border-radius: 999px;
+  background: #fff;
+  color: #405846;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentor-register-selected-dates button:hover {
+  border-color: #9eb8a4;
+  background: #edf5ef;
+}
+
+.mentor-register-calendar-guide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+  color: #89958c;
+  font-size: 10px;
+}
+
+.mentor-register-calendar-guide span {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* =====================================================
+   MENTOR 등록 삭제 / 취소 버튼
+   ===================================================== */
+
+.mentor-delete-button {
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 20px;
+  border: 1px solid #d8a5a5;
+  border-radius: 10px;
+  background: #fff;
+  color: #b85c5c;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mentor-delete-button:hover {
+  background: #fff5f5;
+  border-color: #c98282;
+  color: #a94c4c;
+}
+
+.mentor-cancel-button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px 20px;
+  border: 1px solid #dfe5df;
+  border-radius: 10px;
+  background: #f7f9f7;
+  color: #667066;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mentor-cancel-button:hover {
+  background: #edf2ed;
+  border-color: #cfd8cf;
+  color: #39453b;
+}
+
+/* =====================================================
    TABLET
-================================ */
+   ===================================================== */
 
 @media screen and (max-width: 900px) {
   .mentoring-content {
@@ -681,11 +1569,23 @@
   .mentor-grid {
     grid-template-columns: 1fr;
   }
+
+  .mentoring-value-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mentor-register-calendar {
+    padding: 18px;
+  }
+
+  .mentor-register-calendar-day {
+    min-height: 48px;
+  }
 }
 
-/* ================================
+/* =====================================================
    MOBILE
-================================ */
+   ===================================================== */
 
 @media screen and (max-width: 600px) {
   .mentoring-hero {
@@ -717,23 +1617,9 @@
     width: 100%;
   }
 
-  .mentoring-filter {
-    padding-bottom: 10px;
-  }
-
   .mentor-card {
     padding: 22px;
     border-radius: 20px;
-  }
-
-  .mentor-card-top {
-    gap: 15px;
-  }
-
-  .mentor-avatar {
-    width: 58px;
-    height: 58px;
-    font-size: 19px;
   }
 
   .mentor-basic h3 {
@@ -752,11 +1638,11 @@
     font-size: 16px;
   }
 
-  .mentor-card-bottom button {
-    padding: 9px 12px;
-  }
-
-  .mentor-modal {
+  .mentor-modal,
+  .review-modal,
+  .reservation-modal,
+  .register-modal {
+    max-height: 92vh;
     padding: 30px 22px;
     border-radius: 22px;
   }
@@ -765,24 +1651,141 @@
     align-items: flex-start;
   }
 
-  .mentor-modal-bottom,
-  .reservation-bottom {
+  .mentor-modal-bottom {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .mentor-request-button,
-  .reservation-submit-button {
+  .mentor-request-button {
     width: 100%;
   }
 
-  .reservation-modal {
-    padding: 30px 22px;
-    border-radius: 22px;
+  .check-grid,
+  .skills-grid {
+    grid-template-columns: 1fr 1fr;
   }
 
-  .reservation-modal h2 {
-    font-size: 24px;
+  .reservation-row {
+    grid-template-columns: 1fr;
+  }
+
+  .reservation-price {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .reservation-price > span {
+    text-align: left;
+  }
+
+  /* 예약 달력 */
+
+  .reservation-calendar {
+    padding: 12px;
+    border-radius: 15px;
+  }
+
+  .reservation-calendar-header {
+    margin-bottom: 12px;
+  }
+
+  .reservation-calendar-header strong {
+    font-size: 15px;
+  }
+
+  .calendar-month-button {
+    width: 32px;
+    height: 32px;
+    font-size: 21px;
+  }
+
+  .reservation-calendar-grid {
+    gap: 3px;
+  }
+
+  .reservation-calendar-empty {
+    min-height: 40px;
+  }
+
+  .reservation-calendar-day {
+    min-height: 40px;
+    border-radius: 9px;
+    font-size: 11px;
+  }
+
+  .reservation-calendar-week span {
+    font-size: 9px;
+  }
+
+  .day-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* 멘토 등록 달력 */
+
+  .mentor-register-calendar {
+    padding: 15px;
+    border-radius: 14px;
+  }
+
+  .mentor-register-calendar-header {
+    margin-bottom: 14px;
+  }
+
+  .mentor-register-calendar-header strong {
+    font-size: 15px;
+  }
+
+  .mentor-register-calendar-header button {
+    width: 33px;
+    height: 33px;
+    border-radius: 9px;
+    font-size: 20px;
+  }
+
+  .mentor-register-calendar-week,
+  .mentor-register-calendar-grid {
+    gap: 4px;
+  }
+
+  .mentor-register-calendar-week span {
+    font-size: 10px;
+  }
+
+  .mentor-register-calendar-day {
+    min-height: 38px;
+    border-radius: 8px;
+    font-size: 11px;
+  }
+
+  .mentor-register-calendar-day.selected::after {
+    right: 4px;
+    bottom: 4px;
+    width: 4px;
+    height: 4px;
+  }
+
+  .mentor-register-calendar-guide {
+    gap: 8px;
+    font-size: 9px;
+  }
+
+  .mentor-register-selected-dates {
+    gap: 5px;
+  }
+
+  .mentor-register-selected-dates button {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .mentoring-value-section {
+    margin-top: 80px;
+    padding-top: 60px;
+  }
+
+  .mentoring-value-section h2 {
+    font-size: 30px;
   }
 
   .mentoring-page::before {

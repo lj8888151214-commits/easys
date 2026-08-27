@@ -380,6 +380,191 @@
 
 
 /* =====================================================
+   🌟 [NEW] 메인 래퍼 & 6:4 비율 채팅 레이아웃 스타일
+===================================================== */
+
+.study-main-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+/* 기본 상태 (참가자 2명 미만일 때 전체 너비) */
+.study-grid-section {
+  width: 100%;
+  transition: width 0.3s ease;
+}
+
+/* 2명 이상일 때 6:4 비율 적용 (그리드 영역: 6) */
+.study-main-layout.with-chat .study-grid-section {
+  width: 60%;
+}
+
+.study-main-layout.with-chat .study-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* 3개에서 2개로 압축하여 카드 정렬 최적화 */
+}
+
+/* 채팅창 패널 (기본 숨김) */
+.study-chat-panel {
+  display: none;
+  width: 40%; /* 비율: 4 */
+  height: 650px;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e1e7e2;
+  border-radius: 22px;
+  box-shadow: 0 12px 30px rgba(30, 50, 38, 0.06);
+  overflow: hidden;
+  position: sticky;
+  top: 100px;
+}
+
+/* 2명 이상일 때 채팅창 활성화 */
+.study-main-layout.with-chat .study-chat-panel {
+  display: flex;
+}
+
+/* 스트리밍실과 일체감을 주는 채팅 내부 컴포넌트 스타일 */
+.study-chat-panel .chat-header {
+  padding: 16px 20px;
+  background: #243329;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.study-chat-panel .chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.study-chat-panel .chat-user-count-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: #a3f7bf;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 12px;
+  border: 1px solid rgba(163, 247, 191, 0.4);
+}
+
+.study-chat-panel .chat-user-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.study-chat-panel .chat-user-badge.member {
+  background-color: rgba(46, 213, 115, 0.2);
+  color: #2ed573;
+  border: 1px solid #2ed573;
+}
+.study-chat-panel .chat-user-badge.guest {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #e0e0e0;
+  border: 1px solid #777;
+}
+
+.study-chat-panel .chat-messages-container {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8faf8;
+}
+
+.study-chat-panel .chat-bubble-row {
+  display: flex;
+  flex-direction: column;
+}
+.study-chat-panel .chat-bubble-row.me {
+  align-items: flex-end;
+}
+.study-chat-panel .chat-bubble-row.other {
+  align-items: flex-start;
+}
+
+.study-chat-panel .chat-bubble {
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  word-break: break-word;
+}
+.study-chat-panel .chat-bubble-row.me .chat-bubble {
+  background-color: #243329;
+  color: #ffffff;
+}
+.study-chat-panel .chat-bubble-row.other .chat-bubble {
+  background-color: #ffffff;
+  color: #222;
+  border: 1px solid #e2e8e2;
+}
+
+.study-chat-panel .chat-system-msg {
+  font-size: 11px;
+  color: #243329;
+  background: #e2f0e4;
+  border: 1px solid #b8dabf;
+  padding: 4px 10px;
+  border-radius: 14px;
+  align-self: center;
+  font-weight: 600;
+  text-align: center;
+}
+
+.study-chat-panel .chat-input-form {
+  display: flex;
+  gap: 8px;
+  background: #fff;
+  border-top: 1px solid #e1e7e2;
+  padding: 12px 16px;
+  align-items: center;
+}
+
+.study-chat-panel .chat-text-input {
+  flex: 1;
+  border: 1px solid #dce2dd;
+  border-radius: 20px;
+  outline: none;
+  font-size: 13px;
+  padding: 8px 14px;
+  background: #f7f9f7;
+}
+.study-chat-panel .chat-text-input:focus {
+  border-color: #78907d;
+  background: #fff;
+}
+
+.study-chat-panel .chat-send-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: none;
+  background: #243329;
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+.study-chat-panel .chat-send-btn:hover {
+  background: #34483a;
+}
+
+
+/* =====================================================
    GRID
 ===================================================== */
 
@@ -617,6 +802,23 @@
    TABLET
 ===================================================== */
 
+@media (max-width: 1024px) {
+  .study-main-layout.with-chat {
+    flex-direction: column;
+  }
+  .study-main-layout.with-chat .study-grid-section {
+    width: 100%;
+  }
+  .study-main-layout.with-chat .study-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .study-main-layout.with-chat .study-chat-panel {
+    width: 100%;
+    position: static;
+    height: 480px;
+  }
+}
+
 @media (max-width: 900px) {
 
   .study-content {
@@ -729,7 +931,6 @@
 
   /* ================================================
      모바일 물방울
-     더 작고 은은하게
   ================================================ */
 
   .study-drop-1 {
