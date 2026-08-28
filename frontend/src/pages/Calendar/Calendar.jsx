@@ -46,12 +46,13 @@ const groupSchedules = [
 ];
 
 function Calendar() {
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [schedules, setSchedules] = useState([]);
   const [activeTab, setActiveTab] = useState("personal");
   const [showModal, setShowModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 24));
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 27));
   const [categoryMap, setCategoryMap] = useState({});
 
   const [form, setForm] = useState({
@@ -404,11 +405,6 @@ function Calendar() {
       return;
     }
 
-    /*
-     * 중요:
-     * isEdit를 try 밖에서 선언해야
-     * catch에서도 사용할 수 있다.
-     */
     const isEdit = Boolean(editingSchedule);
 
     try {
@@ -452,13 +448,6 @@ function Calendar() {
 
       const savedSchedule =
         await response.json();
-
-      console.log(
-        isEdit
-          ? "수정된 일정:"
-          : "등록된 일정:",
-        savedSchedule
-      );
 
       if (savedSchedule?.id) {
         saveCategory(
@@ -1197,8 +1186,6 @@ function Calendar() {
               className="schedule-form"
               onSubmit={handleSubmit}
             >
-              {/* 개인 일정 카테고리 */}
-
               {activeTab === "personal" && (
                 <div className="schedule-type-field">
                   <span className="form-field-title">
@@ -1275,8 +1262,6 @@ function Calendar() {
                   </div>
                 </div>
               )}
-
-              {/* 모임 일정 카테고리 */}
 
               {activeTab === "group" && (
                 <div className="schedule-type-field">
@@ -1429,6 +1414,73 @@ function Calendar() {
           </div>
         </div>
       )}
+
+      {/* ==================================================
+          우측 슬라이드 미니 캘린더 패널
+      ================================================== */}
+      <div className={`slide-calendar-panel ${isCalendarOpen ? "open" : ""}`} style={{
+        position: "fixed",
+        top: 0,
+        right: isCalendarOpen ? "0" : "-100%",
+        width: "350px",
+        height: "100%",
+        background: "#fff",
+        transition: "right 0.3s ease-in-out",
+        boxShadow: "-4px 0 15px rgba(0,0,0,0.1)",
+        zIndex: 9999,
+        padding: "20px",
+        boxSizing: "border-box",
+        overflowY: "auto"
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px", borderBottom: "1px solid #eee", paddingBottom: "8px" }}>
+          <h3 style={{ margin: 0, fontSize: "16px" }}>📅 미니 캘린더</h3>
+          <button
+            type="button"
+            onClick={() => setIsCalendarOpen(false)}
+            style={{ background: "#ff4d4f", color: "#fff", border: "none", width: "24px", height: "24px", borderRadius: "50%", fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* 달력 월 이동 헤더 */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+          <button type="button" onClick={() => moveMonth(-1)} style={{ border: "none", background: "#f1f5f9", cursor: "pointer", padding: "4px 8px", borderRadius: "4px" }}>←</button>
+          <span style={{ fontWeight: "700", fontSize: "14px" }}>{monthName}</span>
+          <button type="button" onClick={() => moveMonth(1)} style={{ border: "none", background: "#f1f5f9", cursor: "pointer", padding: "4px 8px", borderRadius: "4px" }}>→</button>
+        </div>
+
+        {/* 요일 헤더 */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center", fontSize: "11px", fontWeight: "600", color: "#666", marginBottom: "5px" }}>
+          <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+        </div>
+
+        {/* 달력 그리드 */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px" }}>
+          {calendarDays.map((date, index) => (
+            <div key={index} style={{
+              minHeight: "45px",
+              background: date ? "#f8fafc" : "transparent",
+              border: "1px solid #e2e8f0",
+              borderRadius: "4px",
+              padding: "2px",
+              fontSize: "11px"
+            }}>
+              {date && (
+                <>
+                  <div style={{ fontWeight: "600", textAlign: "right", color: "#333" }}>{date.getDate()}</div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: "20px", textAlign: "center" }}>
+          <a href="/calendar" style={{ fontSize: "12px", color: "#4f46e5", textDecoration: "underline" }}>
+            전체 캘린더 페이지로 이동하기 →
+          </a>
+        </div>
+      </div>
     </main>
   );
 }
