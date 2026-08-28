@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
- import "./BroadCast.css"; // 방송 시작 및 히어로 섹션 스타일
-// import "./Base.css"; // 방송 시작 및 히어로 섹션 스타일
- import "./Panorama.css";   // 현재 방송 파노라마 슬라이드 섹션 스타일
-////import "./Streaming.css";   // 현재 방송 파노라마 슬라이드 섹션 스타일
+import "./BroadCast.css"; // 방송 시작 및 히어로 섹션 스타일
+import "./Panorama.css";   // 현재 방송 파노라마 슬라이드 섹션 스타일
 
 import streamingBg from "../../assets/images/streaming-bg.jpg";
 import stream1 from "../../assets/videos/stream1.mp4";
@@ -61,7 +59,7 @@ function Streaming() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-// 🌟 CamPage 진입 시 상단 헤더 글씨가 잘 보이도록 .scrolled 강제 적용
+  // 🌟 CamPage 진입 시 상단 헤더 글씨가 잘 보이도록 .scrolled 강제 적용
   useEffect(() => {
     const header = document.querySelector(".main-header");
     if (header) {
@@ -82,7 +80,7 @@ function Streaming() {
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data) && data.length > 0) {
-            setLiveStreams(data); // 서버에 활성 방송이 있다면 실시간 목록으로 갱신
+            setLiveStreams(data);
           }
         }
       } catch (error) {
@@ -159,7 +157,7 @@ function Streaming() {
         </div>
       </section>
 
-      {/* CONTENT */}
+      {/* CONTENT 메인 컨테이너 */}
       <section className="streaming-content">
         {/* 방송 시작 */}
         <section className="stream-start-section">
@@ -194,102 +192,100 @@ function Streaming() {
             <span>Study · Coding · Knowledge</span>
           </div>
         </section>
+      </section>
 
-          {/* 현재 방송 목록 (파노라마 가로 스크롤 영역) */}
-              </section>
-              <section className="stream-list-section">
-                <div className="stream-section-heading">
-                  <div>
-                    <span className="section-label">LIVE NOW</span>
-                    <h2>지금 방송 중</h2>
-                  </div>
-                  <a href="/streaming" className="stream-more-link">
-                    전체보기 →``
-                  </a>
+      {/* 현재 방송 목록 (파노라마 가로 스크롤 영역) */}
+      <section className="stream-list-section">
+        <div className="stream-section-heading">
+          <div>
+            <span className="section-label">LIVE NOW</span>
+            <h2>지금 방송 중</h2>
+          </div>
+          <a href="/streaming" className="stream-more-link">
+            전체보기 →
+          </a>
+        </div>
+
+        <div className="stream-grid">
+          {liveStreams.map((stream, index) => (
+            <article className="stream-card" key={`stream-1-${stream.id}`}>
+              <div className="stream-thumbnail">
+                <video
+                  ref={(element) => {
+                    videoRefs.current[index] = element;
+                  }}
+                  className="stream-video"
+                  src={stream.video || stream1}
+                  muted
+                  autoPlay
+                  loop
+                  playsInline
+                  preload="auto"
+                />
+                <div className="stream-video-overlay" />
+                <span className="stream-live">● LIVE</span>
+                {stream.screenShare && (
+                  <span className="screen-share-badge">🖥 화면공유</span>
+                )}
+                <span className="stream-play">▶</span>
+              </div>
+
+              <div className="stream-card-content">
+                <span className="stream-category">{stream.category}</span>
+                <h3>{stream.title}</h3>
+                <p>{stream.description}</p>
+                <span className="stream-host">{stream.host}</span>
+
+                <div className="stream-card-bottom">
+                  <span>👤 {stream.viewers || 1}명 시청 중</span>
+                  <button type="button" onClick={() => navigate("/streaming/cam")}>
+                    시청하기 →
+                  </button>
                 </div>
+              </div>
+            </article>
+          ))}
 
-                <div className="stream-grid">
-                  {/* 첫 번째 목록 */}
-                  {liveStreams.map((stream, index) => (
-                    <article className="stream-card" key={`stream-1-${stream.id}`}>
-                      <div className="stream-thumbnail">
-                        <video
-                          ref={(element) => {
-                            videoRefs.current[index] = element;
-                          }}
-                          className="stream-video"
-                          src={stream.video || stream1}
-                          muted
-                          autoPlay
-                          loop
-                          playsInline
-                          preload="auto"
-                        />
-                        <div className="stream-video-overlay" />
-                        <span className="stream-live">● LIVE</span>
-                        {stream.screenShare && (
-                          <span className="screen-share-badge">🖥 화면공유</span>
-                        )}
-                        <span className="stream-play">▶</span>
-                      </div>
+          {liveStreams.map((stream, index) => (
+            <article className="stream-card" key={`stream-2-${stream.id}`}>
+              <div className="stream-thumbnail">
+                <video
+                  className="stream-video"
+                  src={stream.video || stream1}
+                  muted
+                  autoPlay
+                  loop
+                  playsInline
+                  preload="auto"
+                />
+                <div className="stream-video-overlay" />
+                <span className="stream-live">● LIVE</span>
+                {stream.screenShare && (
+                  <span className="screen-share-badge">🖥 화면공유</span>
+                )}
+                <span className="stream-play">▶</span>
+              </div>
 
-                      <div className="stream-card-content">
-                        <span className="stream-category">{stream.category}</span>
-                        <h3>{stream.title}</h3>
-                        <p>{stream.description}</p>
-                        <span className="stream-host">{stream.host}</span>
+              <div className="stream-card-content">
+                <span className="stream-category">{stream.category}</span>
+                <h3>{stream.title}</h3>
+                <p>{stream.description}</p>
+                <span className="stream-host">{stream.host}</span>
 
-                        <div className="stream-card-bottom">
-                          <span>👤 {stream.viewers || 1}명 시청 중</span>
-                          <button type="button" onClick={() => navigate("/streaming/cam")}>
-                            시청하기 →
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-
-                  {/* 🌟 무한 루프 구현을 위해 동일한 방송 목록을 한번 더 렌더링 */}
-                  {liveStreams.map((stream, index) => (
-                    <article className="stream-card" key={`stream-2-${stream.id}`}>
-                      <div className="stream-thumbnail">
-                        <video
-                          className="stream-video"
-                          src={stream.video || stream1}
-                          muted
-                          autoPlay
-                          loop
-                          playsInline
-                          preload="auto"
-                        />
-                        <div className="stream-video-overlay" />
-                        <span className="stream-live">● LIVE</span>
-                        {stream.screenShare && (
-                          <span className="screen-share-badge">🖥 화면공유</span>
-                        )}
-                        <span className="stream-play">▶</span>
-                      </div>
-
-                      <div className="stream-card-content">
-                        <span className="stream-category">{stream.category}</span>
-                        <h3>{stream.title}</h3>
-                        <p>{stream.description}</p>
-                        <span className="stream-host">{stream.host}</span>
-
-                        <div className="stream-card-bottom">
-                          <span>👤 {stream.viewers || 1}명 시청 중</span>
-                          <button type="button" onClick={() => navigate("/streaming/cam")}>
-                            시청하기 →
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
+                <div className="stream-card-bottom">
+                  <span>👤 {stream.viewers || 1}명 시청 중</span>
+                  <button type="button" onClick={() => navigate("/streaming/cam")}>
+                    시청하기 →
+                  </button>
                 </div>
-              </section>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
-
-        {/* 스트리밍 기능 소개 */}
+      {/* 스트리밍 기능 소개 및 하단 컨텐츠 */}
+      <section className="streaming-content">
         <section className="stream-feature-section">
           <div className="stream-section-heading">
             <div>
@@ -320,9 +316,6 @@ function Streaming() {
           </div>
         </section>
 
-
-
-      <section className="streaming-content">
         {/* 예정된 방송 */}
         <section className="stream-upcoming-section">
           <div className="stream-section-heading">

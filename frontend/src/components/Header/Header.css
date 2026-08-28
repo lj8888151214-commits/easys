@@ -117,14 +117,14 @@
 }
 
 .main-nav a {
-  position: relative;
-  display: inline-block;
-  padding: 8px 2px;
-  color: white;
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: 600;
-  transition:
+    position: relative;
+    display: inline-block;
+    padding: 8px 2px;
+    color: #000000;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+    transition:
     color 0.25s ease,
     transform 0.25s ease;
 }
@@ -140,6 +140,7 @@
   bottom: 0;
   width: 0;
   height: 2px;
+
   border-radius: 10px;
   background: currentColor;
   transform: translateX(-50%);
@@ -147,7 +148,7 @@
 }
 .campage .main-header .main-nav a,
 .campage .main-header.scrolled .main-nav a {
-  color: #ffffff;
+  color: #000000;
 }
 
 .main-nav a:hover {
@@ -437,6 +438,7 @@
 
   .main-nav a {
     font-size: 14px;
+
   }
 
   .header-search form {
@@ -605,7 +607,8 @@
 
   .mobile-menu nav > a {
     padding: 14px 5px;
-    color: #2e4033;
+
+    color: #000000; /* 진한 회색/녹색에서 완전한 검은색으로 변경 */
     text-decoration: none;
     font-size: 15px;
     font-weight: 600;
