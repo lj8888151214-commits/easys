@@ -47,11 +47,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(signalWebSocketHandler(), "/signal")
-                .addInterceptors(new HttpSessionHandshakeInterceptor()) // 🌟 세션에서 닉네임 자동 추출
+                .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .setAllowedOriginPatterns("*");
     }
 
-    // 🌟 핸드셰이크 시점에 Spring Security 세션에서 실제 로그인 닉네임/이메일 추출
     public static class HttpSessionHandshakeInterceptor implements HandshakeInterceptor {
         @Override
         public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
@@ -85,11 +84,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
         @Override
         public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-            // 닫힌 세션 정리
-            sessions.entrySet().removeIf(entry -> !entry.getValue().isOpen());
-            userNicknames.entrySet().removeIf(entry -> !sessions.containsKey(entry.getKey()));
+            // 🌟 1. 새 연결이 들어오기 전 죽은 세션들 먼저 확실하게 청소
+            cleanupClosedSessions();
 
-            // 핸드셰이크 인터셉터에서 추출한 닉네임 우선 적용
             String initialNick = (String) session.getAttributes().get("nickname");
             if (initialNick == null || initialNick.isBlank()) {
                 initialNick = "게스트";
@@ -114,7 +111,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 String type = (String) map.get("type");
                 String target = (String) map.get("target");
 
-                // 🌟 클라이언트가 수동으로 보낸 닉네임 등록 처리
                 if ("join".equals(type)) {
                     String nickname = (String) map.get("nickname");
                     if (nickname != null && !nickname.isBlank() && !"게스트".equals(nickname)) {
@@ -125,19 +121,19 @@ public class WebSocketConfig implements WebSocketConfigurer {
                     return;
                 }
 
-                // 1:1 시그널링 메시지
-                if (target != null && !target.isEmpty()) {
+                // 🌟 1:1 시그널링 (offer, answer, candidate, request-stream 등 target이 있는 경우)
+                if (target != null && !target.isBlank()) {
                     WebSocketSession targetSession = sessions.get(target);
                     if (targetSession != null && targetSession.isOpen()) {
                         targetSession.sendMessage(message);
                     }
+                    return; // 🌟 전체 브로드캐스트로 빠지지 않도록 확실하게 차단
                 }
-                // 전체 브로드캐스트
-                else {
-                    for (WebSocketSession s : sessions.values()) {
-                        if (s.isOpen() && !s.getId().equals(session.getId())) {
-                            s.sendMessage(message);
-                        }
+
+                // 🌟 target이 없는 일반 메시지(전체 채팅 등)만 브로드캐스트
+                for (WebSocketSession s : sessions.values()) {
+                    if (s.isOpen() && !s.getId().equals(session.getId())) {
+                        s.sendMessage(message);
                     }
                 }
             } catch (Exception e) {
@@ -153,23 +149,31 @@ public class WebSocketConfig implements WebSocketConfigurer {
             broadcastUserList();
         }
 
-        private void broadcastUserList() {
-            sessions.entrySet().removeIf(entry -> !entry.getValue().isOpen());
+        // 🌟 닫힌 세션 일괄 정리 헬퍼 메서드
+        private void cleanupClosedSessions() {
+            sessions.entrySet().removeIf(entry -> entry.getValue() == null || !entry.getValue().isOpen());
             userNicknames.entrySet().removeIf(entry -> !sessions.containsKey(entry.getKey()));
+        }
+
+        private void broadcastUserList() {
+            // 🌟 목록을 만들기 전 닫힌 세션 강제 청소
+            cleanupClosedSessions();
 
             List<Map<String, String>> userList = new ArrayList<>();
-            for (String id : sessions.keySet()) {
-                userList.add(Map.of(
-                        "id", id,
-                        "nickname", userNicknames.getOrDefault(id, "게스트")
-                ));
+            for (Map.Entry<String, WebSocketSession> entry : sessions.entrySet()) {
+                if (entry.getValue().isOpen()) {
+                    userList.add(Map.of(
+                            "id", entry.getKey(),
+                            "nickname", userNicknames.getOrDefault(entry.getKey(), "게스트")
+                    ));
+                }
             }
 
             try {
                 String payload = objectMapper.writeValueAsString(Map.of(
                         "type", "userList",
                         "users", userList,
-                        "count", sessions.size()
+                        "count", userList.size()
                 ));
                 TextMessage msg = new TextMessage(payload);
 
