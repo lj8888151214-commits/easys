@@ -15,6 +15,7 @@ public class MemberResponseDto {
     private String bio;
     private LocalDateTime createdAt;
     private String profileImageUrl;
+    private String role;
 
     public MemberResponseDto(Member member) {
         this.id = member.getId();
@@ -24,5 +25,6 @@ public class MemberResponseDto {
         this.bio = member.getBio();
         this.createdAt = member.getCreatedAt();
         this.profileImageUrl = member.getProfileImageUrl();
+        this.role = member.getRole().name();
     }
 }

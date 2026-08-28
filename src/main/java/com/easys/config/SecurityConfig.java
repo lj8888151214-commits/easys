@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -109,6 +110,19 @@ public class SecurityConfig {
                                 "/study/**"
                         ).permitAll()
 
+                        // 스터디룸 목록/상세/검색/리뷰 조회 (예약 전 누구나 볼 수 있어야 함)
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/study-rooms",
+                                "/study-rooms/**"
+                        ).permitAll()
+
+                        // 스터디룸 예약 가능 시간 조회
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/reservations/availability"
+                        ).permitAll()
+
                         // 커뮤니티 게시글 조회
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -116,8 +130,54 @@ public class SecurityConfig {
                                 "/community/posts/**"
                         ).permitAll()
 
+                        // 관리자 전용 API (스터디룸/커뮤니티 관리 등)
+                        .requestMatchers(
+                                "/admin/**"
+                        ).hasRole("ADMIN")
+
                         // 그 외 모든 요청은 로그인 필요
                         .anyRequest().authenticated()
+                )
+
+                // /api/** 요청은 로그인 페이지로 리다이렉트하지 않고
+                // 401 JSON 응답을 그대로 내려준다.
+                // (스터디룸/예약/리뷰 API는 프론트에서 절대경로로 직접 호출하므로
+                //  실제 요청 경로에 /api 접두사가 그대로 남아있다)
+                .exceptionHandling(exception -> exception
+                        .defaultAuthenticationEntryPointFor(
+                                (request, response, authException) -> {
+
+                                    response.setStatus(
+                                            HttpServletResponse.SC_UNAUTHORIZED
+                                    );
+
+                                    response.setContentType(
+                                            "application/json;charset=UTF-8"
+                                    );
+
+                                    response.getWriter().write(
+                                            "{\"message\":\"로그인이 필요합니다.\"}"
+                                    );
+                                },
+                                PathPatternRequestMatcher.pathPattern("/api/**")
+                        )
+                        .defaultAccessDeniedHandlerFor(
+                                (request, response, accessDeniedException) -> {
+
+                                    response.setStatus(
+                                            HttpServletResponse.SC_FORBIDDEN
+                                    );
+
+                                    response.setContentType(
+                                            "application/json;charset=UTF-8"
+                                    );
+
+                                    response.getWriter().write(
+                                            "{\"message\":\"관리자만 접근할 수 있습니다.\"}"
+                                    );
+                                },
+                                PathPatternRequestMatcher.pathPattern("/api/**")
+                        )
                 )
 
                 // 로그인 설정

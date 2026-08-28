@@ -28,6 +28,7 @@ import StudyCreate from "./pages/StudyCreate/StudyCreate";
 import StudyDetail from "./pages/StudyDetail/StudyDetail";
 import StudyEdit from "./pages/StudyEdit/StudyEdit";
 import CamPage from "./pages/Streaming/CamPage";
+import Admin from "./pages/Admin/Admin";
 
 
 // =====================================================
@@ -225,6 +226,16 @@ function App() {
         <Route
           path="/profile/password"
           element={<PasswordChange />}
+        />
+
+
+        {/* =================================================
+            관리자
+        ================================================= */}
+
+        <Route
+          path="/admin"
+          element={<Admin />}
         />
 
       </Routes>

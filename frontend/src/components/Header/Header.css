@@ -351,6 +351,25 @@
   transform: translateY(-2px);
 }
 
+.admin-link {
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  color: white;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.main-header.scrolled .admin-link {
+  border-color: #a9c1ad;
+  color: #2e4033;
+}
+
+.admin-link:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 /* =====================================================
    PC 로그아웃
 ===================================================== */
@@ -531,6 +550,7 @@
 
   /* 모바일에서는 닉네임 / 로그아웃 숨김 */
   .user-nickname,
+  .admin-link,
   .logout-btn {
     display: none;
   }
