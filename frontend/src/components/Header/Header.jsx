@@ -212,6 +212,16 @@ function Header() {
                     "마이페이지"}
                 </Link>
 
+                {/* 관리자 링크 */}
+                {user.role === "ADMIN" && (
+                  <Link
+                    to="/admin"
+                    className="admin-link"
+                  >
+                    관리자
+                  </Link>
+                )}
+
                 {/* PC 로그아웃 */}
                 <button
                   type="button"
@@ -307,7 +317,18 @@ function Header() {
                     "마이페이지"}
                 </span>
               </Link>
-            ) : (
+            ) : null}
+
+            {user && user.role === "ADMIN" && (
+              <Link
+                to="/admin"
+                onClick={handleMenuClose}
+              >
+                관리자
+              </Link>
+            )}
+
+            {!user && (
               <>
                 <Link
                   to="/login"

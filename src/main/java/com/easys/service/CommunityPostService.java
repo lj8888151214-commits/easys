@@ -7,6 +7,7 @@ import com.easys.dto.CommunityPostUpdateRequest;
 import com.easys.entity.CommunityImage;
 import com.easys.entity.CommunityPost;
 import com.easys.entity.Member;
+import com.easys.entity.MemberRole;
 import com.easys.repository.CommentRepository;
 import com.easys.repository.CommunityPostRepository;
 import com.easys.repository.PostLikeRepository;
@@ -209,13 +210,21 @@ public class CommunityPostService {
                         );
 
 
-        // 작성자 확인
-        if (!post.getMember().getId().equals(member.getId())) {
+        // 작성자 본인이거나 관리자만 삭제 가능
+        boolean isOwner =
+                post.getMember().getId().equals(member.getId());
+
+        if (!isOwner && member.getRole() != MemberRole.ADMIN) {
 
             throw new IllegalArgumentException(
                     "게시글 작성자만 삭제할 수 있습니다."
             );
         }
+
+
+        // 댓글/좋아요가 남아있으면 FK 제약으로 삭제가 실패하므로 먼저 정리
+        commentRepository.deleteByCommunityPost_Id(postId);
+        postLikeRepository.deleteByCommunityPostId(postId);
 
 
         // 게시글 삭제

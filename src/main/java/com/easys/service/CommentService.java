@@ -6,6 +6,7 @@ import com.easys.dto.CommentUpdateRequest;
 import com.easys.entity.Comment;
 import com.easys.entity.CommunityPost;
 import com.easys.entity.Member;
+import com.easys.entity.MemberRole;
 import com.easys.repository.CommentRepository;
 import com.easys.repository.CommunityPostRepository;
 import lombok.RequiredArgsConstructor;
@@ -134,8 +135,11 @@ public class CommentService {
                         );
 
 
-        // 댓글 작성자 확인
-        if (!comment.getMember().getId().equals(member.getId())) {
+        // 댓글 작성자 본인이거나 관리자만 삭제 가능
+        boolean isOwner =
+                comment.getMember().getId().equals(member.getId());
+
+        if (!isOwner && member.getRole() != MemberRole.ADMIN) {
 
             throw new IllegalArgumentException(
                     "댓글 작성자만 삭제할 수 있습니다."

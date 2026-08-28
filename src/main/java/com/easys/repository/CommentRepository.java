@@ -17,4 +17,9 @@ public interface CommentRepository
     long countByCommunityPost_Id(
             Long postId
     );
+
+    // 게시글 삭제 시 댓글을 함께 정리하기 위한 일괄 삭제
+    void deleteByCommunityPost_Id(
+            Long postId
+    );
 }
