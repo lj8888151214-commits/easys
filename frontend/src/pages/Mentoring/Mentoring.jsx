@@ -16,18 +16,35 @@ function Mentoring() {
   const [detailReservation, setDetailReservation] = useState(null);
   // 거절 사유 입력 모달 대상 예약
   const [rejectingReservation, setRejectingReservation] = useState(null);
+  // 삭제 확인 모달 대상 멘토링(offering)
+  const [deletingOffering, setDeletingOffering] = useState(null);
   const [rejectReasonInput, setRejectReasonInput] = useState("");
   const [showRegister, setShowRegister] = useState(false);
   const [isEditingMentor, setIsEditingMentor] = useState(false);
   // registerMode: "profile" = 멘토 등록/수정, "offering" = 멘토링 등록/수정
   const [registerMode, setRegisterMode] = useState("profile");
   const [editingOfferingId, setEditingOfferingId] = useState(null);
+  // 수정 중인 멘토링에서 이미 예약이 걸려 삭제/시간 변경이 불가능한 날짜 목록
+  const [registerLockedDates, setRegisterLockedDates] = useState([]);
   const [user, setUser] = useState(null);
   const [myMentor, setMyMentor] = useState(null);
   const [myOfferings, setMyOfferings] = useState([]);
+  const [myOfferingsPage, setMyOfferingsPage] = useState(1);
+  const MY_OFFERINGS_PAGE_SIZE = 12;
   const [selectedMentorOfferings, setSelectedMentorOfferings] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [mentors, setMentors] = useState([]);
+  const [offerings, setOfferings] = useState([]);
+  const [mentorGridPage, setMentorGridPage] = useState(1);
+  const MENTOR_GRID_PAGE_SIZE = 4;
+  useEffect(() => {
+    setMentorGridPage(1);
+  }, [category]);
+  const [myRequestsPage, setMyRequestsPage] = useState(1);
+  const [receivedRequestsPage, setReceivedRequestsPage] = useState(1);
+  const [myHistoryMentorPage, setMyHistoryMentorPage] = useState(1);
+  const [myHistoryApplicantPage, setMyHistoryApplicantPage] = useState(1);
+  const RECORDS_PAGE_SIZE = 9;
   const [bookedReservationDates, setBookedReservationDates] = useState([]);
   const [reviewSummary, setReviewSummary] = useState({
     averageRating: 0,
@@ -120,7 +137,90 @@ function Mentoring() {
       ? mentors
       : mentors.filter((mentor) => mentor.skills.includes(category));
 
+  // 공개 mentor-grid는 멘토링(offering) 단위로 필터링한다.
+  const filteredOfferings =
+    category === "전체"
+      ? offerings
+      : offerings.filter((offering) => offering.skillTags.includes(category));
+
+  const isMyOffering = (offering) =>
+    !!myMentor && offering.mentorId === myMentor.id;
+
+  // "내가 등록한 멘토링"은 관리(진행 중/예정) 화면이다. 슬롯이 하나라도
+  // 남아있으면(신청 가능/예약중/승인됨) 계속 보여주고, 그 안의 완료된
+  // 슬롯만 개별적으로 숨긴다(아래 카드 렌더링에서 처리). 다만 offering의
+  // 슬롯이 전부 완료 상태라면 더는 관리할 게 없으므로 카드 자체를
+  // "나의 멘토링 기록"으로 넘기고 여기서는 제외한다.
+  const visibleMyOfferings = myOfferings.filter((offering) => {
+    const slots = Array.isArray(offering.slots) ? offering.slots : [];
+    return !(
+      slots.length > 0 &&
+      slots.every((slot) => slot.reservationStatus === "COMPLETED")
+    );
+  });
+
+  // 여러 목록(공개 멘토 카드, 나의 멘토링 기록 각 섹션)에서 공통으로 쓰는
+  // 페이지네이션 계산. 항목 수가 바뀌어 현재 페이지가 범위를 벗어나면
+  // 자동으로 마지막 페이지로 보정한다.
+  const paginate = (list, page, size) => {
+    const totalPages = Math.max(1, Math.ceil(list.length / size));
+    const currentPage = Math.min(page, totalPages);
+    const start = (currentPage - 1) * size;
+    return {
+      pageItems: list.slice(start, start + size),
+      totalPages,
+      currentPage
+    };
+  };
+
+  // "내가 등록한 멘토링"에서 이미 쓰던 것과 동일한 페이지네이션 UI를
+  // 재사용한다(같은 CSS 클래스를 그대로 써서 디자인을 통일한다).
+  const renderPaginationNav = (totalPages, currentPage, onPageChange, ariaLabel) => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <nav className="offering-pagination" aria-label={ariaLabel}>
+        <button
+          type="button"
+          className="offering-pagination-arrow"
+          disabled={currentPage === 1}
+          onClick={() => onPageChange(currentPage - 1)}
+        >
+          ‹
+        </button>
+
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <button
+            type="button"
+            key={page}
+            className={`offering-pagination-page ${
+              page === currentPage ? "active" : ""
+            }`}
+            onClick={() => onPageChange(page)}
+          >
+            {page}
+          </button>
+        ))}
+
+        <button
+          type="button"
+          className="offering-pagination-arrow"
+          disabled={currentPage === totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+        >
+          ›
+        </button>
+      </nav>
+    );
+  };
+
   const getProfileImage = (mentor) => mentor?.profileImage || "";
+
+  // "내가 등록한 멘토링"의 모든 카드는 같은 멘토(나)의 것이므로,
+  // 공개 mentor-grid와 동일한 /api${profileImageUrl} 규칙으로 한 번만 계산해 재사용한다.
+  const myAvatarImage = myMentor?.profileImageUrl
+    ? `/api${myMentor.profileImageUrl}`
+    : "";
 
   const normalizeLinkUrl = (value, service) => {
     const trimmedValue = value?.trim();
@@ -315,6 +415,20 @@ function Mentoring() {
     }
 
     if (item.status === "APPROVED") {
+      // 멘토가 승인했더라도 결제가 완료되지 않았다면 예약이 아직
+      // 최종 확정된 것이 아니므로 "결제 대기중" 상태로 먼저 보여준다.
+      if (item.paymentStatus !== "PAID") {
+        return {
+          key: "payment-pending",
+          emoji: "💳",
+          label: "결제 대기중",
+          message:
+            role === "mentor"
+              ? "신청자의 결제를 기다리고 있습니다."
+              : "결제를 완료하면 멘토링이 최종 확정됩니다."
+        };
+      }
+
       const daysLeft = getDaysUntil(item.reservationDate);
 
       if (daysLeft === 0) {
@@ -553,6 +667,12 @@ function Mentoring() {
     if (!date || isPastDate(date)) return;
 
     const dateString = formatDateString(date);
+
+    if (registerLockedDates.includes(dateString)) {
+      alert("이미 예약이 있는 날짜는 삭제하거나 변경할 수 없습니다.");
+      return;
+    }
+
     const dayName = getWeekDayName(date);
 
     setRegisterForm((prev) => {
@@ -586,6 +706,11 @@ function Mentoring() {
   };
 
   const updateScheduleTime = (dateString, field, value) => {
+    if (registerLockedDates.includes(dateString)) {
+      alert("이미 예약이 있는 날짜는 삭제하거나 변경할 수 없습니다.");
+      return;
+    }
+
     setRegisterForm((prev) => ({
       ...prev,
       availableSchedules: prev.availableSchedules.map((s) => {
@@ -598,6 +723,11 @@ function Mentoring() {
   };
 
   const removeSchedule = (dateString) => {
+    if (registerLockedDates.includes(dateString)) {
+      alert("이미 예약이 있는 날짜는 삭제하거나 변경할 수 없습니다.");
+      return;
+    }
+
     setRegisterForm((prev) => {
       const nextSchedules = prev.availableSchedules.filter(
         (s) => s.date !== dateString
@@ -681,7 +811,7 @@ function Mentoring() {
   // 내가 등록한 멘토링(여러 개) 목록 — 멘토 등록(MentorProfile)과는
   // 별개의 데이터이므로 별도 API로 조회한다.
   const fetchMyOfferings = async () => {
-    if (!myMentor) {
+    if (!user) {
       setMyOfferings([]);
       return;
     }
@@ -788,6 +918,58 @@ function Mentoring() {
 
   useEffect(() => {
     fetchMentors();
+  }, []);
+
+  // 공개 mentor-grid는 "사람"이 아니라 "등록한 멘토링(MentoringOffering)" 단위로 표시한다.
+  // 같은 멘토가 여러 멘토링을 등록했다면 그만큼 여러 카드로 노출된다.
+  const fetchOfferings = async () => {
+    try {
+      const response = await fetch("/api/mentor/offerings", {
+        method: "GET",
+        credentials: "include"
+      });
+
+      if (!response.ok) {
+        console.error("공개 멘토링 목록 조회 실패:", response.status);
+        return;
+      }
+
+      const data = await response.json();
+
+      // 주의: offering.skills / offering.consultationFields는 원래 서버가
+      // 콤마로 구분된 "문자열"로 내려주고, openOfferingEditModal/openReservationForOffering이
+      // 그 문자열을 그대로 split(",")해서 쓴다. 여기서 배열로 덮어써버리면
+      // (배열에는 .split이 없어) 그 두 함수가 클릭 시 예외를 던지면서
+      // "수정하기"/"신청하기" 버튼이 아무 반응 없는 것처럼 보이게 된다.
+      // 그래서 원본 문자열 필드는 그대로 두고, 화면 표시/필터링에 필요한
+      // 배열은 별도 이름(skillTags/fieldTags)으로만 추가한다.
+      const offeringList = Array.isArray(data)
+        ? data.map((offering) => ({
+            ...offering,
+            skillTags: offering.skills
+              ? offering.skills
+                  .split(",")
+                  .map((item) => item.trim())
+                  .filter(Boolean)
+              : [],
+            fieldTags: offering.consultationFields
+              ? offering.consultationFields
+                  .split(",")
+                  .map((item) => item.trim())
+                  .filter(Boolean)
+              : [],
+            slots: Array.isArray(offering.slots) ? offering.slots : []
+          }))
+        : [];
+
+      setOfferings(offeringList);
+    } catch (error) {
+      console.error("공개 멘토링 목록 조회 오류:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchOfferings();
   }, []);
 
   const fetchMyReservations = async () => {
@@ -1141,14 +1323,19 @@ function Mentoring() {
   // =====================================================
 
   const openOfferingCreateModal = () => {
-    if (!myMentor) {
-      alert("멘토링 등록은 멘토 등록 후 이용할 수 있습니다.");
+    if (!user) {
+      alert("멘토 등록은 로그인 후 이용할 수 있습니다.");
+      navigate("/login");
       return;
     }
 
+    // "멘토 등록하기"를 처음 누르는 경우에도(아직 MentorProfile이 없어도)
+    // 곧바로 새 멘토링 등록 폼을 열 수 있다. MentorProfile은 서버에서
+    // 이 폼을 처음 제출할 때 자동으로 함께 생성된다.
     resetRegisterForm();
     setRegisterMode("offering");
     setEditingOfferingId(null);
+    setRegisterLockedDates([]);
 
     const today = new Date();
     setRegisterCalendarDate(
@@ -1158,8 +1345,60 @@ function Mentoring() {
     setShowRegister(true);
   };
 
+  const openDeleteOfferingModal = (offering) => {
+    setDeletingOffering(offering);
+  };
+
+  const closeDeleteOfferingModal = () => {
+    setDeletingOffering(null);
+  };
+
+  const confirmDeleteOffering = async () => {
+    if (!deletingOffering) return;
+
+    try {
+      const response = await fetch(
+        `/api/mentor/offerings/${deletingOffering.id}`,
+        {
+          method: "DELETE",
+          credentials: "include"
+        }
+      );
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        alert(data?.message || "멘토링 삭제 중 오류가 발생했습니다.");
+        return;
+      }
+
+      alert("멘토링이 삭제되었습니다.");
+      setDeletingOffering(null);
+
+      // 같은 MentoringOffering 데이터를 관리용/공개용에서 각각 보여주는 구조이므로,
+      // 삭제 후 두 목록을 모두 다시 불러와 양쪽에서 자연스럽게 사라지게 한다.
+      await fetchMyOfferings();
+      await fetchOfferings();
+    } catch (error) {
+      console.error("멘토링 삭제 오류:", error);
+      alert("서버와 통신하는 중 오류가 발생했습니다.");
+    }
+  };
+
   const openOfferingEditModal = (offering) => {
-    const schedules = parseSchedulesFromMentor(offering);
+    const lockedDates = Array.isArray(offering.slots)
+      ? offering.slots
+          .filter((slot) => slot.available === false)
+          .map((slot) => slot.date)
+      : [];
+
+    // 이미 지난 날짜인데 예약도 없는(=아무도 신청하지 않고 그냥 지나간) 슬롯은
+    // 수정 대상에서 자동으로 제외한다. 예약이 있어 보호되는 날짜는 지난 날짜여도 남겨둔다.
+    const schedules = parseSchedulesFromMentor(offering).filter(
+      (schedule) =>
+        lockedDates.includes(schedule.date) ||
+        !isPastDate(new Date(`${schedule.date}T00:00:00`))
+    );
 
     setRegisterForm({
       title: offering.title || "",
@@ -1203,6 +1442,7 @@ function Mentoring() {
 
     setRegisterMode("offering");
     setEditingOfferingId(offering.id);
+    setRegisterLockedDates(lockedDates);
 
     const today = new Date();
     setRegisterCalendarDate(
@@ -1329,7 +1569,23 @@ function Mentoring() {
         setShowRegister(false);
         setEditingOfferingId(null);
 
+        // 처음으로 "멘토 등록하기"를 눌러 첫 멘토링을 만든 경우,
+        // 서버에서 MentorProfile이 함께 자동 생성되므로 화면 상태도 갱신한다.
+        if (!myMentor) {
+          try {
+            const meResponse = await fetch("/api/mentor/me", {
+              credentials: "include"
+            });
+            if (meResponse.ok) {
+              setMyMentor(await meResponse.json());
+            }
+          } catch (meError) {
+            console.error("내 멘토 정보 갱신 오류:", meError);
+          }
+        }
+
         await fetchMyOfferings();
+        await fetchOfferings();
       } catch (error) {
         console.error("멘토링 등록/수정 오류:", error);
         alert("서버와 통신하는 중 오류가 발생했습니다.");
@@ -1731,6 +1987,14 @@ function Mentoring() {
       alert(data?.message || "처리가 완료되었습니다.");
       fetchReceivedReservations();
       fetchMyReservations();
+      // "내가 등록한 멘토링" 카드의 슬롯별 예약 상태(및 공개 목록의 신청 가능 여부)도
+      // 승인/거절 직후 바로 반영되도록 함께 새로고침한다.
+      fetchMyOfferings();
+      fetchOfferings();
+      // 수업 완료 직후 "후기 작성하기" 버튼이 바로 보이도록 후기 작성 가능 목록도
+      // 함께 새로고침한다(안 하면 방금 완료한 예약이 아직 옛 목록에 없어
+      // "후기 작성 완료"로 잘못 보였다).
+      fetchMyReviewEligibleIds();
     } catch (error) {
       console.error("멘토링 신청 처리 오류:", error);
       alert("서버와 통신하는 중 오류가 발생했습니다.");
@@ -1770,6 +2034,34 @@ function Mentoring() {
 
   const openReservationDetail = (item, role) => {
     setDetailReservation({ item, role });
+  };
+
+  // "나의 멘토링 기록"에서 삭제 — 예약 데이터 자체를 지우는 것이 아니라
+  // 본인 화면에서만 숨긴다(상대방의 기록/후기/캘린더는 그대로 유지).
+  const hideMyRecord = async (reservationId) => {
+    const confirmed = window.confirm(
+      "이 멘토링 기록을 나의 기록에서 삭제하시겠습니까?\n상대방의 기록에는 영향이 없습니다."
+    );
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(
+        `/api/mentor/reservation/${reservationId}/my-record`,
+        { method: "DELETE", credentials: "include" }
+      );
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        alert(data?.message || "기록 삭제 중 오류가 발생했습니다.");
+        return;
+      }
+
+      fetchMyReservations();
+      fetchReceivedReservations();
+    } catch (error) {
+      console.error("나의 멘토링 기록 삭제 오류:", error);
+      alert("서버와 통신하는 중 오류가 발생했습니다.");
+    }
   };
 
   const handleReviewSubmit = async (e) => {
@@ -1998,17 +2290,261 @@ function Mentoring() {
               멘토 둘러보기 →
             </button>
 
+            {/*
+              "멘토 등록하기"는 클릭할 때마다 항상 새로운 멘토링(MentoringOffering)을
+              등록하는 버튼이다. 한 번 등록했다고 "수정하기"로 바뀌지 않는다.
+              (기존 멘토링 수정은 "내가 등록한 멘토링"의 각 카드 안 [수정하기]로만 한다.)
+            */}
             <button
               type="button"
               className="mentor-register-button"
-              onClick={openRegisterModal}
+              onClick={openOfferingCreateModal}
             >
-              {myMentor
-                ? "내 멘토 정보 수정하기 →"
-                : "멘토 등록하기 →"}
+              멘토 등록하기 →
             </button>
           </div>
         </div>
+
+        {user && myMentor && (
+          <div className="reservation-board-card my-offerings-section">
+            <div className="offering-section-header">
+              <div>
+                <span className="section-label">MY MENTORING OFFERINGS</span>
+                <h3>내가 등록한 멘토링</h3>
+              </div>
+
+              <button
+                type="button"
+                className="offering-add-button"
+                onClick={openOfferingCreateModal}
+              >
+                + 멘토 등록하기
+              </button>
+            </div>
+
+            {visibleMyOfferings.length > 0 ? (
+              (() => {
+                const totalPages = Math.max(
+                  1,
+                  Math.ceil(visibleMyOfferings.length / MY_OFFERINGS_PAGE_SIZE)
+                );
+                const currentPage = Math.min(myOfferingsPage, totalPages);
+                const pageStart = (currentPage - 1) * MY_OFFERINGS_PAGE_SIZE;
+                const pageItems = visibleMyOfferings.slice(
+                  pageStart,
+                  pageStart + MY_OFFERINGS_PAGE_SIZE
+                );
+
+                return (
+                  <>
+                    <div className="offering-manage-grid">
+                      {pageItems.map((offering) => {
+                        // 완료된 슬롯은 "내가 등록한 멘토링"에 계속 쌓아두지 않고
+                        // "나의 멘토링 기록"에서만 확인하도록, 관리 카드에서는 숨긴다.
+                        const slots = (
+                          Array.isArray(offering.slots) ? offering.slots : []
+                        ).filter((slot) => slot.reservationStatus !== "COMPLETED");
+                        const skillTags = offering.skills
+                          ? offering.skills
+                              .split(",")
+                              .map((tag) => tag.trim())
+                              .filter(Boolean)
+                          : [];
+                        const fieldTags = offering.consultationFields
+                          ? offering.consultationFields
+                              .split(",")
+                              .map((tag) => tag.trim())
+                              .filter(Boolean)
+                          : [];
+
+                        return (
+                          <article className="offering-manage-card" key={offering.id}>
+                            <div className="offering-manage-card-title">
+                              <div className="mentor-avatar tiny">
+                                {myAvatarImage ? (
+                                  <img
+                                    src={myAvatarImage}
+                                    alt={`${offering.mentorName} 프로필`}
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                    }}
+                                  />
+                                ) : (
+                                  (offering.mentorName || "M").charAt(0)
+                                )}
+                              </div>
+                              <strong>{offering.title}</strong>
+                            </div>
+
+                            {(skillTags.length > 0 || fieldTags.length > 0) && (
+                              <div className="offering-manage-tags">
+                                {skillTags.slice(0, 3).map((tag) => (
+                                  <span className="tag-skill" key={`s-${tag}`}>
+                                    {tag}
+                                  </span>
+                                ))}
+                                {fieldTags.slice(0, 2).map((tag) => (
+                                  <span className="tag-field" key={`f-${tag}`}>
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {slots.length > 0 && (
+                              <div className="offering-manage-slots">
+                                {slots.map((slot) => {
+                                  const slotLabel = `${Number(
+                                    slot.date.slice(5, 7)
+                                  )}/${Number(slot.date.slice(8, 10))} ${
+                                    slot.startTime
+                                  }`;
+
+                                  if (slot.available) {
+                                    return (
+                                      <div
+                                        key={`${slot.date}-${slot.startTime}`}
+                                        className="offering-manage-slot available"
+                                      >
+                                        <span className="offering-manage-slot-time">
+                                          {slotLabel}
+                                        </span>
+                                        <span className="offering-slot-status available">
+                                          신청 가능
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+
+                                  const phase = getReservationPhase(
+                                    {
+                                      status: slot.reservationStatus,
+                                      reservationDate: slot.date,
+                                      rejectReason: null,
+                                      paymentStatus: slot.paymentStatus
+                                    },
+                                    "mentor"
+                                  );
+
+                                  return (
+                                    <div
+                                      key={`${slot.date}-${slot.startTime}`}
+                                      className="offering-manage-slot booked"
+                                    >
+                                      <div className="offering-manage-slot-header">
+                                        <span className="offering-manage-slot-time">
+                                          {slotLabel}
+                                        </span>
+                                        <em className={`reservation-status ${phase.key}`}>
+                                          {phase.emoji} {phase.label}
+                                        </em>
+                                      </div>
+
+                                      <span className="offering-manage-slot-applicant">
+                                        신청자: {slot.applicantNickname}
+                                      </span>
+
+                                      {slot.reservationStatus === "PENDING" && (
+                                        <div className="reservation-board-actions">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleReservationDecision(
+                                                slot.reservationId,
+                                                "approve"
+                                              )
+                                            }
+                                          >
+                                            승인
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="reject"
+                                            onClick={() =>
+                                              openRejectModal({
+                                                id: slot.reservationId,
+                                                memberNickname: slot.applicantNickname
+                                              })
+                                            }
+                                          >
+                                            거절
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            <div className="offering-manage-actions">
+                              <button
+                                type="button"
+                                className="offering-manage-edit-button"
+                                onClick={() => openOfferingEditModal(offering)}
+                              >
+                                수정하기
+                              </button>
+                              <button
+                                type="button"
+                                className="offering-manage-delete-button"
+                                onClick={() => openDeleteOfferingModal(offering)}
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+
+                    {totalPages > 1 && (
+                      <nav className="offering-pagination" aria-label="내가 등록한 멘토링 페이지">
+                        <button
+                          type="button"
+                          className="offering-pagination-arrow"
+                          disabled={currentPage === 1}
+                          onClick={() => setMyOfferingsPage(currentPage - 1)}
+                        >
+                          ‹
+                        </button>
+
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                          (page) => (
+                            <button
+                              type="button"
+                              key={page}
+                              className={`offering-pagination-page ${
+                                page === currentPage ? "active" : ""
+                              }`}
+                              onClick={() => setMyOfferingsPage(page)}
+                            >
+                              {page}
+                            </button>
+                          )
+                        )}
+
+                        <button
+                          type="button"
+                          className="offering-pagination-arrow"
+                          disabled={currentPage === totalPages}
+                          onClick={() => setMyOfferingsPage(currentPage + 1)}
+                        >
+                          ›
+                        </button>
+                      </nav>
+                    )}
+                  </>
+                );
+              })()
+            ) : (
+              <p className="offering-empty-text">
+                아직 등록한 멘토링이 없습니다. 새로운 멘토링을
+                등록해보세요.
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="mentoring-filter" id="mentor-explore">
           {categories.map((item) => (
@@ -2025,24 +2561,37 @@ function Mentoring() {
           ))}
         </div>
 
-        {filteredMentors.length > 0 ? (
-          <div className="mentor-grid">
-            {filteredMentors.map((mentor) => {
-              const image = getProfileImage(mentor);
-              const isMyCard = isMyMentorCard(mentor);
+        <div className="mentor-grid-section">
+        {filteredOfferings.length > 0 ? (
+          (() => {
+            const {
+              pageItems: mentorGridPageItems,
+              totalPages: mentorGridTotalPages,
+              currentPage: mentorGridCurrentPage
+            } = paginate(filteredOfferings, mentorGridPage, MENTOR_GRID_PAGE_SIZE);
+
+            return (
+              <>
+                <div className="mentor-grid">
+                  {mentorGridPageItems.map((offering) => {
+                    const isMyCard = isMyOffering(offering);
+              const mentorProfile = mentors.find(
+                (mentor) => mentor.id === offering.mentorId
+              );
+              const image = getProfileImage(mentorProfile);
 
               return (
                 <article
                   className={`mentor-card ${
                     isMyCard ? "my-mentor-card" : ""
                   }`}
-                  key={mentor.id}
+                  key={offering.id}
                 >
                   <div className="mentor-card-top">
                     <div className="mentor-basic">
                       <div className="mentor-type-badge-row">
                         <span>
-                          {mentor.mentoringType || "MENTOR"}
+                          {offering.mentoringType || "MENTOR"}
                         </span>
                         {isMyCard && (
                           <span className="my-mentor-card-badge">
@@ -2051,14 +2600,21 @@ function Mentoring() {
                         )}
                       </div>
 
-                      <h3>{mentor.name}</h3>
+                      <h3>{offering.title}</h3>
 
-                      <p className="mentor-card-rating">
-                        ★ {formatRating(mentor.averageRating)}
-                        <span>후기 {mentor.reviewCount || 0}개</span>
-                      </p>
-
-                      <p>{mentor.career}</p>
+                      {mentorProfile ? (
+                        <button
+                          type="button"
+                          className="mentor-card-mentor-link"
+                          onClick={() => setSelectedMentor(mentorProfile)}
+                        >
+                          👤 {offering.mentorName} 멘토 프로필 보기
+                        </button>
+                      ) : (
+                        <p className="mentor-card-mentor-name">
+                          👤 {offering.mentorName}
+                        </p>
+                      )}
                     </div>
 
                     <div className="mentor-profile">
@@ -2066,40 +2622,37 @@ function Mentoring() {
                         {image ? (
                           <img
                             src={image}
-                            alt={`${mentor.name} 프로필`}
+                            alt={`${offering.mentorName} 프로필`}
                             onError={(e) => {
-                              e.currentTarget.style.display =
-                                "none";
+                              e.currentTarget.style.display = "none";
                             }}
                           />
                         ) : (
-                          mentor.name.charAt(0)
+                          offering.mentorName.charAt(0)
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <p className="mentor-description">
-                    {mentor.description ||
-                      "멘토 소개가 등록되지 않았습니다."}
-                  </p>
-
-                  {mentor.availableSchedules?.length > 0 && (
+                  {offering.slots.length > 0 && (
                     <div className="mentor-card-schedules">
-                      <small>상담 가능 일정</small>
-                      {mentor.availableSchedules.slice(0, 3).map((schedule) => (
-                        <span key={schedule.date}>
-                          {`${Number(schedule.date.slice(5, 7))}/${Number(schedule.date.slice(8, 10))}`} ({schedule.day}) · {schedule.startTime} ~ {schedule.endTime}
+                      <small>예약 가능 일정</small>
+                      {offering.slots.slice(0, 3).map((slot) => (
+                        <span key={`${slot.date}-${slot.startTime}`}>
+                          {`${Number(slot.date.slice(5, 7))}/${Number(
+                            slot.date.slice(8, 10)
+                          )}`}{" "}
+                          · {slot.startTime} ~ {slot.endTime}
                         </span>
                       ))}
-                      {mentor.availableSchedules.length > 3 && (
-                        <span>외 {mentor.availableSchedules.length - 3}일</span>
+                      {offering.slots.length > 3 && (
+                        <span>외 {offering.slots.length - 3}건</span>
                       )}
                     </div>
                   )}
 
                   <div className="mentor-consultation-tags">
-                    {mentor.consultationTypes
+                    {offering.fieldTags
                       .slice(0, 3)
                       .map((type) => (
                         <span key={type}>{type}</span>
@@ -2107,7 +2660,7 @@ function Mentoring() {
                   </div>
 
                   <div className="mentor-skills">
-                    {mentor.skills.map((skill) => (
+                    {offering.skillTags.map((skill) => (
                       <span key={skill}>{skill}</span>
                     ))}
                   </div>
@@ -2118,128 +2671,119 @@ function Mentoring() {
 
                       <strong>
                         {Number(
-                          mentor.price
+                          offering.price
                         ).toLocaleString()}
                         원
                       </strong>
                     </div>
 
-                    <button
-                      type="button"
-                      className={
-                        isMyCard
-                          ? "mentor-card-edit-button"
-                          : ""
-                      }
-                      onClick={() => {
-                        if (isMyCard) {
-                          openRegisterModal();
-                        } else {
-                          setSelectedMentor(mentor);
+                    {isMyCard ? (
+                      <button
+                        type="button"
+                        className="mentor-card-edit-button"
+                        onClick={() => openOfferingEditModal(offering)}
+                      >
+                        수정하기 →
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openReservationForOffering(
+                            {
+                              id: offering.mentorId,
+                              name: offering.mentorName,
+                              profileImage: mentorProfile?.profileImage || ""
+                            },
+                            offering
+                          )
                         }
-                      }}
-                    >
-                      {isMyCard
-                        ? "내 멘토 정보 수정 →"
-                        : "상세보기 →"}
-                    </button>
+                      >
+                        신청하기 →
+                      </button>
+                    )}
                   </div>
                 </article>
               );
-            })}
-          </div>
+                  })}
+                </div>
+
+                {renderPaginationNav(
+                  mentorGridTotalPages,
+                  mentorGridCurrentPage,
+                  setMentorGridPage,
+                  "공개 멘토링 페이지"
+                )}
+              </>
+            );
+          })()
         ) : (
           <div className="mentor-empty">
             {category === "전체"
-              ? "승인된 멘토가 아직 없습니다."
-              : `${category} 분야의 멘토가 아직 없습니다.`}
+              ? "신청 가능한 멘토링이 아직 없습니다."
+              : `${category} 분야의 신청 가능한 멘토링이 아직 없습니다.`}
           </div>
         )}
+        </div>
 
         {user &&
-          (myMentor ||
-            activeMyReservations.length > 0 ||
+          (activeMyReservations.length > 0 ||
             visibleReceivedReservations.length > 0 ||
             completedMyReservations.length > 0 ||
             completedReceivedReservations.length > 0) && (
             <section className="mentoring-reservation-board">
-              {myMentor && (
-                <div className="reservation-board-card reservation-board-full">
-                  <span className="section-label">MY MENTORING OFFERINGS</span>
-                  <h3>내가 등록한 멘토링</h3>
-
-                  {myOfferings.length > 0 ? (
-                    <ul>
-                      {myOfferings.map((offering) => (
-                        <li key={offering.id}>
-                          <div>
-                            <strong>{offering.title}</strong>
-                            <span>
-                              {offering.mentoringType} ·{" "}
-                              {Number(offering.price || 0).toLocaleString()}원
-                            </span>
-                          </div>
-                          <div className="reservation-board-actions">
-                            <button
-                              type="button"
-                              onClick={() => openOfferingEditModal(offering)}
-                            >
-                              수정
-                            </button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="offering-empty-text">
-                      아직 등록한 멘토링이 없습니다. 새로운 멘토링을
-                      등록해보세요.
-                    </p>
-                  )}
-
-                  <button
-                    type="button"
-                    className="offering-add-button"
-                    onClick={openOfferingCreateModal}
-                  >
-                    + 새로운 멘토링 등록
-                  </button>
-                </div>
-              )}
+              <div className="reservation-board-header reservation-board-full">
+                <span className="section-label">MY MENTORING RECORDS</span>
+                <h2>나의 멘토링 기록</h2>
+              </div>
 
               {activeMyReservations.length > 0 && (
-                <div className="reservation-board-card">
+                <div className="reservation-board-card reservation-board-full">
                   <span className="section-label">MY REQUESTS</span>
                   <h3>내가 신청한 멘토링</h3>
-                  <ul>
-                    {activeMyReservations.map((item) => {
-                      const phase = getReservationPhase(item);
+                  {(() => {
+                    const { pageItems, totalPages, currentPage } = paginate(
+                      activeMyReservations,
+                      myRequestsPage,
+                      RECORDS_PAGE_SIZE
+                    );
 
-                      return (
-                        <li key={item.id} className="reservation-history-item">
-                          <div>
-                            <strong>
-                              {item.mentorName}
-                              {item.offeringTitle ? ` · ${item.offeringTitle}` : ""}
-                            </strong>
-                            <span>
-                              {item.reservationDate} {item.reservationTime}
-                            </span>
-                          </div>
+                    return (
+                      <>
+                        <div className="mentoring-record-grid">
+                          {pageItems.map((item) => {
+                            const phase = getReservationPhase(item);
 
-                          <div className="reservation-complete-info">
+                            return (
+                        <article className="mentoring-record-card" key={item.id}>
+                          <div className="mentoring-record-top">
+                            <strong>{item.mentorName}</strong>
                             <em className={`reservation-status ${phase.key}`}>
                               {phase.emoji} {phase.label}
                             </em>
+                          </div>
 
-                            {phase.message && (
-                              <span className="reservation-phase-message">
-                                {phase.message}
-                              </span>
-                            )}
+                          <span className="mentoring-record-datetime">
+                            {item.reservationDate} · {item.reservationTime}
+                          </span>
 
-                            <div className="reservation-board-actions">
-                              {item.status === "APPROVED" && (
+                          <div className="mentoring-record-actions">
+                            {item.status === "APPROVED" &&
+                              item.paymentStatus !== "PAID" && (
+                                <button
+                                  type="button"
+                                  className="payment-cta-button"
+                                  onClick={() =>
+                                    navigate(
+                                      `/payment?type=mentoring&id=${item.id}`
+                                    )
+                                  }
+                                >
+                                  결제하기
+                                </button>
+                              )}
+                            {item.status === "APPROVED" &&
+                              item.paymentStatus === "PAID" && (
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -2249,213 +2793,9 @@ function Mentoring() {
                                   수업 완료
                                 </button>
                               )}
-                              <button
-                                type="button"
-                                className="reservation-detail-button"
-                                onClick={() =>
-                                  openReservationDetail(item, "applicant")
-                                }
-                              >
-                                상세보기
-                              </button>
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-
-              {visibleReceivedReservations.length > 0 && (
-                <div className="reservation-board-card">
-                  <span className="section-label">RECEIVED REQUESTS</span>
-                  <h3>받은 멘토링 신청</h3>
-                  <ul>
-                    {visibleReceivedReservations.map((item) => {
-                      const phase = getReservationPhase(item, "mentor");
-                      const consultationTags = item.consultationTypes
-                        ? item.consultationTypes
-                            .split(",")
-                            .map((tag) => tag.trim())
-                            .filter(Boolean)
-                        : [];
-
-                      return (
-                        <li key={item.id} className="reservation-history-item">
-                          <div>
-                            <strong>
-                              {item.offeringTitle ||
-                                (item.skills ? `${item.skills} 멘토링` : "멘토링")}
-                            </strong>
-                            <span>
-                              신청자 {item.memberNickname}
-                            </span>
-                            <span>
-                              {item.reservationDate} {item.reservationTime}
-                            </span>
-                            {consultationTags.length > 0 && (
-                              <span className="reservation-tag-row">
-                                {consultationTags.slice(0, 3).map((tag) => (
-                                  <em key={tag} className="reservation-tag">
-                                    {tag}
-                                  </em>
-                                ))}
-                              </span>
-                            )}
-                            {item.problem && (
-                              <span className="reservation-problem-preview">
-                                {item.problem}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="reservation-complete-info">
-                            <em className={`reservation-status ${phase.key}`}>
-                              {phase.emoji} {phase.label}
-                            </em>
-
-                            {phase.message && (
-                              <span className="reservation-phase-message">
-                                {phase.message}
-                              </span>
-                            )}
-
-                            <div className="reservation-board-actions">
-                              {item.status === "PENDING" && (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleReservationDecision(item.id, "approve")
-                                    }
-                                  >
-                                    승인
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="reject"
-                                    onClick={() => openRejectModal(item)}
-                                  >
-                                    거절
-                                  </button>
-                                </>
-                              )}
-                              <button
-                                type="button"
-                                className="reservation-detail-button"
-                                onClick={() =>
-                                  openReservationDetail(item, "mentor")
-                                }
-                              >
-                                상세보기
-                              </button>
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-
-              {completedReceivedReservations.length > 0 && (
-                <div className="reservation-board-card reservation-board-full">
-                  <span className="section-label">MY MENTORING HISTORY</span>
-                  <h3>나의 멘토링 기록</h3>
-                  <ul>
-                    {completedReceivedReservations.map((item) => (
-                      <li key={item.id} className="reservation-history-item">
-                        <div>
-                          <strong>
-                            {item.memberNickname}님과의{" "}
-                            {item.offeringTitle ||
-                              (item.skills
-                                ? `${item.skills} 멘토링`
-                                : "멘토링")}
-                          </strong>
-                          <span>
-                            {item.reservationDate} {item.reservationTime}
-                          </span>
-                        </div>
-
-                        <div className="reservation-complete-info">
-                          <em className="reservation-status completed">
-                            ✓ 멘토링 완료
-                          </em>
-
-                          <button
-                            type="button"
-                            className="reservation-detail-button"
-                            onClick={() => openReservationDetail(item, "mentor")}
-                          >
-                            상세보기
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {completedMyReservations.length > 0 && (
-                <div className="reservation-board-card reservation-board-full">
-                  <span className="section-label">MY MENTORING HISTORY</span>
-                  <h3>나의 멘토링 기록</h3>
-                  <ul>
-                    {completedMyReservations.map((item) => {
-                      const reviewNotWritten = myReviewEligibleIds.includes(
-                        item.id
-                      );
-
-                      return (
-                        <li key={item.id} className="reservation-history-item">
-                          <div>
-                            <strong>{item.mentorName}</strong>
-                            {(item.offeringTitle || item.skills) && (
-                              <span>
-                                {item.offeringTitle || `${item.skills} 멘토링`}
-                              </span>
-                            )}
-                            <span>
-                              {item.reservationDate} {item.reservationTime}
-                            </span>
-                          </div>
-
-                          <div className="reservation-complete-info">
-                            <em className="reservation-status completed">
-                              ✓ 멘토링 완료
-                            </em>
-
-                            {reviewNotWritten ? (
-                              <>
-                                <span className="reservation-complete-guide">
-                                  수업이 완료되었습니다.
-                                  <br />
-                                  소중한 후기를 남겨주세요.
-                                </span>
-                                <button
-                                  type="button"
-                                  className="reservation-review-link"
-                                  onClick={() =>
-                                    setReviewMentor({
-                                      id: item.mentorId,
-                                      name: item.mentorName
-                                    })
-                                  }
-                                >
-                                  후기 작성하기 →
-                                </button>
-                              </>
-                            ) : (
-                              <span className="reservation-review-done">
-                                ✓ 후기 작성 완료
-                              </span>
-                            )}
-
                             <button
                               type="button"
-                              className="reservation-detail-button"
+                              className="mentoring-record-detail-link"
                               onClick={() =>
                                 openReservationDetail(item, "applicant")
                               }
@@ -2463,10 +2803,237 @@ function Mentoring() {
                               상세보기
                             </button>
                           </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                        </article>
+                            );
+                          })}
+                        </div>
+                        {renderPaginationNav(
+                          totalPages,
+                          currentPage,
+                          setMyRequestsPage,
+                          "내가 신청한 멘토링 페이지"
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {visibleReceivedReservations.length > 0 && (
+                <div className="reservation-board-card reservation-board-full">
+                  <span className="section-label">RECEIVED REQUESTS</span>
+                  <h3>받은 멘토링 신청</h3>
+                  {(() => {
+                    const { pageItems, totalPages, currentPage } = paginate(
+                      visibleReceivedReservations,
+                      receivedRequestsPage,
+                      RECORDS_PAGE_SIZE
+                    );
+
+                    return (
+                      <>
+                        <div className="mentoring-record-grid">
+                          {pageItems.map((item) => {
+                            const phase = getReservationPhase(item, "mentor");
+
+                            return (
+                        <article className="mentoring-record-card" key={item.id}>
+                          <div className="mentoring-record-top">
+                            <strong>{item.memberNickname}</strong>
+                            <em className={`reservation-status ${phase.key}`}>
+                              {phase.emoji} {phase.label}
+                            </em>
+                          </div>
+
+                          <span className="mentoring-record-datetime">
+                            {item.reservationDate} · {item.reservationTime}
+                          </span>
+
+                          <div className="mentoring-record-actions">
+                            {item.status === "PENDING" && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleReservationDecision(item.id, "approve")
+                                  }
+                                >
+                                  승인
+                                </button>
+                                <button
+                                  type="button"
+                                  className="reject"
+                                  onClick={() => openRejectModal(item)}
+                                >
+                                  거절
+                                </button>
+                              </>
+                            )}
+                            <button
+                              type="button"
+                              className="mentoring-record-detail-link"
+                              onClick={() =>
+                                openReservationDetail(item, "mentor")
+                              }
+                            >
+                              상세보기
+                            </button>
+                          </div>
+                        </article>
+                            );
+                          })}
+                        </div>
+                        {renderPaginationNav(
+                          totalPages,
+                          currentPage,
+                          setReceivedRequestsPage,
+                          "받은 멘토링 신청 페이지"
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {completedReceivedReservations.length > 0 && (
+                <div className="reservation-board-card reservation-board-full">
+                  <span className="section-label">MY MENTORING HISTORY</span>
+                  <h3>나의 멘토링 기록 (멘토)</h3>
+                  {(() => {
+                    const { pageItems, totalPages, currentPage } = paginate(
+                      completedReceivedReservations,
+                      myHistoryMentorPage,
+                      RECORDS_PAGE_SIZE
+                    );
+
+                    return (
+                      <>
+                        <div className="mentoring-record-grid">
+                          {pageItems.map((item) => (
+                            <article className="mentoring-record-card" key={item.id}>
+                              <div className="mentoring-record-top">
+                                <strong>{item.memberNickname}</strong>
+                                <em className="reservation-status completed">
+                                  ✓ 멘토링 완료
+                                </em>
+                              </div>
+
+                              <span className="mentoring-record-datetime">
+                                {item.reservationDate} · {item.reservationTime}
+                              </span>
+
+                              <div className="mentoring-record-actions">
+                                <button
+                                  type="button"
+                                  className="mentoring-record-detail-link"
+                                  onClick={() => openReservationDetail(item, "mentor")}
+                                >
+                                  상세보기
+                                </button>
+                                <button
+                                  type="button"
+                                  className="mentoring-record-delete-link"
+                                  onClick={() => hideMyRecord(item.id)}
+                                >
+                                  삭제
+                                </button>
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                        {renderPaginationNav(
+                          totalPages,
+                          currentPage,
+                          setMyHistoryMentorPage,
+                          "나의 멘토링 기록(멘토) 페이지"
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {completedMyReservations.length > 0 && (
+                <div className="reservation-board-card reservation-board-full">
+                  <span className="section-label">MY MENTORING HISTORY</span>
+                  <h3>나의 멘토링 기록</h3>
+                  {(() => {
+                    const { pageItems, totalPages, currentPage } = paginate(
+                      completedMyReservations,
+                      myHistoryApplicantPage,
+                      RECORDS_PAGE_SIZE
+                    );
+
+                    return (
+                      <>
+                        <div className="mentoring-record-grid">
+                          {pageItems.map((item) => {
+                            const reviewNotWritten = myReviewEligibleIds.includes(
+                              item.id
+                            );
+
+                            return (
+                        <article className="mentoring-record-card" key={item.id}>
+                          <div className="mentoring-record-top">
+                            <strong>{item.mentorName}</strong>
+                            <em className="reservation-status completed">
+                              ✓ 멘토링 완료
+                            </em>
+                          </div>
+
+                          <span className="mentoring-record-datetime">
+                            {item.reservationDate} · {item.reservationTime}
+                          </span>
+
+                          <div className="mentoring-record-actions">
+                            {reviewNotWritten ? (
+                              <button
+                                type="button"
+                                className="mentoring-record-review-link"
+                                onClick={() =>
+                                  setReviewMentor({
+                                    id: item.mentorId,
+                                    name: item.mentorName
+                                  })
+                                }
+                              >
+                                후기 작성하기 →
+                              </button>
+                            ) : (
+                              <span className="reservation-review-done">
+                                ✓ 후기 작성 완료
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              className="mentoring-record-detail-link"
+                              onClick={() =>
+                                openReservationDetail(item, "applicant")
+                              }
+                            >
+                              상세보기
+                            </button>
+                            <button
+                              type="button"
+                              className="mentoring-record-delete-link"
+                              onClick={() => hideMyRecord(item.id)}
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        </article>
+                            );
+                          })}
+                        </div>
+                        {renderPaginationNav(
+                          totalPages,
+                          currentPage,
+                          setMyHistoryApplicantPage,
+                          "나의 멘토링 기록 페이지"
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </section>
@@ -2746,6 +3313,30 @@ function Mentoring() {
                             <span key={skill}>{skill}</span>
                           ))}
                         </div>
+
+                        {Array.isArray(offering.slots) &&
+                          offering.slots.length > 0 && (
+                            <div className="mentor-offering-slot-list">
+                              {offering.slots.slice(0, 3).map((slot) => (
+                                <div
+                                  className="mentor-schedule-badge"
+                                  key={`${slot.date}-${slot.startTime}`}
+                                >
+                                  <span className="badge-date">
+                                    📅 {slot.date.replaceAll("-", ".")}
+                                  </span>
+                                  <span className="badge-time">
+                                    ⏰ {slot.startTime} ~ {slot.endTime}
+                                  </span>
+                                </div>
+                              ))}
+                              {offering.slots.length > 3 && (
+                                <span className="mentor-offering-slot-more">
+                                  외 {offering.slots.length - 3}건 신청 가능
+                                </span>
+                              )}
+                            </div>
+                          )}
 
                         <button
                           type="button"
@@ -3359,11 +3950,15 @@ function Mentoring() {
 
                 <div className="reservation-available-schedule-list">
                   <strong>상담 가능한 날짜</strong>
-                  {parseSchedulesFromMentor(reservationMentor).map((schedule) => (
-                    <span key={schedule.date}>
-                      {schedule.date.replaceAll("-", ".")} ({schedule.day}) · {schedule.startTime} ~ {schedule.endTime}
-                    </span>
-                  ))}
+                  {parseSchedulesFromMentor(reservationMentor)
+                    .filter(
+                      (schedule) => !bookedReservationDates.includes(schedule.date)
+                    )
+                    .map((schedule) => (
+                      <span key={schedule.date}>
+                        {schedule.date.replaceAll("-", ".")} ({schedule.day}) · {schedule.startTime} ~ {schedule.endTime}
+                      </span>
+                    ))}
                 </div>
 
                 <div className="reservation-calendar-guide">
@@ -3464,7 +4059,7 @@ function Mentoring() {
               </div>
 
               <span>
-                상담 신청 후 결제 단계로 이동합니다.
+                멘토가 신청을 승인하면 결제를 진행할 수 있습니다.
               </span>
             </div>
 
@@ -3516,7 +4111,7 @@ function Mentoring() {
               {registerMode === "offering"
                 ? editingOfferingId
                   ? "멘토링 수정"
-                  : "새로운 멘토링 등록"
+                  : "멘토 등록하기"
                 : isEditingMentor
                 ? "내 멘토 정보 수정"
                 : "멘토 등록"}
@@ -3946,51 +4541,66 @@ function Mentoring() {
 
                 {registerForm.availableSchedules.length > 0 ? (
                   <div className="schedule-config-list">
-                    {registerForm.availableSchedules.map((schedule) => (
-                      <div className="schedule-config-item" key={schedule.date}>
-                        <div className="schedule-config-header">
-                          <span className="schedule-date-text">
-                            📅 {schedule.date.replaceAll("-", ".")} ({schedule.day})
-                          </span>
-                          <button
-                            type="button"
-                            className="schedule-delete-btn"
-                            title="일정 삭제"
-                            onClick={() => removeSchedule(schedule.date)}
-                          >
-                            × 삭제
-                          </button>
-                        </div>
+                    {registerForm.availableSchedules.map((schedule) => {
+                      const locked = registerLockedDates.includes(schedule.date);
 
-                        <div className="schedule-config-times">
-                          <div className="schedule-time-field">
-                            <small>시작 시간</small>
-                            <input
-                              type="time"
-                              value={schedule.startTime}
-                              onChange={(e) =>
-                                updateScheduleTime(schedule.date, "startTime", e.target.value)
-                              }
-                              required
-                            />
+                      return (
+                        <div
+                          className={`schedule-config-item${locked ? " locked" : ""}`}
+                          key={schedule.date}
+                        >
+                          <div className="schedule-config-header">
+                            <span className="schedule-date-text">
+                              📅 {schedule.date.replaceAll("-", ".")} ({schedule.day})
+                            </span>
+                            {locked ? (
+                              <span className="schedule-lock-badge" title="이미 예약이 있어 수정/삭제할 수 없습니다.">
+                                🔒 예약됨
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="schedule-delete-btn"
+                                title="일정 삭제"
+                                onClick={() => removeSchedule(schedule.date)}
+                              >
+                                × 삭제
+                              </button>
+                            )}
                           </div>
 
-                          <span className="schedule-time-divider">~</span>
+                          <div className="schedule-config-times">
+                            <div className="schedule-time-field">
+                              <small>시작 시간</small>
+                              <input
+                                type="time"
+                                value={schedule.startTime}
+                                onChange={(e) =>
+                                  updateScheduleTime(schedule.date, "startTime", e.target.value)
+                                }
+                                disabled={locked}
+                                required
+                              />
+                            </div>
 
-                          <div className="schedule-time-field">
-                            <small>종료 시간</small>
-                            <input
-                              type="time"
-                              value={schedule.endTime}
-                              onChange={(e) =>
-                                updateScheduleTime(schedule.date, "endTime", e.target.value)
-                              }
-                              required
-                            />
+                            <span className="schedule-time-divider">~</span>
+
+                            <div className="schedule-time-field">
+                              <small>종료 시간</small>
+                              <input
+                                type="time"
+                                value={schedule.endTime}
+                                onChange={(e) =>
+                                  updateScheduleTime(schedule.date, "endTime", e.target.value)
+                                }
+                                disabled={locked}
+                                required
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="schedule-config-empty">
@@ -4230,6 +4840,50 @@ function Mentoring() {
                 onClick={submitRejectReservation}
               >
                 거절하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deletingOffering && (
+        <div className="modal-background" onClick={closeDeleteOfferingModal}>
+          <div
+            className="reject-reason-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="modal-close"
+              onClick={closeDeleteOfferingModal}
+            >
+              ×
+            </button>
+
+            <span className="section-label">DELETE MENTORING</span>
+            <h2>멘토링 삭제</h2>
+
+            <p className="reject-reason-guide">
+              "{deletingOffering.title}" 멘토링을 삭제하시겠습니까?
+              <br />
+              예약이 진행 중인 멘토링은 삭제할 수 없으며, 이미 완료된 예약
+              기록은 그대로 유지됩니다.
+            </p>
+
+            <div className="reject-reason-actions">
+              <button
+                type="button"
+                className="mentor-cancel-button"
+                onClick={closeDeleteOfferingModal}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="reject-confirm-button"
+                onClick={confirmDeleteOffering}
+              >
+                삭제
               </button>
             </div>
           </div>

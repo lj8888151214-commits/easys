@@ -1,6 +1,7 @@
 package com.easys.repository;
 
 import com.easys.entity.MentorProfile;
+import com.easys.entity.MentorStatus;
 import com.easys.entity.MentoringOffering;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -14,6 +15,9 @@ public interface MentoringOfferingRepository
     List<MentoringOffering> findByMentorOrderByCreatedAtDesc(MentorProfile mentor);
 
     List<MentoringOffering> findByMentorIdOrderByCreatedAtDesc(Long mentorId);
+
+    // 전체 공개 멘토링 목록 (mentor-grid). 승인된 멘토가 등록한 멘토링만 대상으로 한다.
+    List<MentoringOffering> findByMentorStatusOrderByCreatedAtDesc(MentorStatus status);
 
     // 본인이 등록한 멘토링인지 확인 후 조회 (수정 권한 검증용)
     Optional<MentoringOffering> findByIdAndMentor(Long id, MentorProfile mentor);

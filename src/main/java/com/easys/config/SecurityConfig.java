@@ -170,9 +170,10 @@ public class SecurityConfig {
                                 "/mentor/{mentorId}"
                         ).permitAll()
 
-                        // 특정 멘토가 등록한 멘토링 목록 (멘토 찾기 화면에서 조회)
+                        // 전체 공개 멘토링 목록(mentor-grid) / 특정 멘토가 등록한 멘토링 목록
                         .requestMatchers(
                                 HttpMethod.GET,
+                                "/mentor/offerings",
                                 "/mentor/offerings/mentor/*"
                         ).permitAll()
 

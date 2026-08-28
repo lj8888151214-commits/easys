@@ -3,6 +3,7 @@ package com.easys.service;
 import com.easys.config.WebSocketConfig;
 import com.easys.repository.EmailVerificationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,11 @@ public class EmailService {
 
     private final EmailVerificationRepository
             emailVerificationRepository;
+
+    // 발신 주소는 application.properties의 spring.mail.username(환경변수 GMAIL_USERNAME)과
+    // 동일한 값을 그대로 사용한다. 소스 코드에 실제 이메일 주소를 직접 넣지 않기 위함이다.
+    @Value("${spring.mail.username}")
+    private String senderEmail;
 
 
     @Transactional
@@ -82,7 +88,7 @@ public class EmailService {
 
 
         message.setFrom(
-                "yeunjun37@gmail.com"
+                senderEmail
         );
 
         message.setTo(email);

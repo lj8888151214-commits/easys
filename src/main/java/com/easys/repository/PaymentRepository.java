@@ -26,6 +26,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             Long targetId
     );
 
+    // 토스 결제 승인(confirm) 요청은 orderId로 어떤 결제인지 식별한다.
+    Optional<Payment> findByOrderId(String orderId);
+
     void deleteByProductTypeAndTargetIdIn(
             PaymentProductType productType,
             Collection<Long> targetIds

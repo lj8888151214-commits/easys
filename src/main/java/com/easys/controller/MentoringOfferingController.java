@@ -64,7 +64,7 @@ public class MentoringOfferingController {
     }
 
     // =====================================================
-    // 특정 멘토가 등록한 멘토링 목록 (다른 사용자의 멘토 찾기 화면)
+    // 특정 멘토가 등록한 멘토링 목록 (멘토 상세 모달)
     // GET /mentor/offerings/mentor/{mentorId}
     // =====================================================
 
@@ -72,6 +72,18 @@ public class MentoringOfferingController {
     public ResponseEntity<?> getOfferingsByMentor(@PathVariable Long mentorId) {
         return ResponseEntity.ok(
                 mentoringOfferingService.getOfferingsByMentor(mentorId)
+        );
+    }
+
+    // =====================================================
+    // 전체 공개 멘토링 목록 (mentor-grid, "등록한 멘토링 1개 = 카드 1개")
+    // GET /mentor/offerings
+    // =====================================================
+
+    @GetMapping
+    public ResponseEntity<?> getAllPublicOfferings() {
+        return ResponseEntity.ok(
+                mentoringOfferingService.getAllPublicOfferings()
         );
     }
 
@@ -90,6 +102,24 @@ public class MentoringOfferingController {
             return ResponseEntity.ok(
                     mentoringOfferingService.updateOffering(offeringId, getCurrentMember(authentication), request)
             );
+        } catch (IllegalArgumentException e) {
+            return badRequest(e);
+        }
+    }
+
+    // =====================================================
+    // 멘토링 삭제
+    // DELETE /mentor/offerings/{offeringId}
+    // =====================================================
+
+    @DeleteMapping("/{offeringId}")
+    public ResponseEntity<?> deleteOffering(
+            Authentication authentication,
+            @PathVariable Long offeringId
+    ) {
+        try {
+            mentoringOfferingService.deleteOffering(offeringId, getCurrentMember(authentication));
+            return ResponseEntity.ok(Map.of("message", "멘토링이 삭제되었습니다."));
         } catch (IllegalArgumentException e) {
             return badRequest(e);
         }

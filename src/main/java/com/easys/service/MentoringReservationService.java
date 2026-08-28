@@ -23,6 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,10 +37,14 @@ import java.util.stream.Collectors;
 @Transactional
 public class MentoringReservationService {
 
+    // MentoringOfferingService와 동일한 기준(한국 시간)으로 "오늘"을 계산한다.
+    private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
+
     private final MentoringReservationRepository mentoringReservationRepository;
     private final MentorProfileRepository mentorProfileRepository;
     private final MentoringOfferingRepository mentoringOfferingRepository;
     private final PaymentRepository paymentRepository;
+    private final PersonalScheduleService personalScheduleService;
 
     // =====================================================
     // 멘토링 신청
@@ -92,20 +99,9 @@ public class MentoringReservationService {
                 throw new IllegalArgumentException("해당 멘토가 등록한 멘토링이 아닙니다.");
             }
 
-            // =============================================
-            // 이미 신청(거절 제외)이 들어온 멘토링인지 확인
-            //
-            // 공개 목록에서는 이미 숨겨지지만, API를 직접 호출하는
-            // 경우에도 동일한 멘토링에 중복으로 신청할 수 없도록
-            // 서버에서도 한 번 더 막는다.
-            // =============================================
-
-            if (mentoringReservationRepository.existsByOfferingIdAndStatusNot(
-                    offering.getId(),
-                    MentoringReservationStatus.REJECTED
-            )) {
-                throw new IllegalArgumentException("이미 다른 사용자가 신청한 멘토링입니다.");
-            }
+            // 같은 멘토링(offering) 안의 다른 날짜/시간(슬롯)은 계속 신청할 수 있어야 하므로
+            // 여기서는 offering 전체를 막지 않는다. 같은 날짜에 대한 중복 신청 여부는
+            // 아래의 "동일 시간 예약 확인"(멘토 + 예약 날짜 기준)에서 한 번에 검증한다.
         }
 
         String targetAvailableSchedules = offering != null ? offering.getAvailableSchedules() : mentor.getAvailableSchedules();
@@ -133,6 +129,12 @@ public class MentoringReservationService {
         } catch (Exception e) {
             throw new IllegalArgumentException(
                     "예약 날짜 형식이 올바르지 않습니다."
+            );
+        }
+
+        if (reservationDate.isBefore(LocalDate.now(KOREA_ZONE))) {
+            throw new IllegalArgumentException(
+                    "이미 지난 날짜에는 멘토링을 신청할 수 없습니다."
             );
         }
 
@@ -191,16 +193,17 @@ public class MentoringReservationService {
                 );
 
         MentoringReservation saved = mentoringReservationRepository.save(reservation);
-        paymentRepository.save(
+        Payment payment = paymentRepository.save(
                 new Payment(
                         member,
                         PaymentProductType.MENTORING,
                         saved.getId(),
-                        targetPrice == null ? 0 : targetPrice
+                        targetPrice == null ? 0 : targetPrice,
+                        mentor.getMember().getNickname() + " 멘토링"
                 )
         );
 
-        return new MentoringReservationResponseDto(saved);
+        return new MentoringReservationResponseDto(saved, payment);
     }
 
     // =====================================================
@@ -215,7 +218,8 @@ public class MentoringReservationService {
         return mentoringReservationRepository
                 .findByMemberOrderByCreatedAtDesc(member)
                 .stream()
-                .map(MentoringReservationResponseDto::new)
+                .filter(reservation -> !Boolean.TRUE.equals(reservation.getHiddenByApplicant()))
+                .map(reservation -> new MentoringReservationResponseDto(reservation, findPayment(reservation.getId())))
                 .toList();
     }
 
@@ -255,8 +259,41 @@ public class MentoringReservationService {
         return mentoringReservationRepository
                 .findByMentorOrderByCreatedAtDesc(mentor)
                 .stream()
-                .map(MentoringReservationResponseDto::new)
+                .filter(reservation -> !Boolean.TRUE.equals(reservation.getHiddenByMentor()))
+                .map(reservation -> new MentoringReservationResponseDto(reservation, findPayment(reservation.getId())))
                 .toList();
+    }
+
+    // =====================================================
+    // 나의 멘토링 기록에서 삭제 (본인 화면에서만 숨김)
+    //
+    // MentoringReservation row 자체는 지우지 않는다 — 상대방은 계속
+    // 자신의 기록/후기/PersonalSchedule에서 이 예약을 참조하기 때문이다.
+    // 완료된 기록만 대상으로 하며, 요청한 사람이 이 예약의 멘토인지
+    // 신청자인지에 따라 해당하는 쪽 플래그만 켠다.
+    // =====================================================
+
+    public void hideMyRecord(Long reservationId, Member member) {
+        MentoringReservation reservation = mentoringReservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("멘토링 예약 정보를 찾을 수 없습니다."));
+
+        if (reservation.getStatus() != MentoringReservationStatus.COMPLETED) {
+            throw new IllegalArgumentException("완료된 멘토링 기록만 삭제할 수 있습니다.");
+        }
+
+        boolean isMentor = reservation.getMentor().getMember().getId().equals(member.getId());
+        boolean isApplicant = reservation.getMember().getId().equals(member.getId());
+
+        if (!isMentor && !isApplicant) {
+            throw new IllegalArgumentException("본인의 멘토링 기록만 삭제할 수 있습니다.");
+        }
+
+        if (isMentor) {
+            reservation.hideForMentor();
+        }
+        if (isApplicant) {
+            reservation.hideForApplicant();
+        }
     }
 
     // =====================================================
@@ -274,8 +311,28 @@ public class MentoringReservationService {
                         member
                 );
 
+        // 승인만으로 결제 완료 처리하지 않는다. 결제는 토스 결제가 실제로
+        // 성공한 뒤 onMentoringPaymentConfirmed()에서만 반영된다.
         reservation.approve();
-        updatePaymentStatus(reservation.getId(), PaymentStatus.PAID);
+    }
+
+    // =====================================================
+    // 토스 결제 승인(confirm) 성공 후 PaymentController가 호출한다.
+    //
+    // - 승인(APPROVED) 상태가 아니면 결제를 확정할 수 없다(승인 전 결제 금지).
+    // - 캘린더 등록은 결제 성공 시점에만 이루어진다.
+    // =====================================================
+
+    public void onMentoringPaymentConfirmed(Long reservationId) {
+        MentoringReservation reservation =
+                mentoringReservationRepository.findById(reservationId)
+                        .orElseThrow(() -> new IllegalArgumentException("멘토링 신청 정보를 찾을 수 없습니다."));
+
+        if (reservation.getStatus() != MentoringReservationStatus.APPROVED) {
+            throw new IllegalArgumentException("승인된 예약만 결제를 확정할 수 있습니다.");
+        }
+
+        createCalendarSchedulesIfNeeded(reservation);
     }
 
     // =====================================================
@@ -297,7 +354,83 @@ public class MentoringReservationService {
         String trimmedReason = reason == null ? null : reason.trim();
 
         reservation.reject(trimmedReason == null || trimmedReason.isEmpty() ? null : trimmedReason);
-        updatePaymentStatus(reservation.getId(), PaymentStatus.CANCELLED);
+        cancelPaymentIfExists(reservation.getId());
+        removeCalendarSchedulesIfAny(reservation);
+    }
+
+    // =====================================================
+    // 승인 시점에 멘토/신청자 각각의 개인 캘린더(PersonalSchedule)에
+    // 확정 일정을 자동 생성한다.
+    //
+    // - 이미 생성되어 있으면(재승인 등) 다시 만들지 않는다.
+    // - 예약 신청(PENDING) 단계가 아니라 "실제 확정"된 승인(APPROVED)
+    //   시점에만 생성한다.
+    // =====================================================
+
+    private void createCalendarSchedulesIfNeeded(MentoringReservation reservation) {
+        if (reservation.getMentorScheduleId() != null) {
+            return;
+        }
+
+        LocalDateTime[] range = parseReservationDateTimeRange(reservation);
+        if (range == null) {
+            return;
+        }
+
+        Member mentorMember = reservation.getMentor().getMember();
+        Member applicantMember = reservation.getMember();
+
+        // 별도의 "멘토링" 일정 타입을 만들지 않고, 기존 개인 일정(일반일정)에
+        // "상대방 이름님과 멘토링"이라는 단순한 제목으로만 등록한다.
+        var mentorSchedule = personalScheduleService.createSchedule(
+                mentorMember,
+                applicantMember.getNickname() + "님과 멘토링",
+                "",
+                range[0],
+                range[1]
+        );
+
+        var applicantSchedule = personalScheduleService.createSchedule(
+                applicantMember,
+                mentorMember.getNickname() + "님과 멘토링",
+                "",
+                range[0],
+                range[1]
+        );
+
+        reservation.linkSchedules(mentorSchedule.getId(), applicantSchedule.getId());
+    }
+
+    // =====================================================
+    // 승인 후 거절/취소될 때, 자동 생성됐던 캘린더 일정을 함께 정리한다.
+    // =====================================================
+
+    private void removeCalendarSchedulesIfAny(MentoringReservation reservation) {
+        if (reservation.getMentorScheduleId() == null && reservation.getApplicantScheduleId() == null) {
+            return;
+        }
+
+        personalScheduleService.deleteScheduleIfOwnedBy(
+                reservation.getMentorScheduleId(), reservation.getMentor().getMember()
+        );
+        personalScheduleService.deleteScheduleIfOwnedBy(
+                reservation.getApplicantScheduleId(), reservation.getMember()
+        );
+        reservation.clearScheduleLinks();
+    }
+
+    // reservationDate("2026-08-30") + reservationTime("14:00 ~ 15:00")를
+    // PersonalSchedule에 필요한 시작/종료 LocalDateTime으로 변환한다.
+    private LocalDateTime[] parseReservationDateTimeRange(MentoringReservation reservation) {
+        try {
+            LocalDate date = LocalDate.parse(reservation.getReservationDate());
+            String[] times = reservation.getReservationTime().split("~");
+            LocalTime startTime = LocalTime.parse(times[0].trim());
+            LocalTime endTime = LocalTime.parse(times[1].trim());
+            return new LocalDateTime[]{date.atTime(startTime), date.atTime(endTime)};
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // =====================================================
@@ -321,6 +454,17 @@ public class MentoringReservationService {
         if (reservation.getStatus() != MentoringReservationStatus.APPROVED) {
             throw new IllegalArgumentException(
                     "승인된 멘토링만 완료 처리할 수 있습니다."
+            );
+        }
+
+        boolean paid = paymentRepository
+                .findByProductTypeAndTargetId(PaymentProductType.MENTORING, reservation.getId())
+                .map(payment -> payment.getStatus() == PaymentStatus.PAID)
+                .orElse(false);
+
+        if (!paid) {
+            throw new IllegalArgumentException(
+                    "결제가 완료된 멘토링만 완료 처리할 수 있습니다."
             );
         }
 
@@ -388,18 +532,21 @@ public class MentoringReservationService {
         return reservation;
     }
 
-    private void updatePaymentStatus(Long reservationId, PaymentStatus status) {
+    // 거절/취소된 예약에 연결된 결제가 있으면(READY 상태로 대기 중이던 결제)
+    // CANCELLED로 정리한다. 결제를 PAID로 만드는 것은 오직
+    // onMentoringPaymentConfirmed()를 통해서만 가능하다.
+    private void cancelPaymentIfExists(Long reservationId) {
         paymentRepository.findByProductTypeAndTargetId(
                         PaymentProductType.MENTORING,
                         reservationId
                 )
-                .ifPresent(payment -> {
-                    if (status == PaymentStatus.PAID) {
-                        payment.markPaid();
-                    } else if (status == PaymentStatus.CANCELLED) {
-                        payment.cancel();
-                    }
-                });
+                .ifPresent(Payment::cancel);
+    }
+
+    private Payment findPayment(Long reservationId) {
+        return paymentRepository
+                .findByProductTypeAndTargetId(PaymentProductType.MENTORING, reservationId)
+                .orElse(null);
     }
 
     // =====================================================

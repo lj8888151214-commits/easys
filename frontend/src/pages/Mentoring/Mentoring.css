@@ -263,6 +263,17 @@
   font-size: 18px;
 }
 
+.reservation-board-header {
+  margin-bottom: 6px;
+}
+
+.reservation-board-header h2 {
+  margin: 4px 0 0;
+  color: #243329;
+  font-size: 22px;
+  letter-spacing: -1px;
+}
+
 .reservation-board-card ul {
   display: flex;
   flex-direction: column;
@@ -287,10 +298,6 @@
   grid-column: 1 / -1;
 }
 
-.reservation-board-card li.reservation-history-item {
-  align-items: flex-start;
-}
-
 .reservation-review-done {
   flex-shrink: 0;
   color: #3d7a4d;
@@ -299,7 +306,45 @@
   white-space: nowrap;
 }
 
-/* 내가 등록한 멘토링 (관리) */
+/* =====================================================
+   내가 등록한 멘토링 (관리) — 공개 멘토 목록보다 위쪽,
+   헤더에 등록 버튼 고정 + 컴팩트 카드 Grid
+   ===================================================== */
+
+.my-offerings-section {
+  margin-bottom: 40px;
+}
+
+.offering-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.offering-section-header h3 {
+  margin: 4px 0 0;
+}
+
+.offering-add-button {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: 1px dashed #9eb8a4;
+  border-radius: 16px;
+  background: #f4f8f5;
+  color: #34483b;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.offering-add-button:hover {
+  border-style: solid;
+  background: #edf5ef;
+}
 
 .offering-empty-text {
   margin: 4px 0 16px;
@@ -308,23 +353,356 @@
   line-height: 1.7;
 }
 
-.offering-add-button {
-  width: 100%;
-  margin-top: 14px;
-  padding: 12px;
-  border: 1px dashed #9eb8a4;
+/* =====================================================
+   내가 등록한 멘토링 — 관리용 초소형 카드.
+   목적이 "소개"가 아니라 "관리"이므로 공개 mentor-card보다
+   훨씬 작고 간결하게 만든다. PC 3열 / 태블릿·모바일 2열(1열로 떨어지지 않음).
+   ===================================================== */
+
+.offering-manage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.offering-manage-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 14px;
+  border: 1px solid rgba(227, 233, 227, 0.9);
   border-radius: 16px;
-  background: #f4f8f5;
-  color: #34483b;
+  background: rgba(255, 255, 255, 0.92);
+  transition: 0.2s ease;
+}
+
+.offering-manage-card:hover {
+  border-color: #9eb8a4;
+  box-shadow: 0 8px 20px rgba(30, 50, 38, 0.06);
+}
+
+.offering-manage-card-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.offering-manage-card-title strong {
+  overflow: hidden;
+  color: #243329;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 컴팩트 관리 카드 전용 초소형 아바타 (공개 mentor-grid의 이미지 데이터를 그대로 재사용) */
+.mentor-avatar.tiny {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
   font-size: 12px;
+}
+
+.offering-manage-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+.offering-manage-tags .tag-skill,
+.offering-manage-tags .tag-field {
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.offering-manage-tags .tag-skill {
+  background: #e6f0e8;
+  color: #3d5744;
+}
+
+.offering-manage-tags .tag-field {
+  border: 1px solid #cfdccf;
+  color: #5c6c60;
+}
+
+.offering-manage-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.offering-manage-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: #f7faf7;
+}
+
+.offering-manage-slot.available {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.offering-manage-slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.offering-manage-slot-header .reservation-status {
+  padding: 3px 8px;
+  font-size: 10px;
+}
+
+.offering-manage-slot-time {
+  color: #4a5a4e;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.offering-manage-slot-applicant {
+  color: #7b857e;
+  font-size: 11px;
+}
+
+.offering-manage-slot .reservation-board-actions {
+  margin-top: 2px;
+}
+
+.offering-manage-slot .reservation-board-actions button {
+  padding: 5px 10px;
+  font-size: 10px;
+}
+
+.offering-manage-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.offering-manage-edit-button,
+.offering-manage-delete-button {
+  padding: 6px 12px;
+  border: 1px solid #dfe5df;
+  border-radius: 12px;
+  background: white;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: 0.2s ease;
 }
 
-.offering-add-button:hover {
-  border-style: solid;
+.offering-manage-edit-button {
+  color: #34483b;
+}
+
+.offering-manage-edit-button:hover {
+  border-color: #9eb8a4;
   background: #edf5ef;
+}
+
+.offering-manage-delete-button {
+  border-color: #e5c3c3;
+  color: #a84d4d;
+}
+
+.offering-manage-delete-button:hover {
+  border-color: #c98282;
+  background: #fdf2f2;
+}
+
+/* =====================================================
+   나의 멘토링 기록 — "내가 등록한 멘토링"과 동일한 컴팩트 카드 톤으로 통일.
+   PC 3열 / 태블릿·모바일 2열(1열로 떨어지지 않음).
+   ===================================================== */
+
+.mentoring-record-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.mentoring-record-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 14px;
+  border: 1px solid rgba(227, 233, 227, 0.9);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  transition: 0.2s ease;
+}
+
+.mentoring-record-card:hover {
+  border-color: #9eb8a4;
+  box-shadow: 0 8px 20px rgba(30, 50, 38, 0.06);
+}
+
+.mentoring-record-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mentoring-record-top strong {
+  overflow: hidden;
+  color: #243329;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mentoring-record-top .reservation-status {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  font-size: 10px;
+}
+
+.mentoring-record-datetime {
+  color: #7b857e;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mentoring-record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.mentoring-record-actions button {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: #243329;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentoring-record-actions button:hover {
+  transform: translateY(-2px);
+}
+
+.mentoring-record-actions button.reject {
+  border: 1px solid #d8a5a5;
+  background: #fff;
+  color: #b85c5c;
+}
+
+.mentoring-record-actions button.reject:hover {
+  border-color: #c98282;
+  background: #fff5f5;
+  color: #a94c4c;
+}
+
+.mentoring-record-detail-link,
+.mentoring-record-review-link {
+  padding: 6px 12px;
+  border: 1px solid #dfe5df;
+  border-radius: 12px;
+  background: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentoring-record-detail-link {
+  color: #526358;
+}
+
+.mentoring-record-detail-link:hover {
+  border-color: #9eb8a4;
+  background: #edf5ef;
+}
+
+.mentoring-record-review-link {
+  border-color: #9eb8a4;
+  color: #3d7a4d;
+}
+
+.mentoring-record-review-link:hover {
+  background: #edf5ef;
+}
+
+.mentoring-record-delete-link {
+  padding: 6px 12px;
+  border: 1px solid #e5c3c3;
+  border-radius: 12px;
+  background: white;
+  color: #a84d4d;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentoring-record-delete-link:hover {
+  border-color: #c98282;
+  background: #fdf2f2;
+}
+
+/* 내가 등록한 멘토링 페이지네이션 */
+.offering-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.offering-pagination-page,
+.offering-pagination-arrow {
+  min-width: 34px;
+  padding: 8px 10px;
+  border: 1px solid #dfe6df;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #68736c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.offering-pagination-page:hover,
+.offering-pagination-arrow:hover:not(:disabled) {
+  border-color: #b9c8bc;
+  color: #243329;
+}
+
+.offering-pagination-page.active {
+  border-color: #243329;
+  background: #243329;
+  color: white;
+}
+
+.offering-pagination-arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .reservation-board-card li > div {
@@ -416,6 +794,11 @@
   color: #2f4937;
 }
 
+.reservation-status.payment-pending {
+  background: #eaf1fb;
+  color: #2a5ea8;
+}
+
 .reservation-status.upcoming {
   background: #e6f0e8;
   color: #3d7a4d;
@@ -426,47 +809,7 @@
   color: #315e8c;
 }
 
-.reservation-phase-message {
-  max-width: 220px;
-  color: #6f7d73;
-  font-size: 10px;
-  line-height: 1.5;
-  text-align: right;
-}
-
-.reservation-complete-info {
-  display: flex;
-  flex-shrink: 0;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-}
-
-.reservation-complete-guide {
-  max-width: 220px;
-  color: #6f7d73;
-  font-size: 10px;
-  line-height: 1.5;
-  text-align: right;
-}
-
-.reservation-review-link {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #3d7a4d;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.reservation-review-link:hover {
-  color: #243329;
-  text-decoration: underline;
-}
-
-/* 받은 신청 카드: 멘토링명/신청자/상담분야/신청내용 미리보기 */
+/* 받은 신청 카드: 멘토링명/신청자/상담분야/신청내용 미리보기 (예약 상세보기 모달에서 재사용) */
 
 .reservation-tag-row {
   display: flex;
@@ -482,34 +825,6 @@
   font-size: 10px;
   font-weight: 700;
   font-style: normal;
-}
-
-.reservation-problem-preview {
-  display: -webkit-box;
-  max-width: 260px;
-  overflow: hidden;
-  color: #8a938d;
-  font-size: 11px;
-  line-height: 1.5;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.reservation-detail-button {
-  padding: 8px 14px;
-  border: 1px solid #dfe5df;
-  border-radius: 16px;
-  background: white;
-  color: #526358;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.reservation-detail-button:hover {
-  border-color: #9eb8a4;
-  background: #edf5ef;
 }
 
 /* =====================================================
@@ -663,6 +978,13 @@
    MENTOR GRID
    ===================================================== */
 
+/* "내가 등록한 멘토링"(.my-offerings-section)과 동일한 간격으로,
+   그리드 뒤에 페이지네이션이 붙어도 아래 "나의 멘토링 기록" 섹션과
+   항상 일정하게 떨어지도록 그리드+페이지네이션을 감싸는 래퍼에 마진을 준다. */
+.mentor-grid-section {
+  margin-bottom: 40px;
+}
+
 .mentor-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -670,6 +992,8 @@
 }
 
 .mentor-card {
+  min-width: 0;
+  max-width: 100%;
   padding: 28px;
   border: 1px solid rgba(227, 233, 227, 0.9);
   border-radius: 22px;
@@ -707,6 +1031,29 @@
   margin: 5px 0 4px;
   color: #243329;
   font-size: 20px;
+  overflow-wrap: break-word;
+}
+
+.mentor-card-mentor-name,
+.mentor-card-mentor-link {
+  margin: 0;
+  color: #5c7b65;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mentor-card-mentor-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mentor-card-mentor-link:hover {
+  color: #243329;
 }
 
 .mentor-basic p {
@@ -2319,6 +2666,24 @@
   background: #edf5ef;
 }
 
+.mentor-offering-slot-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mentor-offering-slot-list .mentor-schedule-badge {
+  padding: 6px 10px;
+  gap: 6px;
+}
+
+.mentor-offering-slot-more {
+  align-self: center;
+  color: #5c7b65;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .mentor-offering-card-top {
   display: flex;
   align-items: center;
@@ -2511,6 +2876,21 @@
   border-color: #c98282;
 }
 
+.schedule-config-item.locked {
+  background: #fafcf9;
+  border-color: #e3e9e3;
+}
+
+.schedule-lock-badge {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #f4f1e2;
+  color: #9c8130;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .schedule-config-times {
   display: flex;
   align-items: center;
@@ -2590,6 +2970,12 @@
     grid-template-columns: 1fr;
   }
 
+  /* "내가 등록한 멘토링" / "나의 멘토링 기록" 카드 Grid는 태블릿·모바일에서도 2열을 유지한다(1열로 떨어지지 않음). */
+  .offering-manage-grid,
+  .mentoring-record-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mentoring-value-grid {
     grid-template-columns: 1fr;
   }
@@ -2643,6 +3029,29 @@
     width: 100%;
   }
 
+  .offering-section-header {
+    flex-wrap: wrap;
+  }
+
+  .offering-add-button {
+    width: 100%;
+  }
+
+  .offering-manage-grid,
+  .mentoring-record-grid {
+    gap: 8px;
+  }
+
+  .offering-manage-card,
+  .mentoring-record-card {
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .offering-manage-card-title strong {
+    font-size: 12px;
+  }
+
   .mentor-card {
     padding: 22px;
     border-radius: 20px;
@@ -2694,21 +3103,6 @@
 
   .reservation-status {
     align-self: flex-start;
-  }
-
-  .reservation-complete-info {
-    align-items: flex-start;
-    width: 100%;
-  }
-
-  .reservation-complete-guide,
-  .reservation-phase-message {
-    max-width: 100%;
-    text-align: left;
-  }
-
-  .reservation-problem-preview {
-    max-width: 100%;
   }
 
   .reservation-detail-row {

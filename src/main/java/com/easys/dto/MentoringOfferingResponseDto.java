@@ -4,6 +4,7 @@ import com.easys.entity.MentoringOffering;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 public class MentoringOfferingResponseDto {
@@ -24,7 +25,11 @@ public class MentoringOfferingResponseDto {
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
-    public MentoringOfferingResponseDto(MentoringOffering offering) {
+    // 날짜별 예약 가능/예약됨 상태 (공개 목록 = 신청 가능한 슬롯만,
+    // 내가 등록한 멘토링 = 전체 슬롯 + 예약 정보)
+    private final List<MentoringOfferingSlotDto> slots;
+
+    public MentoringOfferingResponseDto(MentoringOffering offering, List<MentoringOfferingSlotDto> slots) {
         this.id = offering.getId();
         this.mentorId = offering.getMentor().getId();
         this.mentorName = offering.getMentor().getMember().getNickname();
@@ -40,5 +45,6 @@ public class MentoringOfferingResponseDto {
         this.availableSchedules = offering.getAvailableSchedules();
         this.createdAt = offering.getCreatedAt();
         this.updatedAt = offering.getUpdatedAt();
+        this.slots = slots;
     }
 }

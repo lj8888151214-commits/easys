@@ -287,5 +287,45 @@ public class MentoringReservationController {
             );
         }
     }
+
+    // =====================================================
+    // 나의 멘토링 기록에서 삭제 (본인 화면에서만 숨김, 예약 데이터는 유지)
+    // DELETE /mentor/reservation/{reservationId}/my-record
+    // =====================================================
+
+    @DeleteMapping("/{reservationId}/my-record")
+    public ResponseEntity<?> hideMyRecord(
+            Authentication authentication,
+            @PathVariable Long reservationId
+    ) {
+
+        try {
+
+            Member member =
+                    getCurrentMember(authentication);
+
+            mentoringReservationService
+                    .hideMyRecord(
+                            reservationId,
+                            member
+                    );
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "message",
+                            "나의 멘토링 기록에서 삭제되었습니다."
+                    )
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "message",
+                            e.getMessage()
+                    )
+            );
+        }
+    }
 }
 

@@ -27,6 +27,10 @@ import StudyCreate from "./pages/StudyCreate/StudyCreate";
 import StudyDetail from "./pages/StudyDetail/StudyDetail";
 import StudyEdit from "./pages/StudyEdit/StudyEdit";
 
+import Payment from "./pages/Payment/Payment";
+import PaymentSuccess from "./pages/Payment/PaymentSuccess";
+import PaymentFail from "./pages/Payment/PaymentFail";
+
 
 // 페이지 이동 시 스크롤 최상단
 function ScrollToTop() {
@@ -106,6 +110,20 @@ function App() {
         <Route
           path="/community"
           element={<Community />}
+        />
+
+        {/* 결제 (멘토링/스터디 공통) */}
+        <Route
+          path="/payment"
+          element={<Payment />}
+        />
+        <Route
+          path="/payment/success"
+          element={<PaymentSuccess />}
+        />
+        <Route
+          path="/payment/fail"
+          element={<PaymentFail />}
         />
 
         {/* 로그인 */}

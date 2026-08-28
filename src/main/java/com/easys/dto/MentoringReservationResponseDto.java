@@ -1,6 +1,7 @@
 package com.easys.dto;
 
 import com.easys.entity.MentoringReservation;
+import com.easys.entity.Payment;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -25,7 +26,16 @@ public class MentoringReservationResponseDto {
     private final String rejectReason;
     private final LocalDateTime createdAt;
 
+    // 결제 관련 정보 (연결된 Payment가 없으면 모두 null)
+    private final String orderId;
+    private final String paymentStatus;
+    private final Integer amount;
+
     public MentoringReservationResponseDto(MentoringReservation reservation) {
+        this(reservation, null);
+    }
+
+    public MentoringReservationResponseDto(MentoringReservation reservation, Payment payment) {
         this.id = reservation.getId();
         this.mentorId = reservation.getMentor().getId();
         this.mentorName = reservation.getMentor().getMember().getNickname();
@@ -42,5 +52,8 @@ public class MentoringReservationResponseDto {
         this.status = reservation.getStatus().name();
         this.rejectReason = reservation.getRejectReason();
         this.createdAt = reservation.getCreatedAt();
+        this.orderId = payment == null ? null : payment.getOrderId();
+        this.paymentStatus = payment == null ? null : payment.getStatus().name();
+        this.amount = payment == null ? null : payment.getAmount();
     }
 }
