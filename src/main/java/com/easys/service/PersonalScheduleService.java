@@ -73,4 +73,18 @@ public class PersonalScheduleService {
 
         personalScheduleRepository.delete(schedule);
     }
+
+    // 멘토링 예약이 거절/취소될 때, 이전에 자동 생성된 일정을 정리하기 위한 용도.
+    // 이미 지워졌거나 소유자가 다르면 조용히 무시한다(호출부에서 별도 예외 처리가 필요 없도록).
+    public void deleteScheduleIfOwnedBy(Long scheduleId, Member member) {
+        if (scheduleId == null) {
+            return;
+        }
+
+        personalScheduleRepository.findById(scheduleId).ifPresent(schedule -> {
+            if (schedule.getMember().getId().equals(member.getId())) {
+                personalScheduleRepository.delete(schedule);
+            }
+        });
+    }
 }

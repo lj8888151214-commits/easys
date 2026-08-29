@@ -7,26 +7,27 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class MentorProfileCreateDto {
+public class MentoringOfferingCreateDto {
 
+    // 멘토링 이름 (예: "Java 멘토링")
     private String title;
-    private String introduction;
-    private String career;
-    private String careerDetail;
-    private String certificates;
+
+    // 관련 기술
     private String skills;
-    private Integer price;
-    private String mentoringType;
+
+    // 상담 가능 분야
     private String consultationFields;
-    private String github;
-    private String velog;
-    private String portfolio;
+
+    // 멘토링 방식
+    private String mentoringType;
+
+    // 1회 상담 가격
+    private Integer price;
 
     // 기존 상담 가능 요일
     private String availableDays;
 
     // 실제 상담 가능 날짜
-    // 예: 2026-09-03,2026-09-10,2026-09-17
     private String availableDates;
 
     private String availableStart;

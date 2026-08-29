@@ -1,5 +1,6 @@
 package com.easys.controller;
 
+import com.easys.dto.PersonalScheduleResponseDto;
 import com.easys.entity.Member;
 import com.easys.entity.PersonalSchedule;
 import com.easys.security.CustomUserDetails;
@@ -33,6 +34,9 @@ public class PersonalScheduleController {
 
         return ResponseEntity.ok(
                 personalScheduleService.getMySchedules(member)
+                        .stream()
+                        .map(PersonalScheduleResponseDto::new)
+                        .toList()
         );
     }
 
@@ -57,7 +61,7 @@ public class PersonalScheduleController {
                         request.endAt()
                 );
 
-        return ResponseEntity.ok(schedule);
+        return ResponseEntity.ok(new PersonalScheduleResponseDto(schedule));
     }
 
     @PutMapping("/{id}")
@@ -83,7 +87,7 @@ public class PersonalScheduleController {
                         request.endAt()
                 );
 
-        return ResponseEntity.ok(schedule);
+        return ResponseEntity.ok(new PersonalScheduleResponseDto(schedule));
     }
 
     @DeleteMapping("/{id}")

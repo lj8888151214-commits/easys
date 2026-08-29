@@ -102,6 +102,34 @@ public class SecurityConfig {
                                 "/study/**"
                         ).permitAll()
 
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/mentor",
+                                "/mentor/{mentorId}"
+                        ).permitAll()
+
+                        // 전체 공개 멘토링 목록(mentor-grid) / 특정 멘토가 등록한 멘토링 목록
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/mentor/offerings",
+                                "/mentor/offerings/mentor/*"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/mentor/reservation/*/booked-dates"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/mentor/reviews/eligible/**"
+                        ).authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/mentor/reviews/**"
+                        ).permitAll()
+
                         // 스터디룸 목록/상세/검색/리뷰 조회 (예약 전 누구나 볼 수 있어야 함)
                         .requestMatchers(
                                 HttpMethod.GET,
