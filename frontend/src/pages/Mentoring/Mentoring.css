@@ -454,6 +454,21 @@
   justify-content: space-between;
 }
 
+.offering-slot-status {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.offering-slot-status.available {
+  background: #e6f0e8;
+  color: #3d7a4d;
+  border: 1px solid #cfe3d3;
+}
+
 .offering-manage-slot-header {
   display: flex;
   align-items: center;
