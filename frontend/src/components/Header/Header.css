@@ -117,20 +117,20 @@
 }
 
 .main-nav a {
-  position: relative;
-  display: inline-block;
-  padding: 8px 2px;
-  color: white;
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: 600;
-  transition:
+    position: relative;
+    display: inline-block;
+    padding: 8px 2px;
+    color: #000000;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+    transition:
     color 0.25s ease,
     transform 0.25s ease;
 }
 
 .main-header.scrolled .main-nav a {
-  color: #cadfd0;
+  color: #000000;
 }
 
 .main-nav a::after {
@@ -140,10 +140,15 @@
   bottom: 0;
   width: 0;
   height: 2px;
+
   border-radius: 10px;
   background: currentColor;
   transform: translateX(-50%);
   transition: width 0.25s ease;
+}
+.campage .main-header .main-nav a,
+.campage .main-header.scrolled .main-nav a {
+  color: #000000;
 }
 
 .main-nav a:hover {
@@ -347,6 +352,25 @@
   transform: translateY(-2px);
 }
 
+.admin-link {
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  color: white;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.main-header.scrolled .admin-link {
+  border-color: #a9c1ad;
+  color: #2e4033;
+}
+
+.admin-link:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 /* =====================================================
    PC 로그아웃
 ===================================================== */
@@ -433,6 +457,7 @@
 
   .main-nav a {
     font-size: 14px;
+
   }
 
   .header-search form {
@@ -527,6 +552,7 @@
 
   /* 모바일에서는 닉네임 / 로그아웃 숨김 */
   .user-nickname,
+  .admin-link,
   .logout-btn {
     display: none;
   }
@@ -601,7 +627,8 @@
 
   .mobile-menu nav > a {
     padding: 14px 5px;
-    color: #2e4033;
+
+    color: #000000; /* 진한 회색/녹색에서 완전한 검은색으로 변경 */
     text-decoration: none;
     font-size: 15px;
     font-weight: 600;

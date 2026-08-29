@@ -567,7 +567,7 @@ function Profile() {
 
   const profileImage =
     imagePreview ||
-    "/default-profile.png";
+    "/default-profile.svg";
 
 
   // =====================================================
@@ -608,7 +608,7 @@ function Profile() {
                   className="profile-image"
                   onError={(e) => {
                     e.currentTarget.src =
-                      "/default-profile.png";
+                      "/default-profile.svg";
                   }}
                 />
 
@@ -691,7 +691,7 @@ function Profile() {
                 <img
                   src={
                     imagePreview ||
-                    "/default-profile.png"
+                    "/default-profile.svg"
                   }
                   alt="프로필 미리보기"
                   className="profile-image"

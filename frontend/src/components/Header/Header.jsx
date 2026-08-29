@@ -119,7 +119,7 @@ function Header() {
   const profileImage =
     user?.profileImageUrl
       ? `/api${user.profileImageUrl}`
-      : "/default-profile.png";
+      : "/default-profile.svg";
 
   return (
     <header className={`main-header ${scrolled ? "scrolled" : ""}`}>
@@ -197,7 +197,7 @@ function Header() {
                     className="header-profile-image"
                     onError={(e) => {
                       e.currentTarget.src =
-                        "/default-profile.png";
+                        "/default-profile.svg";
                     }}
                   />
                 </Link>
@@ -211,6 +211,16 @@ function Header() {
                     user.name ||
                     "마이페이지"}
                 </Link>
+
+                {/* 관리자 링크 */}
+                {user.role === "ADMIN" && (
+                  <Link
+                    to="/admin"
+                    className="admin-link"
+                  >
+                    관리자
+                  </Link>
+                )}
 
                 {/* PC 로그아웃 */}
                 <button
@@ -297,7 +307,7 @@ function Header() {
                   className="mobile-profile-image"
                   onError={(e) => {
                     e.currentTarget.src =
-                      "/default-profile.png";
+                      "/default-profile.svg";
                   }}
                 />
 
@@ -307,7 +317,18 @@ function Header() {
                     "마이페이지"}
                 </span>
               </Link>
-            ) : (
+            ) : null}
+
+            {user && user.role === "ADMIN" && (
+              <Link
+                to="/admin"
+                onClick={handleMenuClose}
+              >
+                관리자
+              </Link>
+            )}
+
+            {!user && (
               <>
                 <Link
                   to="/login"
