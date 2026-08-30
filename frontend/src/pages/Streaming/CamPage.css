@@ -393,5 +393,51 @@
     top: 0;
     left: 0;
   }
+  @keyframes bubblePop {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.05);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* 🌟 비디오 카드 기본 스타일에 물방울 애니메이션 클래스 결합 */
+  .cam-card {
+    animation: bubblePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    transform-origin: center;
+  }
+
 
 }
+
+@keyframes smoothSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(15px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 🌟 미디어 쿼리 밖으로 빼내어 모든 화면 크기에서 작동하도록 수정 */
+.cam-card {
+  animation: smoothSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: center;
+}
+
+.btn-expand-cam {
+  background-color: #4b6584; /* 원하시는 색상으로 변경 가능합니다 */
+}
+.btn-expand-cam:hover {
+  background-color: #38485d;
+}
+
