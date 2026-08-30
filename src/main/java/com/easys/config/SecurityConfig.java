@@ -127,6 +127,9 @@ public class SecurityConfig {
                                 "/admin/**"
                         ).hasRole("ADMIN")
 
+                        .requestMatchers("/api/ai/**").permitAll() // 🌟 AI 경로 허용 추가
+                        .requestMatchers("/api/member/me", "/api/study-groups").authenticated() // 필요에 따라 설정
+
                         // 그 외 모든 요청은 로그인 필요
                         .anyRequest().authenticated()
                 )
