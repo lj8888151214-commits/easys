@@ -1,132 +1,374 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState
+} from "react";
+
+import {
+  useNavigate
+} from "react-router-dom";
+
 import "./Study.css";
-import studyBg from "../../assets/images/study-bg.jpg";
+
+import studyBg
+  from "../../assets/images/study-bg.jpg";
+
 
 function Study() {
 
-  // 서버에서 가져온 스터디 목록
-  const [studies, setStudies] = useState([]);
-
-  // 검색어
-  const [keyword, setKeyword] = useState("");
-
-  // 선택한 분야
-  const [selectedSubjects, setSelectedSubjects] = useState([]);
-
-  // 로딩 상태
-  const [loading, setLoading] = useState(true);
-
-  // 오류 메시지
-  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
 
   // =====================================================
-  // 서버에서 스터디 목록 가져오기
-  // GET /study
+  // 상태
+  // =====================================================
+
+  const [studies, setStudies] =
+    useState([]);
+
+  const [keyword, setKeyword] =
+    useState("");
+
+  const [sortType, setSortType] =
+    useState("latest");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const [scrollY, setScrollY] =
+    useState(0);
+
+
+  // =====================================================
+  // 스크롤
   // =====================================================
 
   useEffect(() => {
 
-    fetch("/api/study")
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
 
-      .then((response) => {
+    window.addEventListener(
+      "scroll",
+      handleScroll,
+      {
+        passive: true
+      }
+    );
 
-        if (!response.ok) {
-          throw new Error("스터디 목록을 불러오지 못했습니다.");
-        }
+    return () => {
 
-        return response.json();
-      })
+      window.removeEventListener(
+        "scroll",
+        handleScroll
+      );
 
-      .then((data) => {
-
-        console.log("스터디 목록:", data);
-
-        setStudies(data);
-        setLoading(false);
-      })
-
-      .catch((error) => {
-
-        console.error(error);
-
-        setError(error.message);
-        setLoading(false);
-      });
+    };
 
   }, []);
 
 
   // =====================================================
-  // 분야 목록
+  // 스터디 목록 가져오기
   // =====================================================
 
-  const subjects = [
-    "HTML",
-    "CSS",
-    "Java",
-    "JavaScript",
-    "Spring",
-    "React",
-    "SQL",
-    "DB",
-    "Python",
-  ];
+  useEffect(() => {
+
+    loadStudies();
+
+  }, []);
 
 
-  // =====================================================
-  // 분야 선택
-  // =====================================================
+  const loadStudies = async () => {
 
-  const handleSubjectChange = (subject) => {
+    try {
 
-    setSelectedSubjects((prev) => {
+      setLoading(true);
+      setError("");
 
-      if (prev.includes(subject)) {
+      const response =
+        await fetch(
+          "/api/study",
+          {
+            credentials: "include"
+          }
+        );
 
-        return prev.filter(
-          (item) => item !== subject
+      console.log(
+        "스터디 목록 상태:",
+        response.status
+      );
+
+      const text =
+        await response.text();
+
+      console.log(
+        "스터디 목록 응답:",
+        text
+      );
+
+      if (!response.ok) {
+
+        throw new Error(
+          text ||
+          "스터디 목록을 불러오지 못했습니다."
         );
 
       }
 
-      return [...prev, subject];
+      let data = [];
 
-    });
+      try {
+
+        data =
+          text
+            ? JSON.parse(text)
+            : [];
+
+      } catch (jsonError) {
+
+        console.error(
+          "스터디 목록 JSON 변환 실패:",
+          jsonError
+        );
+
+        throw new Error(
+          "서버에서 올바른 데이터를 받지 못했습니다."
+        );
+
+      }
+
+      console.log(
+        "스터디 목록:",
+        data
+      );
+
+      setStudies(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
+    } catch (error) {
+
+      console.error(
+        "스터디 목록 조회 오류:",
+        error
+      );
+
+      setError(
+        error.message ||
+        "스터디 목록을 불러오지 못했습니다."
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
 
   };
 
 
   // =====================================================
-  // 화면에 보여줄 스터디 필터링
+  // 검색 / 정렬
   // =====================================================
 
-  const filteredStudies = studies.filter((study) => {
+  const filteredStudies =
+    useMemo(() => {
 
-    // 검색어
-    const searchText =
-      `${study.title} ${study.content}`
-        .toLowerCase();
+      const searchText =
+        keyword
+          .trim()
+          .toLowerCase();
 
-    const matchKeyword =
-      searchText.includes(
-        keyword.toLowerCase()
-      );
+      let result =
+        studies.filter(
+          (study) => {
+
+            if (
+              searchText === ""
+            ) {
+              return true;
+            }
+
+            const title =
+              study.title
+                ?.toLowerCase() || "";
+
+            const content =
+              study.content
+                ?.toLowerCase() || "";
+
+            const category =
+              study.category
+                ?.toLowerCase() || "";
+
+            return (
+              title.includes(searchText) ||
+              content.includes(searchText) ||
+              category.includes(searchText)
+            );
+
+          }
+        );
 
 
-    // 분야
-    const matchSubject =
-      selectedSubjects.length === 0 ||
-      selectedSubjects.some(
-        (subject) =>
-          study.category.trim().toLowerCase()
-          === subject.toLowerCase()
-      );
+      // =================================================
+      // 최신순
+      // =================================================
+
+      if (
+        sortType === "latest"
+      ) {
+
+        result.sort(
+          (a, b) => {
+
+            if (
+              a.createdAt &&
+              b.createdAt
+            ) {
+
+              return (
+                new Date(b.createdAt) -
+                new Date(a.createdAt)
+              );
+
+            }
+
+            return (
+              Number(b.id || 0) -
+              Number(a.id || 0)
+            );
+
+          }
+        );
+
+      }
 
 
-    return matchKeyword && matchSubject;
+      // =================================================
+      // 참여자 많은 순
+      // =================================================
 
-  });
+      if (
+        sortType === "members"
+      ) {
+
+        result.sort(
+          (a, b) => {
+
+            return (
+              Number(
+                b.currentMembers || 0
+              ) -
+              Number(
+                a.currentMembers || 0
+              )
+            );
+
+          }
+        );
+
+      }
+
+
+      // =================================================
+      // 마감 임박 순
+      // =================================================
+
+      if (
+        sortType === "deadline"
+      ) {
+
+        result.sort(
+          (a, b) => {
+
+            const aRemain =
+              Number(
+                a.maxMembers || 0
+              ) -
+              Number(
+                a.currentMembers || 0
+              );
+
+            const bRemain =
+              Number(
+                b.maxMembers || 0
+              ) -
+              Number(
+                b.currentMembers || 0
+              );
+
+            return (
+              aRemain -
+              bRemain
+            );
+
+          }
+        );
+
+      }
+
+      return result;
+
+    }, [
+      studies,
+      keyword,
+      sortType
+    ]);
+
+
+  // =====================================================
+  // 스터디 만들기
+  // =====================================================
+
+  const handleCreateStudy = () => {
+
+    navigate(
+      "/study/create"
+    );
+
+  };
+
+
+  // =====================================================
+  // 스터디 상세
+  // =====================================================
+
+  const handleStudyDetail = (
+    studyId
+  ) => {
+
+    if (!studyId) {
+      return;
+    }
+
+    navigate(
+      `/study/${studyId}`
+    );
+
+  };
+
+
+  // =====================================================
+  // 검색 초기화
+  // =====================================================
+
+  const resetSearch = () => {
+
+    setKeyword("");
+
+    setSortType(
+      "latest"
+    );
+
+  };
 
 
   // =====================================================
@@ -137,10 +379,24 @@ function Study() {
 
     <main className="study-page">
 
+      {/* =================================================
+          BACKGROUND DROPS
+          Community보다 적게 사용
+      ================================================= */}
 
-      {/* =========================
+      <div className="study-drops">
+
+        <span className="study-drop study-drop-1" />
+        <span className="study-drop study-drop-2" />
+        <span className="study-drop study-drop-3" />
+        <span className="study-drop study-drop-4" />
+
+      </div>
+
+
+      {/* =================================================
           HERO
-      ========================= */}
+      ================================================= */}
 
       <section className="study-hero">
 
@@ -148,7 +404,10 @@ function Study() {
           className="study-hero-bg"
           style={{
             backgroundImage:
-              `url(${studyBg})`
+              `url(${studyBg})`,
+
+            transform:
+              `scale(1.08) translateY(${scrollY * 0.15}px)`
           }}
         />
 
@@ -175,17 +434,16 @@ function Study() {
       </section>
 
 
-
-      {/* =========================
+      {/* =================================================
           CONTENT
-      ========================= */}
+      ================================================= */}
 
       <section className="study-content">
 
 
-        {/* =========================
-            상단
-        ========================= */}
+        {/* =================================================
+            HEADER
+        ================================================= */}
 
         <div className="study-top">
 
@@ -200,21 +458,20 @@ function Study() {
             </h2>
 
             <p className="study-description">
-              관심 있는 과목을 선택하고
-              나에게 맞는 스터디를 찾아보세요.
+              관심 있는 분야의 스터디를 찾아보세요.
+              <br />
+              원하는 분야는 자유롭게 검색할 수 있습니다.
             </p>
 
           </div>
 
 
           <button
+            type="button"
             className="create-study-button"
-            onClick={() => {
-
-              // 나중에 스터디 생성 페이지 연결
-              alert("스터디 생성 페이지는 준비 중입니다.");
-
-            }}
+            onClick={
+              handleCreateStudy
+            }
           >
             + 스터디 만들기
           </button>
@@ -222,10 +479,9 @@ function Study() {
         </div>
 
 
-
-        {/* =========================
-            분야 필터
-        ========================= */}
+        {/* =================================================
+            검색 안내
+        ================================================= */}
 
         <div className="study-filter-box">
 
@@ -234,75 +490,23 @@ function Study() {
             <div>
 
               <strong>
-                어떤 공부를 찾고 있나요?
+                어떤 스터디를 찾고 있나요?
               </strong>
 
               <span>
-                여러 과목을 동시에 선택할 수 있습니다.
+                제목, 내용 또는 분야를 자유롭게 검색해보세요.
               </span>
 
             </div>
-
-
-            {selectedSubjects.length > 0 && (
-
-              <button
-                className="filter-reset"
-                onClick={() =>
-                  setSelectedSubjects([])
-                }
-              >
-                선택 초기화
-              </button>
-
-            )}
-
-          </div>
-
-
-
-          <div className="study-filter-list">
-
-            {subjects.map((subject) => (
-
-              <label
-                className={`study-check ${
-                  selectedSubjects.includes(subject)
-                    ? "checked"
-                    : ""
-                }`}
-                key={subject}
-              >
-
-                <input
-                  type="checkbox"
-                  checked={
-                    selectedSubjects.includes(subject)
-                  }
-                  onChange={() =>
-                    handleSubjectChange(subject)
-                  }
-                />
-
-                <span className="custom-check"></span>
-
-                <span>
-                  {subject}
-                </span>
-
-              </label>
-
-            ))}
 
           </div>
 
         </div>
 
 
-
-        {/* =========================
-            검색
-        ========================= */}
+        {/* =================================================
+            검색창
+        ================================================= */}
 
         <div className="study-search-row">
 
@@ -314,27 +518,55 @@ function Study() {
 
             <input
               type="text"
-              placeholder="스터디 이름이나 내용을 검색해보세요."
               value={keyword}
-              onChange={(e) =>
-                setKeyword(e.target.value)
+              onChange={(e) => {
+
+                setKeyword(
+                  e.target.value
+                );
+
+              }}
+              placeholder={
+                "예: Java, Spring Boot, Python, 백엔드"
               }
             />
+
+            {keyword && (
+
+              <button
+                type="button"
+                className="search-clear"
+                onClick={() =>
+                  setKeyword("")
+                }
+              >
+                ×
+              </button>
+
+            )}
 
           </div>
 
 
-          <select className="study-sort">
+          <select
+            className="study-sort"
+            value={sortType}
+            onChange={(e) =>
+              setSortType(
+                e.target.value
+              )
+            }
+          >
 
-            <option>
+            <option value="latest">
               최신순
             </option>
 
-            <option>
+            <option value="deadline">
               마감 임박순
             </option>
 
-            <option>
+            <option value="members">
               참여자 많은순
             </option>
 
@@ -343,84 +575,165 @@ function Study() {
         </div>
 
 
-
-        {/* =========================
-            결과
-        ========================= */}
+        {/* =================================================
+            검색 결과 헤더
+        ================================================= */}
 
         <div className="study-result-header">
 
-          <strong>
-            스터디
-          </strong>
+          <div>
 
-          <span>
-            총 {filteredStudies.length}개의 스터디
-          </span>
+            <strong>
+              스터디
+            </strong>
+
+            <span>
+
+              {keyword
+                ? `"${keyword}" 검색 결과`
+                : `전체 스터디 ${filteredStudies.length}개`
+              }
+
+            </span>
+
+          </div>
+
+
+          {keyword && (
+
+            <button
+              type="button"
+              className="search-reset"
+              onClick={
+                resetSearch
+              }
+            >
+              검색 초기화
+            </button>
+
+          )}
 
         </div>
 
 
-
-        {/* =========================
+        {/* =================================================
             로딩
-        ========================= */}
+        ================================================= */}
 
         {loading && (
 
-          <div>
-            스터디를 불러오는 중입니다...
-          </div>
+          <div className="study-empty">
 
-        )}
-
-
-
-        {/* =========================
-            오류
-        ========================= */}
-
-        {!loading && error && (
-
-          <div>
+            <div className="study-loading-spinner" />
 
             <p>
-              {error}
+              스터디를 불러오는 중입니다...
             </p>
-
-            <button
-              onClick={() =>
-                window.location.reload()
-              }
-            >
-              다시 시도
-            </button>
 
           </div>
 
         )}
 
 
-
-        {/* =========================
-            스터디 목록
-        ========================= */}
+        {/* =================================================
+            오류
+        ================================================= */}
 
         {!loading &&
-          !error &&
-          filteredStudies.length === 0 && (
+          error && (
 
-            <div>
+            <div className="study-empty">
+
+              <div className="empty-icon">
+                ⚠️
+              </div>
+
+              <h3>
+                스터디를 불러오지 못했습니다.
+              </h3>
 
               <p>
-                조건에 맞는 스터디가 없습니다.
+                {error}
               </p>
+
+              <button
+                type="button"
+                onClick={
+                  loadStudies
+                }
+              >
+                다시 불러오기
+              </button>
 
             </div>
 
           )}
 
 
+        {/* =================================================
+            결과 없음
+        ================================================= */}
+
+        {!loading &&
+          !error &&
+          filteredStudies.length === 0 && (
+
+            <div className="study-empty">
+
+              <div className="empty-icon">
+                📚
+              </div>
+
+              <h3>
+
+                {keyword
+                  ? "검색 결과가 없습니다."
+                  : "등록된 스터디가 없습니다."
+                }
+
+              </h3>
+
+              <p>
+
+                {keyword
+                  ? "다른 검색어로 다시 검색해보세요."
+                  : "첫 번째 스터디를 만들어보세요."
+                }
+
+              </p>
+
+              {keyword ? (
+
+                <button
+                  type="button"
+                  onClick={
+                    resetSearch
+                  }
+                >
+                  검색 초기화
+                </button>
+
+              ) : (
+
+                <button
+                  type="button"
+                  onClick={
+                    handleCreateStudy
+                  }
+                >
+                  첫 스터디 만들기
+                </button>
+
+              )}
+
+            </div>
+
+          )}
+
+
+        {/* =================================================
+            스터디 카드
+        ================================================= */}
 
         {!loading &&
           !error &&
@@ -428,99 +741,107 @@ function Study() {
 
             <div className="study-grid">
 
-              {filteredStudies.map((study) => (
+              {filteredStudies.map(
+                (study) => (
 
-                <article
-                  className="study-card"
-                  key={study.id}
-                >
+                  <article
+                    className="study-card"
+                    key={study.id}
+                  >
 
+                    <div className="study-card-top">
 
-                  {/* 카드 상단 */}
+                      <div className="study-tags">
 
-                  <div className="study-card-top">
+                        <span>
+                          {study.category ||
+                            "스터디"
+                          }
+                        </span>
 
-                    <div className="study-tags">
+                      </div>
 
-                      <span>
-                        {study.category}
+                      <span
+                        className={
+                          `study-status ${
+                            study.status ===
+                            "RECRUITING"
+                              ? "recruiting"
+                              : "closed"
+                          }`
+                        }
+                      >
+
+                        {study.status ===
+                        "RECRUITING"
+                          ? "모집중"
+                          : "모집완료"
+                        }
+
                       </span>
 
                     </div>
 
 
-                    <span className="study-status">
-
-                      {study.status === "RECRUITING"
-                        ? "모집중"
-                        : "모집완료"}
-
-                    </span>
-
-                  </div>
+                    <h3>
+                      {study.title}
+                    </h3>
 
 
-
-                  {/* 제목 */}
-
-                  <h3>
-                    {study.title}
-                  </h3>
+                    <p className="study-card-content">
+                      {study.content}
+                    </p>
 
 
+                    <div className="study-info">
 
-                  {/* 내용 */}
+                      <span>
+                        👥{" "}
+                        {study.currentMembers ||
+                          0
+                        }
+                        {" / "}
+                        {study.maxMembers ||
+                          0
+                        }
+                        명
+                      </span>
 
-                  <p>
-                    {study.content}
-                  </p>
+                      <span>
+                        👤{" "}
+                        {study.nickname ||
+                          "작성자"
+                        }
+                      </span>
 
-
-
-                  {/* 스터디 정보 */}
-
-                  <div className="study-info">
-
-                    <span>
-                      👥 {study.currentMembers}
-                      /
-                      {study.maxMembers}명
-                    </span>
-
-                    <span>
-                      👤 {study.nickname}
-                    </span>
-
-                  </div>
+                    </div>
 
 
+                    <div className="study-card-bottom">
 
-                  {/* 하단 */}
+                      <span>
+                        {study.category ||
+                          "스터디"
+                        }
+                      </span>
 
-                  <div className="study-card-bottom">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleStudyDetail(
+                            study.id
+                          )
+                        }
+                      >
+                        자세히 보기 →
+                      </button>
 
-                    <span>
-                      {study.category}
-                    </span>
+                    </div>
 
+                  </article>
 
-                    <button
-                      onClick={() => {
-
-                        window.location.href =
-                          `/study-detail?id=${study.id}`;
-
-                      }}
-                    >
-                      자세히 보기 →
-                    </button>
-
-                  </div>
-
-
-                </article>
-
-              ))}
+                )
+              )}
 
             </div>
 
@@ -531,7 +852,7 @@ function Study() {
     </main>
 
   );
-
 }
+
 
 export default Study;

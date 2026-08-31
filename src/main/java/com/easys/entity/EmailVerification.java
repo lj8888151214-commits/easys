@@ -1,4 +1,4 @@
-        package com.easys.entity;
+package com.easys.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -47,4 +47,3 @@ public class EmailVerification {
         this.verified = true;
     }
 }
-

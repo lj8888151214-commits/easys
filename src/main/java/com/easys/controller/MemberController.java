@@ -5,65 +5,111 @@ import com.easys.dto.MemberResponseDto;
 import com.easys.dto.MemberUpdateDto;
 import com.easys.dto.PasswordUpdateDto;
 import com.easys.entity.Member;
-import com.easys.security.CustomUserDetails;
+import com.easys.repository.MemberRepository;
 import com.easys.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-// 이 클래스가 REST API를 담당하는 Controller라는 뜻
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
+
 @RestController
-// final로 선언된 필드의 생성자를 자동으로 만들어준다.
-@RequiredArgsConstructor
-// 이 Controller의 기본 주소 여기서부터 시작하는 URL은 /member
 @RequestMapping("/member")
+@RequiredArgsConstructor
 public class MemberController {
 
-    // 회원 관련 비즈니스 로직을 담당하는 Service
+    private final MemberRepository memberRepository;
     private final MemberService memberService;
+
+
+    // =====================================================
+    // 회원가입
+    // POST /member
+    // =====================================================
 
     @PostMapping
     public ResponseEntity<MemberResponseDto> createMember(
-            // HTML에서 보낸 JSON을 MemberCreateDto 객체로 변환한다
             @RequestBody MemberCreateDto request
     ) {
 
-        // 실제 회원가입 작업은 Service에게 맡긴다.
-        MemberResponseDto response = memberService.createMember(request);
+        MemberResponseDto response =
+                memberService.createMember(request);
 
-        // 회원가입 결과를 JSON으로 응답한다.
         return ResponseEntity.ok(response);
     }
 
 
+    // =====================================================
+    // 현재 로그인한 회원 가져오기
+    // =====================================================
 
-    @GetMapping("/me") // 또는 @GetMapping("")
-    public ResponseEntity<?> getMyInfo(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        // 비로그인 상태일 때 500 NPE 방지
-        if (userDetails == null) {
-            return ResponseEntity.ok(null); // 또는 ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    private Member getCurrentMember(
+            Authentication authentication
+    ) {
+
+        if (authentication == null ||
+                !authentication.isAuthenticated()) {
+
+            throw new IllegalArgumentException(
+                    "로그인이 필요합니다."
+            );
         }
 
-        Member member = userDetails.getMember();
-        return ResponseEntity.ok(new MemberResponseDto(member));
+
+        String email =
+                authentication.getName();
+
+
+        return memberRepository
+                .findByEmail(email)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "회원 정보를 찾을 수 없습니다."
+                        )
+                );
     }
 
 
+    // =====================================================
+    // 내 프로필 조회
+    // GET /member/me
+    // =====================================================
+
+    @GetMapping("/me")
+    public ResponseEntity<MemberResponseDto> getMyInfo(
+            Authentication authentication
+    ) {
+
+        Member member =
+                getCurrentMember(authentication);
+
+
+        return ResponseEntity.ok(
+                new MemberResponseDto(member)
+        );
+    }
+
+
+    // =====================================================
+    // 내 프로필 수정
+    // PUT /member/me
+    // =====================================================
+
     @PutMapping("/me")
     public ResponseEntity<MemberResponseDto> updateMyInfo(
-
-            // 현제 접속한 회워
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            // HTML에서 보낸 수정 정보
-            @RequestBody
-            MemberUpdateDto request
+            Authentication authentication,
+            @RequestBody MemberUpdateDto request
     ) {
-        // Service에게 수정 요청
+
+        Member member =
+                getCurrentMember(authentication);
+
+
         MemberResponseDto response =
                 memberService.updateMyInfo(
-                        userDetails.getMember(),
+                        member,
                         request
                 );
 
@@ -72,32 +118,82 @@ public class MemberController {
     }
 
 
-    /*
-     * =====================================================
-     * 비밀번호 변경
-     * PUT /member/me/password
-     * =====================================================
-     */
-    @PutMapping("/me/password")
-    public ResponseEntity<String> updatePassword(
+    // =====================================================
+    // 프로필 이미지 업로드
+    // POST /member/me/profile-image
+    // =====================================================
 
-            /*
-             * 현재 로그인한 회원
-             */
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            /*
-             * 비밀번호 변경 정보
-             */
-            @RequestBody
-            PasswordUpdateDto request
+    @PostMapping("/me/profile-image")
+    public ResponseEntity<?> uploadProfileImage(
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file
     ) {
-        // Service에서 비밀번호 변경
-        memberService.updatePassword(userDetails.getMember(), request);
-        return ResponseEntity.ok("비밀번호가 변경되었습니다."
-        );
+
+        try {
+
+            Member member =
+                    getCurrentMember(authentication);
+
+
+            MemberResponseDto response =
+                    memberService.updateProfileImage(
+                            member,
+                            file
+                    );
+
+
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "message",
+                            e.getMessage()
+                    )
+            );
+        }
     }
 
 
+    // =====================================================
+    // 비밀번호 변경
+    // PUT /member/me/password
+    // =====================================================
+
+    @PutMapping("/me/password")
+    public ResponseEntity<?> updatePassword(
+            Authentication authentication,
+            @RequestBody PasswordUpdateDto request
+    ) {
+
+        try {
+
+            Member member =
+                    getCurrentMember(authentication);
+
+
+            memberService.updatePassword(
+                    member,
+                    request
+            );
+
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "message",
+                            "비밀번호가 변경되었습니다."
+                    )
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "message",
+                            e.getMessage()
+                    )
+            );
+        }
+    }
 }

@@ -92,13 +92,7 @@ public class Reservation {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 토스 결제 승인 완료 (관리자 승인 대기 상태로 전환)
-    public void markPaid() {
-        this.status = ReservationStatus.PAID;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    // 관리자 승인 완료 후 예약 확정
+    // 결제 완료 후 예약 확정
     public void confirm(PersonalSchedule personalSchedule) {
         this.status = ReservationStatus.CONFIRMED;
         this.personalSchedule = personalSchedule;
@@ -106,12 +100,8 @@ public class Reservation {
     }
 
     // 예약 취소
-    //
-    // personalSchedule 참조도 함께 끊어야 한다 - FK로 걸려있는 캘린더
-    // 일정을 삭제하려면 이 예약이 먼저 그 일정을 참조하지 않아야 한다.
     public void cancel() {
         this.status = ReservationStatus.CANCELLED;
-        this.personalSchedule = null;
         this.updatedAt = LocalDateTime.now();
     }
 

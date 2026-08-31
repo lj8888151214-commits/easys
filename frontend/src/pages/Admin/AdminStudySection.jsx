@@ -107,12 +107,10 @@ function AdminStudySection() {
                     </span>
                   </td>
                   <td>{formatDate(study.createdAt)}</td>
-                  <td>
-                    <div className="admin-row-actions">
-                      <button type="button" className="danger" onClick={() => handleDelete(study)}>
-                        강제 삭제
-                      </button>
-                    </div>
+                  <td className="admin-row-actions">
+                    <button type="button" className="danger" onClick={() => handleDelete(study)}>
+                      강제 삭제
+                    </button>
                   </td>
                 </tr>
               ))}
