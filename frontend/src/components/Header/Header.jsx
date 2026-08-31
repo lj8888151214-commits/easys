@@ -5,7 +5,6 @@ import "./Header.css";
 import logo from "../../assets/images/logo.png";
 import logoSecond from "../../assets/images/logo_second.png";
 
-// 네비게이션 메뉴
 const NAV_ITEMS = [
   { to: "/streaming", label: "스트리밍" },
   { to: "/mentor", label: "멘토링" },
@@ -24,7 +23,7 @@ function Header() {
   const location = useLocation();
 
   // =========================================================
-  // 로그인한 사용자 정보 확인
+  // 로그인 사용자 확인
   // =========================================================
   useEffect(() => {
     const getUser = async () => {
@@ -36,22 +35,24 @@ function Header() {
 
         console.log("🔥 /api/member/me 상태:", response.status);
 
-        if (response.ok) {
-          const data = await response.json();
-
-          console.log("🔥 현재 로그인 사용자:", data);
-
-          setUser(data);
-        } else {
-          console.log("❌ 로그인한 사용자가 없습니다.");
+        if (response.status === 401) {
           setUser(null);
+          return;
         }
-      } catch (error) {
-        console.error(
-          "❌ 사용자 정보를 불러오지 못했습니다.",
-          error
-        );
 
+        if (!response.ok) {
+          console.log("❌ 사용자 정보 조회 실패:", response.status);
+          setUser(null);
+          return;
+        }
+
+        const data = await response.json();
+
+        console.log("🔥 현재 로그인 사용자:", data);
+
+        setUser(data);
+      } catch (error) {
+        console.error("❌ 사용자 정보를 불러오지 못했습니다.", error);
         setUser(null);
       }
     };
@@ -60,14 +61,7 @@ function Header() {
   }, [location.pathname]);
 
   // =========================================================
-  // user 상태 확인용
-  // =========================================================
-  useEffect(() => {
-    console.log("🔥 Header user 상태:", user);
-  }, [user]);
-
-  // =========================================================
-  // 스크롤 이벤트
+  // 스크롤
   // =========================================================
   useEffect(() => {
     const handleScroll = () => {
@@ -109,6 +103,7 @@ function Header() {
       console.log("🔥 로그아웃 상태:", response.status);
 
       setUser(null);
+      setMenuOpen(false);
 
       navigate("/", {
         replace: true,
@@ -118,17 +113,21 @@ function Header() {
     }
   };
 
+  // =========================================================
+  // 프로필 이미지
+  // =========================================================
+  const profileImage =
+    user?.profileImageUrl
+      ? `/api${user.profileImageUrl}`
+      : "/default-profile.svg";
+
   return (
-    <header
-      className={`main-header ${
-        scrolled ? "scrolled" : ""
-      }`}
-    >
+    <header className={`main-header ${scrolled ? "scrolled" : ""}`}>
       <div className="header-container">
 
-        {/* =========================
+        {/* =====================================================
             로고
-        ========================== */}
+        ===================================================== */}
         <Link to="/" className="header-logo">
           <img
             src={logo}
@@ -143,9 +142,9 @@ function Header() {
           />
         </Link>
 
-        {/* =========================
-            데스크톱 메뉴
-        ========================== */}
+        {/* =====================================================
+            PC 메뉴
+        ===================================================== */}
         <nav className="main-nav">
           <ul>
             {NAV_ITEMS.map((item) => (
@@ -158,9 +157,9 @@ function Header() {
           </ul>
         </nav>
 
-        {/* =========================
+        {/* =====================================================
             오른쪽 영역
-        ========================== */}
+        ===================================================== */}
         <div className="header-right">
 
           {/* 검색 */}
@@ -172,38 +171,69 @@ function Header() {
                 placeholder="검색어를 입력하세요"
               />
 
-              <button type="submit">
+              <button type="submit" aria-label="검색">
                 🔍
               </button>
             </form>
           </div>
 
-          {/* =========================
-              로그인 여부
-          ========================== */}
+          {/* ===================================================
+              로그인 상태
+          =================================================== */}
           <div className="header-member">
 
             {user ? (
-              <>
-                {/* 로그인 상태 */}
+              <div className="user-member">
+
+                {/* 프로필 이미지 */}
                 <Link
                   to="/profile"
-                  className="login-btn"
+                  className="profile-link"
+                  aria-label="프로필"
                 >
-                  {user.nickname || user.name || "마이페이지"}님
+                  <img
+                    src={profileImage}
+                    alt="프로필"
+                    className="header-profile-image"
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        "/default-profile.svg";
+                    }}
+                  />
                 </Link>
 
+                {/* 닉네임 */}
+                <Link
+                  to="/profile"
+                  className="user-nickname"
+                >
+                  {user.nickname ||
+                    user.name ||
+                    "마이페이지"}
+                </Link>
+
+                {/* 관리자 링크 */}
+                {user.role === "ADMIN" && (
+                  <Link
+                    to="/admin"
+                    className="admin-link"
+                  >
+                    관리자
+                  </Link>
+                )}
+
+                {/* PC 로그아웃 */}
                 <button
                   type="button"
-                  className="signup-btn"
+                  className="logout-btn"
                   onClick={handleLogout}
                 >
                   로그아웃
                 </button>
-              </>
+
+              </div>
             ) : (
               <>
-                {/* 로그아웃 상태 */}
                 <Link
                   to="/login"
                   className="login-btn"
@@ -223,9 +253,9 @@ function Header() {
           </div>
         </div>
 
-        {/* =========================
-            모바일 메뉴 버튼
-        ========================== */}
+        {/* =====================================================
+            모바일 햄버거
+        ===================================================== */}
         <button
           type="button"
           className={`mobile-menu-btn ${
@@ -241,9 +271,9 @@ function Header() {
         </button>
       </div>
 
-      {/* =========================
+      {/* =======================================================
           모바일 메뉴
-      ========================== */}
+      ======================================================= */}
       <div
         className={`mobile-menu ${
           menuOpen ? "active" : ""
@@ -266,25 +296,39 @@ function Header() {
           <div className="mobile-member">
 
             {user ? (
-              <>
-                <Link
-                  to="/profile"
-                  onClick={handleMenuClose}
-                >
-                  {user.nickname || user.name || "마이페이지"}님
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleMenuClose();
-                    handleLogout();
+              <Link
+                to="/profile"
+                className="mobile-profile-link"
+                onClick={handleMenuClose}
+              >
+                <img
+                  src={profileImage}
+                  alt="프로필"
+                  className="mobile-profile-image"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "/default-profile.svg";
                   }}
-                >
-                  로그아웃
-                </button>
-              </>
-            ) : (
+                />
+
+                <span>
+                  {user.nickname ||
+                    user.name ||
+                    "마이페이지"}
+                </span>
+              </Link>
+            ) : null}
+
+            {user && user.role === "ADMIN" && (
+              <Link
+                to="/admin"
+                onClick={handleMenuClose}
+              >
+                관리자
+              </Link>
+            )}
+
+            {!user && (
               <>
                 <Link
                   to="/login"

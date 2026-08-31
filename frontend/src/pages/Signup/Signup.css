@@ -1,1 +1,42 @@
-@import url('../Login/Login.css');.signup-card{max-width:520px}.inline{display:flex;gap:8px}.inline input{flex:1}.inline button{width:auto;white-space:nowrap;margin:8px 0 0;padding:0 16px}.auth-message{color:#16834b;background:#effaf4;padding:10px;border-radius:8px;margin:10px 0}
+@import url("../Login/Login.css");
+
+
+.signup-card {
+    max-width: 520px;
+}
+
+
+.inline {
+    display: flex;
+
+    gap: 8px;
+}
+
+
+.inline input {
+    flex: 1;
+}
+
+
+.inline button {
+    width: auto;
+
+    margin: 8px 0 0;
+
+    padding: 0 16px;
+
+    white-space: nowrap;
+}
+
+
+.auth-message {
+    margin: 10px 0;
+
+    padding: 10px;
+
+    border-radius: 8px;
+
+    background: #effaf4;
+
+    color: #16834b;
+}

@@ -32,7 +32,7 @@ public class Study {
 
 
     // 스터디 분야
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String category;
 
 
@@ -54,9 +54,8 @@ public class Study {
     private String status;
 
 
-    // =====================================================
-    // 2. 스터디 작성자
-    // =====================================================
+
+    // 스터디 작성자
 
     //여러 개의 Study가 한 명의 Member를 작성자로 가질 수 있음
     // Study N : 1 Member
@@ -70,83 +69,194 @@ public class Study {
     private LocalDateTime createdAt;
 
     // 스터디 수정 날짜
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    //  스터디 생성
+    public Study(
+            String title,
+            String content,
+            String category,
+            int maxMembers,
+            Member member
+    ) {
+        // 기본값 검증
+        validateTitle(title);
+        validateContent(content);
+        validateCategory(category);
+        validateMaxMembers(maxMembers);
 
-    // =====================================================
-    // 4. 스터디 생성
-    // =====================================================
-
-    public Study(String title, String content, String category, int maxMembers, Member member) {
+        // 실제 데이터 저장
         this.title = title;
         this.content = content;
         this.category = category;
         this.maxMembers = maxMembers;
-        // 스터디를 만든 사람이 방장이므로 현재 인원은 1명
+
+
+        // 스터디 생성자는 방장이므로 처음 인원은 1명
         this.currentMembers = 1;
-        //처음에는 모집중
+
+
+        // 처음에는 모집중
         this.status = "RECRUITING";
-        // 작성자 저장
+
+
+        // 작성자
         this.member = member;
+
+
         // 생성 시간
         this.createdAt = LocalDateTime.now();
+
+
         // 수정 시간
-        this.updatedAt = LocalDateTime.now();}
+        this.updatedAt = LocalDateTime.now();
+    }
 
 
-    // =====================================================
-    // 5. 스터디 수정
-    // =====================================================
+    // 4. 스터디 수정
+    public void update(
+            String title,
+            String content,
+            String category,
+            int maxMembers
+    ) {
 
-    public void update(String title, String content, String category, int maxMembers) {
+        // 수정할 데이터 검증
+        validateTitle(title);
+        validateContent(content);
+        validateCategory(category);
+        validateMaxMembers(maxMembers);
+
+
+
+        // 현재 참여 인원보다 최대 인원을 작게 만들 수 없음
+        if (maxMembers < this.currentMembers) {
+            throw new IllegalArgumentException(
+                    "최대 모집 인원은 현재 참여 인원보다 적을 수 없습니다."
+            );
+        }
+
+        // 데이터 수정
         this.title = title;
         this.content = content;
         this.category = category;
         this.maxMembers = maxMembers;
+
+
+        // 최대 인원에 도달했다면 모집 종료
+        if (this.currentMembers >= this.maxMembers) {
+            this.status = "CLOSED";
+        } else {
+            this.status = "RECRUITING";
+        }
+        // 수정 시간 갱신
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // 5. 모집 종료
+    public void closeRecruitment() {
+        this.status = "CLOSED";
+        this.updatedAt = LocalDateTime.now();
+    }
+
+
+
+    // 6. 스터디 인원 증가
+    public void increaseCurrentMembers() {
+        // 이미 모집이 끝난 경우
+        if ("CLOSED".equals(this.status)) {
+            throw new IllegalArgumentException(
+                    "모집이 종료된 스터디입니다."
+            );
+        }
+        // 최대 인원 확인
+        if (this.currentMembers >= this.maxMembers) {
+            throw new IllegalArgumentException(
+                    "모집 인원이 가득 찼습니다."
+            );
+        }
+        // 현재 인원 +1
+        this.currentMembers++;
+        // 최대 인원에 도달하면 모집 종료
+        if (this.currentMembers >= this.maxMembers) {
+            this.status = "CLOSED";
+        }
+        this.updatedAt = LocalDateTime.now();
+    }
+
+
+
+    // 7. 스터디 인원 감소
+    public void decreaseCurrentMembers() {
+        // 방장 1명보다 적어질 수 없음
+        if (this.currentMembers <= 1) {
+            throw new IllegalArgumentException(
+                    "스터디 방장은 항상 한 명 이상 존재해야 합니다."
+            );
+        }
+        // 현재 인원 -1
+        this.currentMembers--;
+        // 자리가 생겼으면 다시 모집중
+        if (this.currentMembers < this.maxMembers) {
+            this.status = "RECRUITING";
+        }
         this.updatedAt = LocalDateTime.now();
     }
 
 
     // =====================================================
-    // 6. 모집 종료
+    // 8. 입력값 검증
     // =====================================================
 
-    public void closeRecruitment() {
-        this.status = "CLOSED";
-    }
+    private void validateTitle(String title) {
+
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException(
+                    "스터디 제목을 입력해주세요."
+            );
+        }
 
 
-    // =====================================================
-    // 7. 스터디 인원 증가
-    // =====================================================
-
-    public void increaseCurrentMembers() {
-
-        //현재 인원 +1
-        this.currentMembers++;
-
-        //최대 인원에 도달하면 자동으로 모집 종료
-        if (this.currentMembers >= this.maxMembers) {
-            this.status = "CLOSED";
+        if (title.length() > 100) {
+            throw new IllegalArgumentException(
+                    "스터디 제목은 100자 이하로 입력해주세요."
+            );
         }
     }
 
 
-    // =====================================================
-    // 8. 스터디 인원 감소
-    // =====================================================
+    private void validateContent(String content) {
 
-    public void decreaseCurrentMembers() {
-
-        // 방장 1명보다 적어질 수는 없음
-        if (this.currentMembers > 1) {
-            this.currentMembers--;
-        }
-
-        // 다시 자리가 생기면 모집중으로 변경
-        if (this.currentMembers < this.maxMembers){
-            this.status = "RECRUITING";
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException(
+                    "스터디 내용을 입력해주세요."
+            );
         }
     }
 
+
+    private void validateCategory(String category) {
+
+        if (category == null || category.isBlank()) {
+            throw new IllegalArgumentException(
+                    "스터디 분야를 선택해주세요."
+            );
+        }
+        if (category.length() > 50) {
+            throw new IllegalArgumentException(
+                    "스터디 분야는 50자 이하로 입력해주세요."
+            );
+        }
+    }
+
+
+    private void validateMaxMembers(int maxMembers) {
+        // 방장 본인을 포함해서 최소 2명
+        if (maxMembers < 2) {
+            throw new IllegalArgumentException(
+                    "최대 모집 인원은 최소 2명이어야 합니다."
+            );
+        }
+    }
 }

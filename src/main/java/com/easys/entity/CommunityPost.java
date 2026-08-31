@@ -1,105 +1,115 @@
 package com.easys.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
 @Getter
-@Setter
+@Entity
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@Table(name = "community_posts")
 public class CommunityPost {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue (strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String author; // 작성자 닉네임
-
-    private String authorAvatar; // 아바타 이니셜
-
-    @Column(nullable = false)
-    private String category; // QUESTION, STUDY, RECRUIT, INFO, CAREER
-
-    @Column(nullable = false)
+    // 게시글 제목
+    @Column(nullable = false , length = 100)
     private String title;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    // 게시글 내용
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    private String tags;
+    @Column(nullable = false, length = 30)
+    private String category = "정보공유";
 
-    // 스터디 모집용 추가 정보 (선택)
-    private String studySchedule;
-    private String studyMembers;
+    // 조회수
+    @Column(nullable = false)
+    private int viewCount = 0 ;
 
-    @Builder.Default
-    @Column(name = "like_count")
-    private int likeCount = 0;
+    // 작성자
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private Member member;
 
-    @Builder.Default
-    @Column(name = "comment_count")
-    private int commentCount = 0; // 👈 DB에 comment_count 컬럼 자동 생성
-
-    @Builder.Default
-    @Column(name = "view_count")
-    private int viewCount = 0;
-
-    @CreationTimestamp
+    // 작성일
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    // 💡 댓글 테이블과 1:N 매핑 (게시글 저장 시 댓글 자동 등록/삭제)
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Comment> comments = new ArrayList<>();
+    // 수정일
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
-    // 연관관계 편의 메서드
-    public void addComment(Comment comment) {
-        if (this.comments == null) {
-            this.comments = new ArrayList<>();
-        }
-        this.comments.add(comment);
-        comment.setPost(this);
-        this.commentCount = this.comments.size();
+    // 이미지
+    @OneToMany (mappedBy = "communityPost",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<CommunityImage> images = new ArrayList<>();
+
+    // 게시글 작성
+    public CommunityPost(String title, String content, String category, Member member){
+        this.title = title;
+        this.content = content;
+        this.category = category == null || category.isBlank() ? "정보공유" : category;
+        this.member = member;
+
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
-    // =========================================================
-    // 💡 JPA 엔티티 등록: community_comments 테이블 자동 생성
-    // =========================================================
-    @Entity
-    @Table(name = "community_comments")
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class Comment {
+    // 수정
+    public void update(String title, String content){
+        validateTitle(title);
+        validateContent(content);
 
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
+        this.title = title;
+        this.content = content;
+        this.updatedAt = LocalDateTime.now();
+    }
 
-        @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "post_id", nullable = false)
-        @JsonIgnore
-        private CommunityPost post;
+    // 조회수 증가
+    public void increaseViewCount(){
+        this.viewCount++;
+    }
 
-        @Column(nullable = false)
-        private String author;
+    // 이미지 추가
+    public void addImage(CommunityImage image) {
+        this.images.add(image);
+        image.setCommunityPost(this);
+    }
 
-        @Column(columnDefinition = "TEXT", nullable = false)
-        private String content;
 
-        @CreationTimestamp
-        private LocalDateTime createdAt;
+    // 제목 검증
+    private void validateTitle(String title) {
+
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException(
+                    "게시글 제목을 입력해주세요."
+            );
+        }
+
+        if (title.length() > 100) {
+            throw new IllegalArgumentException(
+                    "게시글 제목은 100자 이하로 입력해주세요."
+            );
+        }
+    }
+
+
+    // 내용 검증
+    private void validateContent(String content) {
+
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException(
+                    "게시글 내용을 입력해주세요."
+            );
+        }
     }
 }
+
