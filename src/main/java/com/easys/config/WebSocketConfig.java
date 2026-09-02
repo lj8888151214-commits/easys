@@ -85,9 +85,25 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
         @Override
         public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+<<<<<<< Updated upstream
             // 닫힌 세션 정리
             sessions.entrySet().removeIf(entry -> !entry.getValue().isOpen());
             userNicknames.entrySet().removeIf(entry -> !sessions.containsKey(entry.getKey()));
+=======
+            String query = session.getUri().getQuery();
+            String roomId = "default-room";
+            if (query != null) {
+                for (String param : query.split("&")) {
+                    String[] kv = param.split("=");
+                    if (kv.length == 2 && "roomId".equals(kv[0])) {
+                        roomId = kv[1];
+                    }
+                }
+            }
+
+            rooms.putIfAbsent(roomId, new ConcurrentHashMap<>());
+            Map<String, WebSocketSession> roomSessions = rooms.get(roomId);
+>>>>>>> Stashed changes
 
             // 핸드셰이크 인터셉터에서 추출한 닉네임 우선 적용
             String initialNick = (String) session.getAttributes().get("nickname");
@@ -149,8 +165,23 @@ public class WebSocketConfig implements WebSocketConfigurer {
         public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
             sessions.remove(session.getId());
             userNicknames.remove(session.getId());
+<<<<<<< Updated upstream
             System.out.println("🔴 [WS 종료] ID: " + session.getId() + " | 총 인원: " + sessions.size());
             broadcastUserList();
+=======
+
+            if (roomId != null && rooms.containsKey(roomId)) {
+                rooms.get(roomId).remove(session.getId());
+
+                // 🌟 방에 남은 사람이 0명이면 메모리 맵에서만 안전하게 제거
+                if (rooms.get(roomId).isEmpty()) {
+                    rooms.remove(roomId);
+                } else {
+                    broadcastUserList(roomId);
+                }
+            }
+            System.out.println("🔴 [WS 종료] ID: " + session.getId());
+>>>>>>> Stashed changes
         }
 
         private void broadcastUserList() {
@@ -180,6 +211,29 @@ public class WebSocketConfig implements WebSocketConfigurer {
                         } catch (IOException ignored) {}
                     }
                 }
+<<<<<<< Updated upstream
+=======
+            } catch (Exception e) {}
+        }
+
+        public static void broadcastStreamList(List<Map<String, Object>> streams) {
+            try {
+                String payload = new ObjectMapper().writeValueAsString(Map.of(
+                        "type", "streamList",
+                        "streams", streams
+                ));
+                TextMessage msg = new TextMessage(payload);
+
+                for (Map<String, WebSocketSession> roomSessions : rooms.values()) {
+                    for (WebSocketSession s : roomSessions.values()) {
+                        if (s.isOpen()) {
+                            try {
+                                s.sendMessage(msg);
+                            } catch (IOException ignored) {}
+                        }
+                    }
+                }
+>>>>>>> Stashed changes
             } catch (Exception e) {
                 System.err.println("UserList 브로드캐스트 에러: " + e.getMessage());
             }
