@@ -26,6 +26,9 @@ function StudyDetail() {
   const [applications, setApplications] =
     useState([]);
 
+  const [studyReservation, setStudyReservation] =
+    useState(null);
+
   const [loading, setLoading] =
     useState(true);
 
@@ -41,10 +44,9 @@ function StudyDetail() {
   const socketRef = useRef(null);
   const myIdRef = useRef("");
   const chatContainerRef = useRef(null);
-  const [messages, setMessages] = useState([
-    { id: 1, text: "스터디 그룹 채팅방에 입장했습니다.", isSystem: true }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
+  const [completing, setCompleting] = useState(false);
 
 
   // =====================================================
@@ -254,6 +256,43 @@ function StudyDetail() {
 
 
   // =====================================================
+  // 스터디룸 예약 여부 (방장만 사용)
+  // =====================================================
+
+  async function fetchMyReservationForStudy() {
+
+    try {
+
+      const response = await fetch(
+        "/api/reservations/me",
+        { credentials: "include" }
+      );
+
+      if (!response.ok) {
+        setStudyReservation(null);
+        return;
+      }
+
+      const data = await readResponse(response);
+
+      const reservation =
+        Array.isArray(data)
+          ? data.find(
+              (item) =>
+                Number(item.studyId) === Number(id) &&
+                item.status !== "CANCELLED"
+            )
+          : null;
+
+      setStudyReservation(reservation || null);
+
+    } catch {
+      setStudyReservation(null);
+    }
+  }
+
+
+  // =====================================================
   // 페이지 초기화
   // =====================================================
 
@@ -293,6 +332,7 @@ function StudyDetail() {
           ) {
 
             await fetchApplications();
+            await fetchMyReservationForStudy();
           }
         }
 
@@ -332,14 +372,72 @@ function StudyDetail() {
 
 
   // =====================================================
+  // 채팅 시간 표시 형식
+  // =====================================================
+  function formatChatTime(dateTime) {
+    if (!dateTime) return "";
+    const date = new Date(dateTime);
+    if (Number.isNaN(date.getTime())) return "";
+    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  }
+
+  function toMessageItem(dto, myId) {
+    return {
+      id: dto.id,
+      memberId: dto.memberId,
+      nickname: dto.nickname,
+      profileImageUrl: dto.profileImageUrl,
+      text: dto.content,
+      time: formatChatTime(dto.createdAt),
+      isSystem: false,
+      isMe: myId != null && Number(myId) === Number(dto.memberId)
+    };
+  }
+
+  // =====================================================
+  // 채팅 기록 조회 (DB 저장분) - 새로고침/재입장해도 유지된다
+  // =====================================================
+  async function loadChatHistory() {
+    try {
+      const response = await fetch(`/api/study/${id}/chat/messages`, {
+        credentials: "include"
+      });
+
+      if (!response.ok) return;
+
+      const data = await readResponse(response);
+
+      setMessages(
+        Array.isArray(data)
+          ? data.map((item) => toMessageItem(item, currentUser?.id))
+          : []
+      );
+    } catch (error) {
+      console.error("채팅 기록 조회 오류:", error);
+    }
+  }
+
+  useEffect(() => {
+    if (!showChat) return;
+    loadChatHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showChat, id, currentUser?.id]);
+
+
+  // =====================================================
   // 🌟 실시간 웹소켓 채팅 연결 (CamPage와 동일한 안정적 수신 구조)
+  //
+  // roomId를 study-{id}로 지정해 스터디별로 방을 분리한다(기존에는 roomId를
+  // 지정하지 않아 모든 스터디/스트리밍 세션이 같은 "default-room"을 공유했다).
+  // 백엔드(WebSocketConfig)는 이 roomId에 대해 방장/승인된 참여자인지 다시
+  // 검증하므로, 여기서는 화면 노출 조건(showChat)만 맞으면 연결을 시도한다.
   // =====================================================
   useEffect(() => {
     if (!showChat) return;
 
     const hostname = window.location.hostname;
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${hostname}:8080/signal`;
+    const wsUrl = `${protocol}//${hostname}:8080/signal?roomId=study-${id}`;
     const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
 
@@ -366,20 +464,17 @@ function StudyDetail() {
           const isMine = String(data.senderId) === String(myIdRef.current);
 
           setMessages((prev) => {
-            // 중복 방지 필터 (최근 3개 메시지 내역 대조)
-            const isDuplicate = prev.slice(-3).some(
-              (m) => m.text === data.text && m.nickname === data.nickname && m.time === data.time
-            );
-
-            if (isDuplicate) {
+            // DB에 저장된 메시지 id 기준으로 중복(본인이 보낸 메시지가 다시 돌아오는 경우 등)을 걸러낸다.
+            if (data.messageId != null && prev.some((m) => m.id === data.messageId)) {
               return prev;
             }
 
             return [
               ...prev,
               {
-                id: Date.now() + Math.random(),
+                id: data.messageId ?? `${Date.now()}-${Math.random()}`,
                 nickname: data.nickname,
+                profileImageUrl: data.profileImageUrl,
                 text: data.text,
                 time: data.time,
                 isSystem: data.isSystem || false,
@@ -396,44 +491,49 @@ function StudyDetail() {
         ws.close();
       }
     };
-  }, [showChat, currentUser]);
+  }, [showChat, currentUser, id]);
 
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
       e.preventDefault();
-      if (!inputMessage.trim()) return;
-
-      const currentText = inputMessage.trim();
-      const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-
-      const msgData = {
-        type: "chat",
-        senderId: myIdRef.current,
-        nickname: currentUser?.nickname || "참가자",
-        text: currentText,
-        time: timeStr
-      };
-
-      // 1. 서버로 전송 (상대방 화면에 전달됨)
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(JSON.stringify(msgData));
-      }
-
-      // 2. 🌟 내 화면에도 즉시 추가 (내 화면 누락 방지)
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + Math.random(),
-          nickname: currentUser?.nickname || "참가자",
-          text: currentText,
-          time: timeStr,
-          isSystem: false,
-          isMe: true // 내 메시지로 지정하여 오른쪽에 배치
-        }
-      ]);
+      const content = inputMessage.trim();
+      if (!content) return;
 
       setInputMessage("");
+
+      try {
+        const response = await fetch(`/api/study/${id}/chat/messages`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content })
+        });
+
+        const data = await readResponse(response);
+
+        if (!response.ok) {
+          throw new Error(data?.message || "메시지 전송에 실패했습니다.");
+        }
+
+        // 1. 내 화면에 즉시 추가 (서버가 저장한 값 그대로 사용 - 작성자/시간 위조 불가)
+        setMessages((prev) => [...prev, toMessageItem(data, currentUser?.id)]);
+
+        // 2. 다른 참여자들에게 실시간 중계 (저장은 이미 위 REST 호출에서 끝났다)
+        if (socketRef.current?.readyState === WebSocket.OPEN) {
+          socketRef.current.send(JSON.stringify({
+            type: "chat",
+            senderId: myIdRef.current,
+            nickname: data.nickname,
+            profileImageUrl: data.profileImageUrl,
+            text: data.content,
+            time: formatChatTime(data.createdAt),
+            messageId: data.id
+          }));
+        }
+      } catch (error) {
+        alert(error.message || "메시지 전송에 실패했습니다.");
+        setInputMessage(content);
+      }
     };
 
   useEffect(() => {
@@ -596,6 +696,44 @@ function StudyDetail() {
     }
   }
 
+  function getStudyStatusLabel(status) {
+    if (status === "COMPLETED") return "완료";
+    if (status === "CLOSED") return "모집완료";
+    return "모집중";
+  }
+
+  // 서버(StudyService.completeStudy)와 동일한 기준(studyDate + endTime)으로
+  // 종료 여부를 판단한다. 실제 차단은 반드시 서버에서 이루어지고, 이건
+  // 버튼을 미리 비활성화해 불필요한 요청/오류 메시지를 줄이기 위한 UX 보조용이다.
+  function isStudyEnded(study) {
+    if (!study?.studyDate || !study?.endTime) return false;
+    const endAt = new Date(`${study.studyDate}T${study.endTime}`);
+    if (Number.isNaN(endAt.getTime())) return false;
+    return new Date() >= endAt;
+  }
+
+  async function handleCompleteStudy() {
+    if (!window.confirm("스터디를 완료 처리하시겠습니까? 완료 후에는 진행 중인 스터디 목록에서 사라집니다.")) return;
+
+    try {
+      setCompleting(true);
+      const response = await fetch(`/api/study/${id}/complete`, {
+        method: "PUT",
+        credentials: "include"
+      });
+      const data = await readResponse(response);
+      if (!response.ok) {
+        throw new Error(data?.message || "스터디 완료 처리에 실패했습니다.");
+      }
+      setStudy(data);
+      alert("스터디가 완료 처리되었습니다.");
+    } catch (error) {
+      alert(error.message || "스터디 완료 처리에 실패했습니다.");
+    } finally {
+      setCompleting(false);
+    }
+  }
+
   function isOwner() {
     return (
       currentUser &&
@@ -657,8 +795,8 @@ function StudyDetail() {
           <div>
             <div className="study-detail-badges">
               <span className="study-detail-category">{study.category}</span>
-              <span className={`study-detail-status ${study.status === "CLOSED" ? "closed" : "recruiting"}`}>
-                {study.status === "CLOSED" ? "모집완료" : "모집중"}
+              <span className={`study-detail-status ${study.status === "RECRUITING" ? "recruiting" : "closed"}`}>
+                {getStudyStatusLabel(study.status)}
               </span>
             </div>
 
@@ -671,6 +809,19 @@ function StudyDetail() {
 
           {isOwner() && (
             <div className="study-detail-owner-buttons">
+              {study.status !== "COMPLETED" && (
+                <button
+                  onClick={handleCompleteStudy}
+                  disabled={completing || !isStudyEnded(study)}
+                  title={
+                    isStudyEnded(study)
+                      ? undefined
+                      : "스터디 종료 시간 이후에 완료 처리할 수 있습니다."
+                  }
+                >
+                  {completing ? "처리 중..." : "스터디 완료"}
+                </button>
+              )}
               <button onClick={() => navigate(`/study/${id}/edit`)}>수정</button>
               <button className="danger" onClick={handleDelete}>삭제</button>
             </div>
@@ -688,11 +839,27 @@ function StudyDetail() {
           </div>
           <div>
             <span>모집 상태</span>
-            <strong>{study.status === "CLOSED" ? "모집완료" : "모집중"}</strong>
+            <strong>{getStudyStatusLabel(study.status)}</strong>
           </div>
           <div>
             <span>분야</span>
             <strong>{study.category}</strong>
+          </div>
+          <div>
+            <span>주제</span>
+            <strong>{study.topic || "일정 미정"}</strong>
+          </div>
+          <div>
+            <span>일정</span>
+            <strong>{study.studyDate ? study.studyDate.replaceAll("-", ".") : "일정 미정"}</strong>
+          </div>
+          <div>
+            <span>시간</span>
+            <strong>
+              {study.startTime && study.endTime
+                ? `${study.startTime.slice(0, 5)} ~ ${study.endTime.slice(0, 5)}`
+                : "일정 미정"}
+            </strong>
           </div>
         </section>
 
@@ -709,6 +876,47 @@ function StudyDetail() {
             <div style={{ width: `${progress}%` }} />
           </div>
         </section>
+
+
+        {/* =================================================
+            스터디룸 예약 (방장 전용)
+        ================================================= */}
+        {isOwner() && (
+          <section className="study-detail-reservation">
+            {studyReservation ? (
+              <>
+                <div>
+                  <span>스터디룸 예약</span>
+                  <strong>
+                    {studyReservation.studyRoomName} · {studyReservation.reservationDate}{" "}
+                    {studyReservation.startTime?.slice(0, 5)} ~ {studyReservation.endTime?.slice(0, 5)}
+                  </strong>
+                  <small>
+                    예약 상태:{" "}
+                    {studyReservation.status === "PENDING" && "결제 대기"}
+                    {studyReservation.status === "PAID" && "결제 완료"}
+                    {studyReservation.status === "CONFIRMED" && "예약 확정"}
+                  </small>
+                </div>
+                {studyReservation.status === "PENDING" && (
+                  <button onClick={() => navigate(`/payment?type=study&id=${studyReservation.id}`)}>
+                    결제 이어하기
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <div>
+                  <span>스터디룸 예약</span>
+                  <strong>정해진 일정에 맞는 스터디룸을 예약하고 결제해보세요.</strong>
+                </div>
+                <button onClick={() => navigate(`/study-reservation?studyId=${id}`)}>
+                  스터디룸 예약하기
+                </button>
+              </>
+            )}
+          </section>
+        )}
 
 
         {/* =================================================
@@ -736,26 +944,46 @@ function StudyDetail() {
               오른쪽: 실시간 채팅창 래퍼 (비율 4)
           ================================================= */}
           <div className="study-detail-chat-wrapper">
-            <div className="cam-chat-panel" style={{ width: "100%", height: "100%", minHeight: "420px", display: "flex", flexDirection: "column", background: "#fff", border: "1px solid #e1e7e2", borderRadius: "20px", overflow: "hidden", boxShadow: "0 8px 30px rgba(0, 0, 0, 0.04)" }}>
-              <div className="chat-header" style={{ padding: "16px 20px", background: "#17191c", color: "#fff", fontSize: "14px", fontWeight: "700", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div className="cam-chat-panel" style={{ width: "100%", height: "100%", minHeight: "420px", display: "flex", flexDirection: "column", background: "#fff", border: "1px solid #e1e7e2", borderRadius: "20px", overflow: "hidden", boxShadow: "0 8px 30px rgba(30, 50, 38, 0.04)" }}>
+              <div className="chat-header" style={{ padding: "16px 20px", background: "#243329", color: "#fff", fontSize: "14px", fontWeight: "700", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span>💬 스터디 실시간 채팅</span>
-                <span style={{ fontSize: "11px", background: "rgba(46, 213, 115, 0.2)", color: "#2ed573", padding: "3px 10px", borderRadius: "20px", border: "1px solid #2ed573", fontWeight: "600" }}>
+                <span style={{ fontSize: "11px", background: "rgba(46, 213, 115, 0.2)", color: "#a3f7bf", padding: "3px 10px", borderRadius: "20px", border: "1px solid #3f7653", fontWeight: "600" }}>
                   ● {currentMembersCount}명 참여중
                 </span>
               </div>
 
               <div className="chat-messages-container" ref={chatContainerRef} style={{ flex: 1, padding: "16px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "10px", background: "#f8faf8" }}>
+                {messages.length === 0 && (
+                  <span className="chat-system-msg" style={{ fontSize: "11px", color: "#243329", background: "#eef3ef", border: "1px solid #dce5de", padding: "4px 10px", borderRadius: "14px", alignSelf: "center", fontWeight: "600" }}>
+                    스터디 그룹 채팅방에 입장했습니다.
+                  </span>
+                )}
+
                 {messages.map((msg) => (
-                  <div key={msg.id} className={`chat-bubble-row ${msg.isSystem ? "system" : msg.isMe ? "me" : "other"}`} style={{ display: "flex", flexDirection: "column", alignItems: msg.isMe ? "flex-end" : "flex-start" }}>
+                  <div key={msg.id} className={`chat-bubble-row ${msg.isSystem ? "system" : msg.isMe ? "me" : "other"}`} style={{ display: "flex", flexDirection: msg.isMe ? "row-reverse" : "row", alignItems: "flex-end", gap: "8px" }}>
                     {msg.isSystem ? (
-                      <span className="chat-system-msg" style={{ fontSize: "11px", color: "#17191c", background: "#edf0f3", border: "1px solid #ddd", padding: "4px 10px", borderRadius: "14px", alignSelf: "center", fontWeight: "600" }}>{msg.text}</span>
+                      <span className="chat-system-msg" style={{ fontSize: "11px", color: "#243329", background: "#eef3ef", border: "1px solid #dce5de", padding: "4px 10px", borderRadius: "14px", alignSelf: "center", fontWeight: "600" }}>{msg.text}</span>
                     ) : (
                       <>
-                        <span style={{ fontSize: "11px", color: "#777", marginBottom: "3px" }}>{msg.nickname || "게스트"}</span>
-                        <div className="chat-bubble" style={{ maxWidth: "85%", padding: "8px 12px", borderRadius: "12px", fontSize: "13px", wordBreak: "break-word", backgroundColor: msg.isMe ? "#17191c" : "#ffffff", color: msg.isMe ? "#ffffff" : "#222", border: msg.isMe ? "none" : "1px solid #e2e8e2" }}>
-                          {msg.text}
+                        <div style={{ width: "28px", height: "28px", borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "#eef3ef", color: "#3f7653", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "800" }}>
+                          {msg.profileImageUrl ? (
+                            <img
+                              src={`/api${msg.profileImageUrl}`}
+                              alt={msg.nickname}
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                          ) : (
+                            (msg.nickname || "게").charAt(0).toUpperCase()
+                          )}
                         </div>
-                        <span style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>{msg.time}</span>
+
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: msg.isMe ? "flex-end" : "flex-start", maxWidth: "78%" }}>
+                          <span style={{ fontSize: "11px", color: "#777", marginBottom: "3px" }}>{msg.nickname || "게스트"}</span>
+                          <div className="chat-bubble" style={{ maxWidth: "100%", padding: "8px 12px", borderRadius: "12px", fontSize: "13px", wordBreak: "break-word", backgroundColor: msg.isMe ? "#243329" : "#ffffff", color: msg.isMe ? "#ffffff" : "#222", border: msg.isMe ? "none" : "1px solid #e2e8e2" }}>
+                            {msg.text}
+                          </div>
+                          <span style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>{msg.time}</span>
+                        </div>
                       </>
                     )}
                   </div>
@@ -771,7 +999,7 @@ function StudyDetail() {
                   onChange={(e) => setInputMessage(e.target.value)}
                   style={{ flex: "1", border: "1px solid #ddd", borderRadius: "10px", outline: "none", fontSize: "13px", padding: "9px 14px", background: "#f9fafb" }}
                 />
-                <button type="submit" className="chat-send-btn" style={{ padding: "9px 18px", borderRadius: "10px", border: "none", background: "#17191c", color: "white", fontWeight: "700", fontSize: "13px", cursor: "pointer" }}>전송</button>
+                <button type="submit" className="chat-send-btn" style={{ padding: "9px 18px", borderRadius: "10px", border: "none", background: "#243329", color: "white", fontWeight: "700", fontSize: "13px", cursor: "pointer" }}>전송</button>
               </form>
             </div>
           </div>
@@ -870,7 +1098,14 @@ function StudyDetail() {
                   <div className="study-application-item" key={application.id}>
                     <div className="study-application-user">
                       <div className="study-application-avatar">
-                        {application.nickname?.charAt(0)?.toUpperCase()}
+                        {application.profileImageUrl ? (
+                          <img
+                            src={`/api${application.profileImageUrl}`}
+                            alt={application.nickname}
+                          />
+                        ) : (
+                          application.nickname?.charAt(0)?.toUpperCase()
+                        )}
                       </div>
                       <div>
                         <strong>{application.nickname}</strong>

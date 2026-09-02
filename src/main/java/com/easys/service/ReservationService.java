@@ -7,6 +7,8 @@ import com.easys.entity.*;
 import com.easys.repository.MemberRepository;
 import com.easys.repository.PaymentRepository;
 import com.easys.repository.ReservationRepository;
+import com.easys.repository.StudyApplicationRepository;
+import com.easys.repository.StudyRepository;
 import com.easys.repository.StudyRoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,19 +19,29 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class ReservationService {
 
+    // 스터디 시작 12시간 전까지 예약/결제 가능 (한국 시간 기준 서버 시각 LocalDateTime.now()로 판단)
+    private static final int PAYMENT_DEADLINE_HOURS_BEFORE_STUDY = 12;
+    private static final int ORDER_NAME_MAX_LENGTH = 200;
+
     private final ReservationRepository reservationRepository;
     private final StudyRoomRepository studyRoomRepository;
+    private final StudyRepository studyRepository;
     private final MemberRepository memberRepository;
     private final PaymentRepository paymentRepository;
+    private final StudyApplicationRepository studyApplicationRepository;
 
     private final PersonalScheduleService personalScheduleService;
+    private final StudyGroupService studyGroupService;
     private final EmailService emailService;
     private final NotificationService notificationService;
 
@@ -64,6 +76,67 @@ public class ReservationService {
                 )
         );
 
+        // 0. 스터디 예약이면 studyId로 Study를 조회한다.
+        //
+        // 비관적 락(findByIdForUpdate)으로 조회해 같은 스터디에 대한
+        // 중복 예약 생성 요청(더블클릭 등)이 동시에 통과하지 못하게 막는다.
+        //
+        // 이 스터디의 일정(studyDate/startTime/endTime)이 곧 예약 시간이 되므로,
+        // 클라이언트가 보낸 reservationDate/startTime/endTime은 무시하고
+        // Study의 값으로 덮어써서 사용한다 - 사용자가 스터디 생성 시 정한
+        // 일정을 예약 단계에서 임의로 바꿀 수 없게 하기 위함이다.
+        Study study = null;
+        LocalDate reservationDate = request.reservationDate();
+        LocalTime startTime = request.startTime();
+        LocalTime endTime = request.endTime();
+
+        if (request.studyId() != null) {
+
+            study = studyRepository.findByIdForUpdate(request.studyId())
+                    .orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "존재하지 않는 스터디입니다."
+                            )
+                    );
+
+            if (!study.getMember().getId().equals(memberId)) {
+                throw new IllegalArgumentException(
+                        "스터디 대표자만 스터디룸을 예약할 수 있습니다."
+                );
+            }
+
+            if (study.getStudyDate() == null
+                    || study.getStartTime() == null
+                    || study.getEndTime() == null) {
+                throw new IllegalArgumentException(
+                        "스터디 일정(날짜/시간)이 설정되지 않아 예약할 수 없습니다."
+                );
+            }
+
+            if (reservationRepository.existsByStudyAndStatusIn(
+                    study,
+                    List.of(ReservationStatus.PENDING, ReservationStatus.PAID, ReservationStatus.CONFIRMED)
+            )) {
+                throw new IllegalArgumentException(
+                        "이미 이 스터디에 연결된 예약이 있습니다."
+                );
+            }
+
+            LocalDateTime paymentDeadline =
+                    study.getStudyDate().atTime(study.getStartTime())
+                            .minusHours(PAYMENT_DEADLINE_HOURS_BEFORE_STUDY);
+
+            if (LocalDateTime.now().isAfter(paymentDeadline)) {
+                throw new IllegalArgumentException(
+                        "결제 마감(스터디 시작 " + PAYMENT_DEADLINE_HOURS_BEFORE_STUDY + "시간 전)이 지나 예약할 수 없습니다."
+                );
+            }
+
+            reservationDate = study.getStudyDate();
+            startTime = study.getStartTime();
+            endTime = study.getEndTime();
+        }
+
         // 1. 스터디룸이 예약 가능한 상태인지 확인
         if (studyRoom.getStatus() != StudyRoomStatus.ACTIVE) {
             throw new IllegalArgumentException(
@@ -72,28 +145,27 @@ public class ReservationService {
         }
 
         // 2. 날짜 검증
-        if (request.reservationDate() == null) {
+        if (reservationDate == null) {
             throw new IllegalArgumentException(
                     "예약 날짜를 입력해주세요."
             );
         }
 
-        if (request.reservationDate().isBefore(LocalDate.now())) {
+        if (reservationDate.isBefore(LocalDate.now())) {
             throw new IllegalArgumentException(
                     "지난 날짜는 예약할 수 없습니다."
             );
         }
 
         // 3. 시간 검증
-        if (request.startTime() == null ||
-                request.endTime() == null) {
+        if (startTime == null || endTime == null) {
 
             throw new IllegalArgumentException(
                     "예약 시간을 입력해주세요."
             );
         }
 
-        if (!request.startTime().isBefore(request.endTime())) {
+        if (!startTime.isBefore(endTime)) {
             throw new IllegalArgumentException(
                     "시작 시간은 종료 시간보다 빨라야 합니다."
             );
@@ -113,10 +185,8 @@ public class ReservationService {
         }
 
         // 5. 예약 시간이 과거인지 확인
-        if (request.reservationDate().equals(LocalDate.now())
-                && request.startTime().isBefore(
-                java.time.LocalTime.now()
-        )) {
+        if (reservationDate.equals(LocalDate.now())
+                && startTime.isBefore(LocalTime.now())) {
 
             throw new IllegalArgumentException(
                     "이미 지난 시간은 예약할 수 없습니다."
@@ -132,9 +202,9 @@ public class ReservationService {
         int alreadyReservedPeople =
                 reservationRepository.sumOverlappingPeopleCount(
                         studyRoom,
-                        request.reservationDate(),
-                        request.startTime(),
-                        request.endTime(),
+                        reservationDate,
+                        startTime,
+                        endTime,
                         List.of(
                                 ReservationStatus.PENDING,
                                 ReservationStatus.PAID,
@@ -154,8 +224,8 @@ public class ReservationService {
 
         // 7. 예약 시간 계산
         long minutes = Duration.between(
-                request.startTime(),
-                request.endTime()
+                startTime,
+                endTime
         ).toMinutes();
 
         // 현재는 시간 단위 예약만 허용
@@ -178,9 +248,10 @@ public class ReservationService {
         Reservation reservation = new Reservation(
                 member,
                 studyRoom,
-                request.reservationDate(),
-                request.startTime(),
-                request.endTime(),
+                study,
+                reservationDate,
+                startTime,
+                endTime,
                 request.peopleCount(),
                 totalPrice
         );
@@ -192,13 +263,21 @@ public class ReservationService {
         // 11. 결제 대기(READY) 상태의 Payment 생성
         // 결제창에는 서버가 계산한 금액(totalPrice)만 사용하며,
         // 실제 결제 승인은 PaymentService.confirmPayment()에서 이 금액을 기준으로 검증한다.
+        String orderName = study != null
+                ? study.getTitle() + " - " + studyRoom.getName() + " 스터디룸 예약"
+                : studyRoom.getName() + " 스터디룸 예약";
+
+        if (orderName.length() > ORDER_NAME_MAX_LENGTH) {
+            orderName = orderName.substring(0, ORDER_NAME_MAX_LENGTH);
+        }
+
         Payment payment = paymentRepository.save(
                 new Payment(
                         member,
                         PaymentProductType.STUDY,
                         savedReservation.getId(),
                         totalPrice.setScale(0, RoundingMode.HALF_UP).intValueExact(),
-                        studyRoom.getName() + " 스터디룸 예약"
+                        orderName
                 )
         );
 
@@ -300,6 +379,8 @@ public class ReservationService {
     //
     // 결제가 완료(PAID)된 예약만 승인할 수 있으며, 승인되는 순간
     // 캘린더 일정이 생성되고 예약이 최종 확정(CONFIRMED)된다.
+    // 스터디 연동 예약이면 모임 캘린더(StudyGroup)에, 개인 예약이면
+    // 나의 캘린더(PersonalSchedule)에 등록된다.
     public ReservationResponseDto approveReservation(Long reservationId) {
 
         Reservation reservation =
@@ -316,6 +397,18 @@ public class ReservationService {
             );
         }
 
+        confirmReservationAndCreateCalendar(reservation);
+
+        return ReservationResponseDto.from(reservation, findPayment(reservation.getId()));
+    }
+
+    // 예약 확정 처리 (캘린더 일정 생성 + 상태 CONFIRMED 전환 + 알림)
+    //
+    // 스터디 예약이면 모임 캘린더(StudyGroup) 일정 하나를 만들어 참여자 전원이
+    // 공유하고, 개인 예약이면 기존처럼 예약자 본인의 나의 캘린더(PersonalSchedule)에
+    // 일정을 만든다.
+    private void confirmReservationAndCreateCalendar(Reservation reservation) {
+
         LocalDateTime startAt =
                 LocalDateTime.of(
                         reservation.getReservationDate(),
@@ -328,34 +421,78 @@ public class ReservationService {
                         reservation.getEndTime()
                 );
 
-        PersonalSchedule schedule =
-                personalScheduleService.createSchedule(
-                        reservation.getMember(),
-                        "스터디룸 예약 - "
-                                + reservation.getStudyRoom().getName(),
-                        reservation.getStudyRoom().getLocation()
-                                + " / "
-                                + reservation.getPeopleCount()
-                                + "명 예약",
-                        startAt,
-                        endAt
+        if (reservation.isStudyReservation()) {
+
+            StudyGroup groupSchedule =
+                    studyGroupService.createForStudyReservation(reservation, startAt, endAt);
+
+            reservation.confirmGroup(groupSchedule);
+
+            // 모임장(예약자) + 승인된 스터디 참여자 전원에게 알림/이메일을 보낸다.
+            // 승인되지 않은(PENDING/REJECTED) 신청자는 대상에서 제외된다.
+            notifyStudyReservationConfirmed(reservation);
+
+        } else {
+
+            PersonalSchedule schedule =
+                    personalScheduleService.createSchedule(
+                            reservation.getMember(),
+                            "스터디룸 예약 - "
+                                    + reservation.getStudyRoom().getName(),
+                            reservation.getStudyRoom().getLocation()
+                                    + " / "
+                                    + reservation.getPeopleCount()
+                                    + "명 예약",
+                            startAt,
+                            endAt
+                    );
+
+            reservation.confirm(schedule);
+
+            emailService.sendStudyReservationApprovedNotification(reservation, reservation.getMember());
+
+            notificationService.notify(
+                    reservation.getMember(),
+                    "스터디룸 예약이 확정되었습니다",
+                    reservation.getStudyRoom().getName() + " · "
+                            + reservation.getReservationDate() + " "
+                            + reservation.getStartTime() + " ~ " + reservation.getEndTime(),
+                    "STUDY_RESERVATION_APPROVED",
+                    reservation.getId()
+            );
+        }
+    }
+
+    // 스터디 연동 예약 확정 알림 대상(방장 + 승인된 참여자)을 모아 각자에게
+    // 이메일 + 웹 알림을 보낸다. Map을 사용해 동일 회원에게 중복 발송되지
+    // 않도록 회원 id로 중복을 제거한다.
+    private void notifyStudyReservationConfirmed(Reservation reservation) {
+
+        Map<Long, Member> recipients = new LinkedHashMap<>();
+
+        recipients.put(reservation.getMember().getId(), reservation.getMember());
+
+        studyApplicationRepository
+                .findByStudyIdAndStatus(reservation.getStudy().getId(), StudyApplicationStatus.APPROVED)
+                .forEach(application ->
+                        recipients.put(application.getMember().getId(), application.getMember())
                 );
 
-        reservation.confirm(schedule);
+        for (Member recipient : recipients.values()) {
 
-        emailService.sendStudyReservationApprovedNotification(reservation);
+            emailService.sendStudyReservationApprovedNotification(reservation, recipient);
 
-        notificationService.notify(
-                reservation.getMember(),
-                "스터디룸 예약이 승인되었습니다",
-                reservation.getStudyRoom().getName() + " · "
-                        + reservation.getReservationDate() + " "
-                        + reservation.getStartTime() + " ~ " + reservation.getEndTime(),
-                "STUDY_RESERVATION_APPROVED",
-                reservation.getId()
-        );
-
-        return ReservationResponseDto.from(reservation, findPayment(reservation.getId()));
+            notificationService.notify(
+                    recipient,
+                    "스터디룸 예약이 확정되었습니다",
+                    reservation.getStudyRoom().getName() + " · "
+                            + reservation.getReservationDate() + " "
+                            + reservation.getStartTime() + " ~ " + reservation.getEndTime(),
+                    "STUDY_RESERVATION_APPROVED",
+                    reservation.getId(),
+                    reservation.getStudy().getId()
+            );
+        }
     }
 
     // 관리자에 의한 예약 취소
@@ -385,12 +522,16 @@ public class ReservationService {
         }
 
         // 캘린더 일정을 지우려면, 이 예약이 그 일정을 참조하는 FK부터 먼저
-        // 끊어야 한다(cancel()이 personalSchedule을 null로 만든다). 그래서
-        // "일정 id를 미리 기억해두고 → cancel() + flush → 그 다음에 삭제"
+        // 끊어야 한다(cancel()이 personalSchedule/groupSchedule을 null로 만든다).
+        // 그래서 "일정 id를 미리 기억해두고 → cancel() + flush → 그 다음에 삭제"
         // 순서로 처리한다.
         Long scheduleIdToDelete =
                 reservation.getPersonalSchedule() != null
                         ? reservation.getPersonalSchedule().getId()
+                        : null;
+        Long groupScheduleIdToDelete =
+                reservation.getGroupSchedule() != null
+                        ? reservation.getGroupSchedule().getId()
                         : null;
         Member reservationOwner = reservation.getMember();
 
@@ -400,6 +541,11 @@ public class ReservationService {
         if (scheduleIdToDelete != null) {
             reservationRepository.flush();
             personalScheduleService.deleteScheduleIfOwnedBy(scheduleIdToDelete, reservationOwner);
+        }
+
+        if (groupScheduleIdToDelete != null) {
+            reservationRepository.flush();
+            studyGroupService.deleteIfLinkedToReservation(groupScheduleIdToDelete);
         }
 
         boolean wasConfirmed = previousStatus == ReservationStatus.CONFIRMED;
@@ -424,7 +570,8 @@ public class ReservationService {
      *
      * 결제만으로 바로 예약을 확정하지 않고 PAID(승인 대기) 상태로
      * 전환한 뒤, 관리자와 스터디룸 사장님에게 알림 메일을 보낸다.
-     * 실제 확정(CONFIRMED) + 캘린더 등록은 관리자가 approveReservation()을
+     * 실제 확정(CONFIRMED) + 캘린더 등록(개인 예약이면 나의 캘린더,
+     * 스터디 연동 예약이면 모임 캘린더)은 관리자가 approveReservation()을
      * 호출해야 이루어진다.
      */
     public ReservationResponseDto onStudyPaymentConfirmed(
@@ -464,6 +611,46 @@ public class ReservationService {
     }
 
     /*
+     * 스터디 연동 예약의 결제 마감(스터디 시작 12시간 전) 여부를 검증한다.
+     *
+     * PaymentController가 Toss 결제 승인(paymentService.confirmPayment)을
+     * 호출하기 "이전에" 이 메서드를 호출해, 마감이 지났으면 실제 결제가
+     * 이뤄지기 전에 막는다. 개인 예약(study 미연동)은 이 마감 정책 대상이 아니므로
+     * 아무 검증도 하지 않는다.
+     */
+    @Transactional(readOnly = true)
+    public void assertPaymentDeadlineNotPassed(Long reservationId) {
+
+        Reservation reservation =
+                reservationRepository.findById(reservationId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "존재하지 않는 예약입니다."
+                                )
+                        );
+
+        if (!reservation.isStudyReservation()) {
+            return;
+        }
+
+        Study study = reservation.getStudy();
+
+        if (study.getStudyDate() == null || study.getStartTime() == null) {
+            return;
+        }
+
+        LocalDateTime paymentDeadline =
+                study.getStudyDate().atTime(study.getStartTime())
+                        .minusHours(PAYMENT_DEADLINE_HOURS_BEFORE_STUDY);
+
+        if (LocalDateTime.now().isAfter(paymentDeadline)) {
+            throw new IllegalArgumentException(
+                    "결제 마감(스터디 시작 " + PAYMENT_DEADLINE_HOURS_BEFORE_STUDY + "시간 전)이 지나 결제할 수 없습니다."
+            );
+        }
+    }
+
+    /*
      * 예약 취소
      */
     public void cancelReservation(
@@ -490,12 +677,16 @@ public class ReservationService {
         }
 
         // 캘린더 일정을 지우려면, 이 예약이 그 일정을 참조하는 FK부터 먼저
-        // 끊어야 한다(cancel()이 personalSchedule을 null로 만든다). 그래서
-        // "일정 id를 미리 기억해두고 → cancel() + flush → 그 다음에 삭제"
+        // 끊어야 한다(cancel()이 personalSchedule/groupSchedule을 null로 만든다).
+        // 그래서 "일정 id를 미리 기억해두고 → cancel() + flush → 그 다음에 삭제"
         // 순서로 처리한다.
         Long scheduleIdToDelete =
                 reservation.getPersonalSchedule() != null
                         ? reservation.getPersonalSchedule().getId()
+                        : null;
+        Long groupScheduleIdToDelete =
+                reservation.getGroupSchedule() != null
+                        ? reservation.getGroupSchedule().getId()
                         : null;
         Member reservationOwner = reservation.getMember();
 
@@ -505,6 +696,11 @@ public class ReservationService {
         if (scheduleIdToDelete != null) {
             reservationRepository.flush();
             personalScheduleService.deleteSchedule(scheduleIdToDelete, reservationOwner);
+        }
+
+        if (groupScheduleIdToDelete != null) {
+            reservationRepository.flush();
+            studyGroupService.deleteIfLinkedToReservation(groupScheduleIdToDelete);
         }
 
         // 예약자가 직접 취소했을 때도 관리자가 알 수 있도록 관리자 전원에게

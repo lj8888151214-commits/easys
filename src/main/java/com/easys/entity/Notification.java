@@ -35,6 +35,12 @@ public class Notification {
     @Column
     private Long targetId;
 
+    // 알림이 특정 스터디와 관련 있으면 그 스터디 id (없으면 null).
+    // 프론트에서 알림 클릭 시 /study/{studyId} 상세 페이지로 바로 이동하는 데 사용한다.
+    // targetId(예: 예약 id)와 별개 필드로 둬 기존 targetId 의미를 바꾸지 않는다.
+    @Column
+    private Long studyId;
+
     // MySQL 예약어(READ)와 충돌하지 않도록 DB 컬럼명은 is_read로 매핑한다.
     @Column(name = "is_read", nullable = false)
     private boolean read;
@@ -49,11 +55,23 @@ public class Notification {
             String type,
             Long targetId
     ) {
+        this(member, title, content, type, targetId, null);
+    }
+
+    public Notification(
+            Member member,
+            String title,
+            String content,
+            String type,
+            Long targetId,
+            Long studyId
+    ) {
         this.member = member;
         this.title = title;
         this.content = content;
         this.type = type;
         this.targetId = targetId;
+        this.studyId = studyId;
         this.read = false;
         this.createdAt = LocalDateTime.now();
     }

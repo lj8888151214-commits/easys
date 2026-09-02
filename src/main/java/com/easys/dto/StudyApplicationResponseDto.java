@@ -21,6 +21,9 @@ public class StudyApplicationResponseDto {
     // 신청한 회원 닉네임
     private String nickname;
 
+    // 신청한 회원 프로필 이미지 (없으면 null - 프론트에서 기본 이미지 처리)
+    private String profileImageUrl;
+
     // 신청한 회원 이메일
     private String email;
 
@@ -55,6 +58,11 @@ public class StudyApplicationResponseDto {
                 application
                         .getMember()
                         .getNickname();
+
+        this.profileImageUrl =
+                application
+                        .getMember()
+                        .getProfileImageUrl();
 
         this.email =
                 application

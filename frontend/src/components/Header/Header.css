@@ -398,6 +398,14 @@
   background: #f6faf7;
 }
 
+.notification-list li.clickable {
+  cursor: pointer;
+}
+
+.notification-list li.clickable:hover {
+  background: #eef3ef;
+}
+
 .notification-list li strong {
   display: block;
   margin-bottom: 4px;

@@ -194,9 +194,16 @@
   background: transparent;
 }
 
-.personal-schedule-section,
-.group-upcoming-section {
+.personal-schedule-section {
   margin-top: 0;
+  background: transparent;
+}
+
+/* group-add-section이 탭 맨 위로 오면서, 그 다음에 오는 이 섹션은
+   더 이상 탭의 첫 섹션이 아니다 - .calendar-section과 같은 간격을 줘서
+   위 박스(group-add-card)와 붙어 보이지 않게 한다. */
+.group-upcoming-section {
+  margin-top: 80px;
   background: transparent;
 }
 
@@ -433,6 +440,22 @@
 .empty-schedule {
   position: relative;
   z-index: 3;
+  padding: 45px 20px;
+  border: 1px dashed #dce4dd;
+  border-radius: 16px;
+  background: #fbfcfb;
+  color: #8a928b;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* 모임 캘린더의 빈 상태 안내 문구도 나의 캘린더(empty-schedule)와 같은 박스로 보이게 한다.
+   place-state-message는 StudyReservation.css에서 이미 다른 스타일(박스 없는 텍스트)로
+   쓰이고 있어 이름이 겹치면 그 규칙과 충돌하므로, 캘린더 전용 클래스를 따로 쓴다. */
+.group-empty-message {
+  position: relative;
+  z-index: 3;
+  margin: 0;
   padding: 45px 20px;
   border: 1px dashed #dce4dd;
   border-radius: 16px;
@@ -736,7 +759,9 @@
 .group-add-section {
   position: relative;
   z-index: 3;
-  margin-top: 50px;
+  /* 이제 모임 탭의 첫 섹션이라, 나의 캘린더 탭의 첫 섹션(personal-schedule-section)과
+     같은 간격 규칙(margin-top: 0)을 따른다. */
+  margin-top: 0;
 }
 
 .group-add-card {

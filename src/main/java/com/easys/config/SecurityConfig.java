@@ -96,6 +96,14 @@ public class SecurityConfig {
                                 "/member/me/**"
                         ).authenticated()
 
+                        // 스터디 채팅은 목록/상세와 달리 참여자만 볼 수 있어야 하므로,
+                        // 아래의 넓은 "/study/**" GET permitAll보다 먼저 인증을 요구한다
+                        // (matcher는 등록 순서대로 평가되어 먼저 매칭되는 규칙이 적용된다).
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/study/*/chat/**"
+                        ).authenticated()
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/study",

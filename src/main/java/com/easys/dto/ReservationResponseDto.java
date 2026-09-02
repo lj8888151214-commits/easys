@@ -33,6 +33,13 @@ public record ReservationResponseDto(
 
         Long personalScheduleId,
 
+        // 스터디 예약이면 연결된 스터디 정보 (개인 예약이면 모두 null)
+        Long studyId,
+
+        String studyTitle,
+
+        Long groupScheduleId,
+
         LocalDateTime createdAt,
 
         // 결제 관련 정보 (연결된 Payment가 없으면 모두 null)
@@ -63,6 +70,9 @@ public record ReservationResponseDto(
                 reservation.getPersonalSchedule() != null
                         ? reservation.getPersonalSchedule().getId()
                         : null,
+                reservation.getStudy() != null ? reservation.getStudy().getId() : null,
+                reservation.getStudy() != null ? reservation.getStudy().getTitle() : null,
+                reservation.getGroupSchedule() != null ? reservation.getGroupSchedule().getId() : null,
                 reservation.getCreatedAt(),
                 payment == null ? null : payment.getOrderId(),
                 payment == null ? null : payment.getStatus().name(),

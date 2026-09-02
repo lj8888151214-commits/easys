@@ -29,6 +29,11 @@ public class Reservation {
     @JoinColumn(name = "study_room_id", nullable = false)
     private StudyRoom studyRoom;
 
+    // 이 예약이 어느 스터디를 위한 예약인지 (null이면 개인 예약)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "study_id")
+    private Study study;
+
     // 예약 날짜
     @Column(nullable = false)
     private LocalDate reservationDate;
@@ -62,6 +67,14 @@ public class Reservation {
     @JoinColumn(name = "personal_schedule_id")
     private PersonalSchedule personalSchedule;
 
+    // 스터디 예약이 확정되면 생성되는 모임 캘린더 일정
+    //
+    // study가 설정된(스터디) 예약이 CONFIRMED가 되면
+    // StudyGroup이 생성되고 여기에 연결한다.
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_schedule_id")
+    private StudyGroup groupSchedule;
+
     // 생성일
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -73,6 +86,7 @@ public class Reservation {
     public Reservation(
             Member member,
             StudyRoom studyRoom,
+            Study study,
             LocalDate reservationDate,
             LocalTime startTime,
             LocalTime endTime,
@@ -81,6 +95,7 @@ public class Reservation {
     ) {
         this.member = member;
         this.studyRoom = studyRoom;
+        this.study = study;
         this.reservationDate = reservationDate;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -92,26 +107,44 @@ public class Reservation {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 토스 결제 승인 완료 (관리자 승인 대기 상태로 전환)
+    // 이 예약이 스터디를 위한 예약인지 (false면 개인 예약)
+    public boolean isStudyReservation() {
+        return this.study != null;
+    }
+
+    // 스터디 삭제 시 참조를 끊는다 (CANCELLED 예약만 대상 - 결제/이용 이력 자체는 보존).
+    public void detachStudy() {
+        this.study = null;
+    }
+
+    // 토스 결제 승인 완료
     public void markPaid() {
         this.status = ReservationStatus.PAID;
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 관리자 승인 완료 후 예약 확정
+    // 개인 예약 확정 (나의 캘린더 일정 연결)
     public void confirm(PersonalSchedule personalSchedule) {
         this.status = ReservationStatus.CONFIRMED;
         this.personalSchedule = personalSchedule;
         this.updatedAt = LocalDateTime.now();
     }
 
+    // 스터디 예약 확정 (모임 캘린더 일정 연결)
+    public void confirmGroup(StudyGroup groupSchedule) {
+        this.status = ReservationStatus.CONFIRMED;
+        this.groupSchedule = groupSchedule;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     // 예약 취소
     //
-    // personalSchedule 참조도 함께 끊어야 한다 - FK로 걸려있는 캘린더
-    // 일정을 삭제하려면 이 예약이 먼저 그 일정을 참조하지 않아야 한다.
+    // personalSchedule/groupSchedule 참조도 함께 끊어야 한다 - FK로 걸려있는
+    // 캘린더 일정을 삭제하려면 이 예약이 먼저 그 일정을 참조하지 않아야 한다.
     public void cancel() {
         this.status = ReservationStatus.CANCELLED;
         this.personalSchedule = null;
+        this.groupSchedule = null;
         this.updatedAt = LocalDateTime.now();
     }
 

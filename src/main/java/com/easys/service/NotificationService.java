@@ -31,6 +31,14 @@ public class NotificationService {
         );
     }
 
+    // 스터디와 관련된 알림 - studyId를 함께 저장해 프론트에서 클릭 시
+    // /study/{studyId} 상세 페이지로 바로 이동할 수 있게 한다.
+    public void notify(Member member, String title, String content, String type, Long targetId, Long studyId) {
+        notificationRepository.save(
+                new Notification(member, title, content, type, targetId, studyId)
+        );
+    }
+
     @Transactional(readOnly = true)
     public List<NotificationResponseDto> getMyNotifications(Member member) {
         return notificationRepository

@@ -927,9 +927,22 @@ export default function CamPage() {
   useEffect(() => {
     const fetchGroupSchedules = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/study-groups", {
-          credentials: "include",
-        });
+        // start/end는 필수 파라미터 - 오늘부터 90일 뒤까지의 모임 일정을 가져온다
+        const now = new Date();
+        const toParam = (d) =>
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+            d.getDate()
+          ).padStart(2, "0")}T${String(d.getHours()).padStart(2, "0")}:${String(
+            d.getMinutes()
+          ).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
+        const start = toParam(now);
+        const end = new Date(now);
+        end.setDate(end.getDate() + 90);
+
+        const response = await fetch(
+          `http://localhost:8080/api/study-groups?start=${start}&end=${toParam(end)}`,
+          { credentials: "include" }
+        );
         if (response.ok) {
           const data = await response.json();
           setGroupSchedules(Array.isArray(data) ? data : []);

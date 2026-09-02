@@ -166,6 +166,7 @@
 ===================================================== */
 
 .form-field input,
+.form-field select,
 .form-field textarea {
   box-sizing: border-box;
   width: 100%;
@@ -192,7 +193,8 @@
    INPUT
 ===================================================== */
 
-.form-field input {
+.form-field input,
+.form-field select {
   height: 54px;
   padding: 0 16px;
 }
@@ -224,6 +226,7 @@
 ===================================================== */
 
 .form-field input:focus,
+.form-field select:focus,
 .form-field textarea:focus {
   border-color: #607c68;
   box-shadow:
@@ -236,6 +239,7 @@
 ===================================================== */
 
 .form-field input:disabled,
+.form-field select:disabled,
 .form-field textarea:disabled {
   background: #f2f5f3;
   color: #89938c;
@@ -395,7 +399,8 @@
     margin-bottom: 25px;
   }
 
-  .form-field input {
+  .form-field input,
+  .form-field select {
     height: 52px;
   }
 

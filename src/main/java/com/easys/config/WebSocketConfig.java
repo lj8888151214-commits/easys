@@ -1,5 +1,9 @@
 package com.easys.config;
 
+import com.easys.entity.Study;
+import com.easys.entity.StudyApplicationStatus;
+import com.easys.repository.StudyApplicationRepository;
+import com.easys.repository.StudyRepository;
 import com.easys.security.CustomUserDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
@@ -31,6 +35,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
+    private final StudyRepository studyRepository;
+    private final StudyApplicationRepository studyApplicationRepository;
+
+    public WebSocketConfig(
+            StudyRepository studyRepository,
+            StudyApplicationRepository studyApplicationRepository
+    ) {
+        this.studyRepository = studyRepository;
+        this.studyApplicationRepository = studyApplicationRepository;
+    }
+
     @Bean
     public ServletServerContainerFactoryBean createWebSocketContainer() {
         ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
@@ -41,7 +56,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public SignalWebSocketHandler signalWebSocketHandler() {
-        return new SignalWebSocketHandler();
+        return new SignalWebSocketHandler(studyRepository, studyApplicationRepository);
     }
 
     @Override
@@ -64,6 +79,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                         if (auth.getPrincipal() instanceof CustomUserDetails userDetails) {
                             String nick = userDetails.getMember().getNickname();
                             attributes.put("nickname", nick != null ? nick : userDetails.getUsername());
+                            attributes.put("memberId", userDetails.getMember().getId());
                         } else {
                             attributes.put("nickname", auth.getName());
                         }
@@ -95,6 +111,21 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
         private final ObjectMapper objectMapper = new ObjectMapper();
 
+        // 스터디 채팅방("study-{id}") 참여 권한 확인용. 스트리밍 시그널링 방은
+        // roomId가 "study-"로 시작하지 않으므로 이 저장소들은 영향을 받지 않는다.
+        private final StudyRepository studyRepository;
+        private final StudyApplicationRepository studyApplicationRepository;
+
+        private static final String STUDY_ROOM_PREFIX = "study-";
+
+        public SignalWebSocketHandler(
+                StudyRepository studyRepository,
+                StudyApplicationRepository studyApplicationRepository
+        ) {
+            this.studyRepository = studyRepository;
+            this.studyApplicationRepository = studyApplicationRepository;
+        }
+
         @Override
         public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 
@@ -111,6 +142,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
                         roomId = kv[1];
                     }
                 }
+            }
+
+            // 스터디 채팅방은 해당 스터디의 방장이거나 승인된 참여자만 입장할 수 있다.
+            if (roomId.startsWith(STUDY_ROOM_PREFIX) && !canJoinStudyChatRoom(roomId, session)) {
+                session.close(CloseStatus.NOT_ACCEPTABLE);
+                return;
             }
 
             rooms.putIfAbsent(roomId, new ConcurrentHashMap<>());
@@ -273,6 +310,36 @@ public class WebSocketConfig implements WebSocketConfigurer {
             }
             System.out.println("🔴 [WS 종료] ID: " + session.getId());
 
+        }
+
+        // roomId가 "study-{studyId}" 형태일 때, 이 세션의 로그인 회원이 그
+        // 스터디의 방장이거나 승인(APPROVED)된 참여자인지 확인한다.
+        private boolean canJoinStudyChatRoom(String roomId, WebSocketSession session) {
+            try {
+                Long studyId = Long.parseLong(roomId.substring(STUDY_ROOM_PREFIX.length()));
+
+                Object memberIdAttr = session.getAttributes().get("memberId");
+                if (!(memberIdAttr instanceof Long memberId)) {
+                    return false;
+                }
+
+                Study study = studyRepository.findById(studyId).orElse(null);
+                if (study == null) {
+                    return false;
+                }
+
+                if (study.getMember().getId().equals(memberId)) {
+                    return true;
+                }
+
+                return studyApplicationRepository
+                        .findByStudyIdAndMemberId(studyId, memberId)
+                        .map(application -> application.getStatus() == StudyApplicationStatus.APPROVED)
+                        .orElse(false);
+
+            } catch (Exception e) {
+                return false;
+            }
         }
 
         private void broadcastUserList(String roomId) {
