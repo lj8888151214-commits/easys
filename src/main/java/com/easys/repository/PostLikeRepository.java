@@ -16,4 +16,7 @@ public interface PostLikeRepository
 
     // 특정 게시글의 좋아요 개수
     long countByCommunityPostId(Long postId);
+
+    // 게시글 삭제 시 좋아요를 함께 정리하기 위한 일괄 삭제
+    void deleteByCommunityPostId(Long postId);
 }

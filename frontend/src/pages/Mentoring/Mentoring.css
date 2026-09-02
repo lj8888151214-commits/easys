@@ -156,22 +156,47 @@
   line-height: 1.8;
 }
 
-.mentor-register-button {
+.mentoring-cta-group {
+  display: flex;
   flex-shrink: 0;
-  padding: 15px 23px;
-  border: 0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mentor-explore-button {
+  padding: 15px 22px;
+  border: 1px solid #243329;
   border-radius: 30px;
-  background: #243329;
-  color: white;
+  background: transparent;
+  color: #243329;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: 0.25s ease;
 }
 
+.mentor-explore-button:hover {
+  transform: translateY(-3px);
+  background: #edf3ee;
+}
+
+.mentor-register-button {
+  flex-shrink: 0;
+  padding: 15px 25px;
+  border: 0;
+  border-radius: 30px;
+  background: #243329;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(36, 51, 41, 0.2);
+  transition: 0.25s ease;
+}
+
 .mentor-register-button:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(36, 51, 41, 0.16);
+  box-shadow: 0 12px 28px rgba(36, 51, 41, 0.3);
 }
 
 /* =====================================================
@@ -215,8 +240,765 @@
 }
 
 /* =====================================================
+   RESERVATION BOARD (신청/수신 목록, 승인·거절)
+   ===================================================== */
+
+.mentoring-reservation-board {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 45px;
+}
+
+.reservation-board-card {
+  padding: 26px;
+  border: 1px solid rgba(227, 233, 227, 0.9);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.reservation-board-card h3 {
+  margin: 4px 0 18px;
+  color: #243329;
+  font-size: 18px;
+}
+
+.reservation-board-header {
+  margin-bottom: 6px;
+}
+
+.reservation-board-header h2 {
+  margin: 4px 0 0;
+  color: #243329;
+  font-size: 22px;
+  letter-spacing: -1px;
+}
+
+.reservation-board-card ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reservation-board-card li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #edf0ed;
+  border-radius: 14px;
+  background: #fafcf9;
+}
+
+.reservation-board-card.reservation-board-full {
+  grid-column: 1 / -1;
+}
+
+.reservation-review-done {
+  flex-shrink: 0;
+  color: #3d7a4d;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* =====================================================
+   내가 등록한 멘토링 (관리) — 공개 멘토 목록보다 위쪽,
+   헤더에 등록 버튼 고정 + 컴팩트 카드 Grid
+   ===================================================== */
+
+.my-offerings-section {
+  margin-bottom: 40px;
+}
+
+.offering-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.offering-section-header h3 {
+  margin: 4px 0 0;
+}
+
+.offering-add-button {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: 1px dashed #9eb8a4;
+  border-radius: 16px;
+  background: #f4f8f5;
+  color: #34483b;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.offering-add-button:hover {
+  border-style: solid;
+  background: #edf5ef;
+}
+
+.offering-empty-text {
+  margin: 4px 0 16px;
+  color: #8a938d;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* =====================================================
+   내가 등록한 멘토링 — 관리용 초소형 카드.
+   목적이 "소개"가 아니라 "관리"이므로 공개 mentor-card보다
+   훨씬 작고 간결하게 만든다. PC 3열 / 태블릿·모바일 2열(1열로 떨어지지 않음).
+   ===================================================== */
+
+.offering-manage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.offering-manage-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 14px;
+  border: 1px solid rgba(227, 233, 227, 0.9);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  transition: 0.2s ease;
+}
+
+.offering-manage-card:hover {
+  border-color: #9eb8a4;
+  box-shadow: 0 8px 20px rgba(30, 50, 38, 0.06);
+}
+
+.offering-manage-card-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.offering-manage-card-title strong {
+  overflow: hidden;
+  color: #243329;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 컴팩트 관리 카드 전용 초소형 아바타 (공개 mentor-grid의 이미지 데이터를 그대로 재사용) */
+.mentor-avatar.tiny {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.offering-manage-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+.offering-manage-tags .tag-skill,
+.offering-manage-tags .tag-field {
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.offering-manage-tags .tag-skill {
+  background: #e6f0e8;
+  color: #3d5744;
+}
+
+.offering-manage-tags .tag-field {
+  border: 1px solid #cfdccf;
+  color: #5c6c60;
+}
+
+.offering-manage-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.offering-manage-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: #f7faf7;
+}
+
+.offering-manage-slot.available {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.offering-slot-status {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.offering-slot-status.available {
+  background: #e6f0e8;
+  color: #3d7a4d;
+  border: 1px solid #cfe3d3;
+}
+
+.offering-manage-slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.offering-manage-slot-header .reservation-status {
+  padding: 3px 8px;
+  font-size: 10px;
+}
+
+.offering-manage-slot-time {
+  color: #4a5a4e;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.offering-manage-slot-applicant {
+  color: #7b857e;
+  font-size: 11px;
+}
+
+.offering-manage-slot .reservation-board-actions {
+  margin-top: 2px;
+}
+
+.offering-manage-slot .reservation-board-actions button {
+  padding: 5px 10px;
+  font-size: 10px;
+}
+
+.offering-manage-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.offering-manage-edit-button,
+.offering-manage-delete-button {
+  padding: 6px 12px;
+  border: 1px solid #dfe5df;
+  border-radius: 12px;
+  background: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.offering-manage-edit-button {
+  color: #34483b;
+}
+
+.offering-manage-edit-button:hover {
+  border-color: #9eb8a4;
+  background: #edf5ef;
+}
+
+.offering-manage-delete-button {
+  border-color: #e5c3c3;
+  color: #a84d4d;
+}
+
+.offering-manage-delete-button:hover {
+  border-color: #c98282;
+  background: #fdf2f2;
+}
+
+/* =====================================================
+   나의 멘토링 기록 — "내가 등록한 멘토링"과 동일한 컴팩트 카드 톤으로 통일.
+   PC 3열 / 태블릿·모바일 2열(1열로 떨어지지 않음).
+   ===================================================== */
+
+.mentoring-record-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.mentoring-record-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 14px;
+  border: 1px solid rgba(227, 233, 227, 0.9);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  transition: 0.2s ease;
+}
+
+.mentoring-record-card:hover {
+  border-color: #9eb8a4;
+  box-shadow: 0 8px 20px rgba(30, 50, 38, 0.06);
+}
+
+.mentoring-record-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mentoring-record-top strong {
+  overflow: hidden;
+  color: #243329;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mentoring-record-top .reservation-status {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  font-size: 10px;
+}
+
+.mentoring-record-datetime {
+  color: #7b857e;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mentoring-record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.mentoring-record-actions button {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: #243329;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentoring-record-actions button:hover {
+  transform: translateY(-2px);
+}
+
+.mentoring-record-actions button.reject {
+  border: 1px solid #d8a5a5;
+  background: #fff;
+  color: #b85c5c;
+}
+
+.mentoring-record-actions button.reject:hover {
+  border-color: #c98282;
+  background: #fff5f5;
+  color: #a94c4c;
+}
+
+.mentoring-record-detail-link,
+.mentoring-record-review-link {
+  padding: 6px 12px;
+  border: 1px solid #dfe5df;
+  border-radius: 12px;
+  background: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentoring-record-detail-link {
+  color: #526358;
+}
+
+.mentoring-record-detail-link:hover {
+  border-color: #9eb8a4;
+  background: #edf5ef;
+}
+
+.mentoring-record-review-link {
+  border-color: #9eb8a4;
+  color: #3d7a4d;
+}
+
+.mentoring-record-review-link:hover {
+  background: #edf5ef;
+}
+
+.mentoring-record-delete-link {
+  padding: 6px 12px;
+  border: 1px solid #e5c3c3;
+  border-radius: 12px;
+  background: white;
+  color: #a84d4d;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentoring-record-delete-link:hover {
+  border-color: #c98282;
+  background: #fdf2f2;
+}
+
+/* 내가 등록한 멘토링 페이지네이션 */
+.offering-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.offering-pagination-page,
+.offering-pagination-arrow {
+  min-width: 34px;
+  padding: 8px 10px;
+  border: 1px solid #dfe6df;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #68736c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.offering-pagination-page:hover,
+.offering-pagination-arrow:hover:not(:disabled) {
+  border-color: #b9c8bc;
+  color: #243329;
+}
+
+.offering-pagination-page.active {
+  border-color: #243329;
+  background: #243329;
+  color: white;
+}
+
+.offering-pagination-arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.reservation-board-card li > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reservation-board-card li strong {
+  color: #243329;
+  font-size: 13px;
+}
+
+.reservation-board-card li > div > span {
+  color: #7b857e;
+  font-size: 11px;
+}
+
+.reservation-board-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.reservation-board-actions button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 16px;
+  background: #243329;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.reservation-board-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(36, 51, 41, 0.16);
+}
+
+.reservation-board-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.reservation-board-actions button.reject {
+  border: 1px solid #d8a5a5;
+  background: #fff;
+  color: #b85c5c;
+}
+
+.reservation-board-actions button.reject:hover {
+  border-color: #c98282;
+  background: #fff5f5;
+  color: #a94c4c;
+}
+
+.reservation-status {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 800;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.reservation-status.pending {
+  background: #f4f1e2;
+  color: #9c8130;
+}
+
+.reservation-status.approved {
+  background: #e6f0e8;
+  color: #3d7a4d;
+}
+
+.reservation-status.rejected {
+  background: #fbeeee;
+  color: #b85c5c;
+}
+
+.reservation-status.completed {
+  background: #dceada;
+  color: #2f4937;
+}
+
+.reservation-status.payment-pending {
+  background: #eaf1fb;
+  color: #2a5ea8;
+}
+
+.reservation-status.upcoming {
+  background: #e6f0e8;
+  color: #3d7a4d;
+}
+
+.reservation-status.ongoing {
+  background: #e3edf7;
+  color: #315e8c;
+}
+
+/* 받은 신청 카드: 멘토링명/신청자/상담분야/신청내용 미리보기 (예약 상세보기 모달에서 재사용) */
+
+.reservation-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.reservation-tag {
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: #edf3ee;
+  color: #4a6352;
+  font-size: 10px;
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* =====================================================
+   예약 상세보기 모달
+   ===================================================== */
+
+.reservation-detail-modal h2 {
+  margin: 4px 0 22px;
+  color: #243329;
+  font-size: 26px;
+  letter-spacing: -1px;
+}
+
+.reservation-detail-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf0ed;
+  font-size: 13px;
+}
+
+.reservation-detail-row > span:first-child {
+  flex-shrink: 0;
+  color: #8a938d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.reservation-detail-row strong {
+  color: #243329;
+  text-align: right;
+}
+
+.reservation-detail-row .reservation-tag-row {
+  justify-content: flex-end;
+}
+
+.reservation-detail-message {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #f4f8f4;
+  color: #526358;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.reservation-detail-block {
+  margin-top: 18px;
+}
+
+.reservation-detail-block > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #78907d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.reservation-detail-block p {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fafcf9;
+  color: #49564d;
+  font-size: 13px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* =====================================================
+   거절 사유 입력 모달
+   ===================================================== */
+
+.reject-reason-modal h2 {
+  margin: 4px 0 14px;
+  color: #243329;
+  font-size: 24px;
+  letter-spacing: -1px;
+}
+
+.reject-reason-guide {
+  margin: 0 0 18px;
+  color: #7b857e;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.reject-reason-modal label {
+  display: block;
+  margin-bottom: 9px;
+  color: #49564d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.reject-reason-modal textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px 14px;
+  border: 1px solid #dfe5df;
+  border-radius: 11px;
+  outline: none;
+  background: #fafcf9;
+  color: #243329;
+  font-family: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: 0.2s ease;
+}
+
+.reject-reason-modal textarea:focus {
+  border-color: #78907d;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(120, 144, 125, 0.08);
+}
+
+.reject-reason-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.reject-reason-actions .mentor-cancel-button {
+  margin-top: 0;
+}
+
+.reject-confirm-button {
+  flex: 1;
+  padding: 14px 20px;
+  border: 1px solid #d8a5a5;
+  border-radius: 10px;
+  background: #b85c5c;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.reject-confirm-button:hover {
+  background: #a94c4c;
+}
+
+/* =====================================================
    MENTOR GRID
    ===================================================== */
+
+/* "내가 등록한 멘토링"(.my-offerings-section)과 동일한 간격으로,
+   그리드 뒤에 페이지네이션이 붙어도 아래 "나의 멘토링 기록" 섹션과
+   항상 일정하게 떨어지도록 그리드+페이지네이션을 감싸는 래퍼에 마진을 준다. */
+.mentor-grid-section {
+  margin-bottom: 40px;
+}
 
 .mentor-grid {
   display: grid;
@@ -225,6 +1007,8 @@
 }
 
 .mentor-card {
+  min-width: 0;
+  max-width: 100%;
   padding: 28px;
   border: 1px solid rgba(227, 233, 227, 0.9);
   border-radius: 22px;
@@ -262,6 +1046,29 @@
   margin: 5px 0 4px;
   color: #243329;
   font-size: 20px;
+  overflow-wrap: break-word;
+}
+
+.mentor-card-mentor-name,
+.mentor-card-mentor-link {
+  margin: 0;
+  color: #5c7b65;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mentor-card-mentor-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mentor-card-mentor-link:hover {
+  color: #243329;
 }
 
 .mentor-basic p {
@@ -347,6 +1154,27 @@
   color: #68736c;
   font-size: 13px;
   line-height: 1.7;
+}
+
+.mentor-card-schedules {
+  display: grid;
+  gap: 4px;
+  margin: 14px 0;
+  padding: 11px 12px;
+  border-radius: 12px;
+  background: #f4f8f4;
+}
+
+.mentor-card-schedules small {
+  color: #718078;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.mentor-card-schedules span {
+  color: #526358;
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 /* =====================================================
@@ -452,17 +1280,25 @@
    ===================================================== */
 
 .mentoring-value-section {
-  margin-top: 120px;
-  padding-top: 80px;
-  border-top: 1px solid rgba(210, 220, 212, 0.8);
+  margin-top: 60px;
+  padding: 50px 45px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(237, 243, 238, 0.9), rgba(247, 250, 247, 0.55));
 }
 
 .mentoring-value-section h2 {
   margin: 0;
   color: #243329;
-  font-size: clamp(30px, 4vw, 45px);
+  font-size: clamp(28px, 3.6vw, 40px);
   line-height: 1.25;
   letter-spacing: -2px;
+}
+
+.mentoring-value-lead {
+  margin: 16px 0 0;
+  color: #647269;
+  font-size: 14px;
+  line-height: 1.8;
 }
 
 .mentoring-value-grid {
@@ -516,7 +1352,9 @@
 .mentor-modal,
 .review-modal,
 .reservation-modal,
-.register-modal {
+.register-modal,
+.reservation-detail-modal,
+.reject-reason-modal {
   position: relative;
   width: 100%;
   max-height: 90vh;
@@ -545,6 +1383,16 @@
 .register-modal {
   max-width: 650px;
   padding: 40px;
+}
+
+.reservation-detail-modal {
+  max-width: 520px;
+  padding: 40px;
+}
+
+.reject-reason-modal {
+  max-width: 460px;
+  padding: 36px;
 }
 
 .modal-close {
@@ -649,6 +1497,22 @@
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
+}
+
+.mentor-link-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.mentor-link-group {
+  display: grid;
+  gap: 7px;
+}
+
+.mentor-link-group > strong {
+  color: #718078;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .certificate-list span,
@@ -797,6 +1661,151 @@
   color: white;
   font-weight: 700;
   cursor: pointer;
+}
+
+.review-modal input,
+.review-modal textarea,
+.review-modal select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #dfe5df;
+  border-radius: 11px;
+  outline: none;
+  background: #fafcf9;
+  color: #243329;
+  font-family: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+  transition: 0.2s ease;
+}
+
+.review-modal input:focus,
+.review-modal textarea:focus,
+.review-modal select:focus {
+  border-color: #78907d;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(120, 144, 125, 0.08);
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
+  padding: 18px;
+  border: 1px solid #edf0ed;
+  border-radius: 16px;
+  background: #fafcf9;
+}
+
+.review-form-label {
+  color: #49564d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.review-form textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.review-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.review-form-actions button[type="submit"] {
+  flex: 1;
+  padding: 12px;
+  border: 0;
+  border-radius: 18px;
+  background: #243329;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.review-form-actions button[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(36, 51, 41, 0.16);
+}
+
+.review-form-cancel {
+  padding: 12px 16px;
+  border: 1px solid #dfe5df;
+  border-radius: 18px;
+  background: white;
+  color: #667066;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.review-form-cancel:hover {
+  border-color: #cfd8cf;
+  background: #edf2ed;
+}
+
+.review-guide {
+  margin: 20px 0;
+  padding: 16px 18px;
+  border: 1px dashed #dce4dd;
+  border-radius: 16px;
+  background: rgba(251, 252, 251, 0.8);
+}
+
+.review-guide p {
+  margin: 0;
+  color: #8a938d;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.review-empty {
+  padding: 24px;
+  border: 1px dashed #dce4dd;
+  border-radius: 16px;
+  background: rgba(251, 252, 251, 0.8);
+  color: #8a938d;
+  font-size: 12px;
+  text-align: center;
+}
+
+.review-item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.review-item-actions button {
+  padding: 6px 12px;
+  border: 1px solid #dfe5df;
+  border-radius: 12px;
+  background: white;
+  color: #526358;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.review-item-actions button:hover {
+  border-color: #9eb8a4;
+  background: #edf5ef;
+}
+
+.review-item-actions button.review-item-delete {
+  border-color: #d8a5a5;
+  color: #b85c5c;
+}
+
+.review-item-actions button.review-item-delete:hover {
+  border-color: #c98282;
+  background: #fff5f5;
+  color: #a94c4c;
 }
 
 /* =====================================================
@@ -1055,6 +2064,12 @@
   font-weight: 800;
 }
 
+.reservation-calendar-day.booked {
+  border-color: #ead7d7;
+  background: #fbf4f4;
+  color: #b17a7a;
+}
+
 .reservation-calendar-day:disabled {
   opacity: 1;
   cursor: default;
@@ -1065,6 +2080,48 @@
   margin-top: 8px;
   color: #949d96;
   font-size: 10px;
+}
+
+.reservation-available-schedule-list {
+  display: grid;
+  gap: 5px;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f3f7f3;
+}
+
+.reservation-available-schedule-list strong {
+  margin-bottom: 2px;
+  color: #425548;
+  font-size: 11px;
+}
+
+.reservation-available-schedule-list span {
+  color: #65746a;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.reservation-fixed-time {
+  display: grid;
+  gap: 5px;
+  margin-top: 18px;
+  padding: 15px 17px;
+  border: 1px solid #dce7df;
+  border-radius: 14px;
+  background: #f7faf7;
+}
+
+.reservation-fixed-time span,
+.reservation-fixed-time small {
+  color: #718078;
+  font-size: 11px;
+}
+
+.reservation-fixed-time strong {
+  color: #243329;
+  font-size: 17px;
 }
 
 /* =====================================================
@@ -1553,7 +2610,361 @@
 }
 
 /* =====================================================
-   TABLET
+   내 멘토 카드 및 표시
+   ===================================================== */
+
+.mentor-type-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.my-mentor-card-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #243329;
+  color: #cce0d1;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.mentor-card.my-mentor-card {
+  border-color: #9eb8a4;
+  background: rgba(247, 252, 248, 0.96);
+  box-shadow: 0 4px 20px rgba(36, 51, 41, 0.06);
+}
+
+.mentor-card-bottom button.mentor-card-edit-button {
+  background: #395441;
+  color: #fff;
+  border: 1px solid #2e4434;
+}
+
+.mentor-card-bottom button.mentor-card-edit-button:hover {
+  background: #243329;
+}
+
+.mentor-request-button.my-mentor-edit {
+  background: #395441;
+}
+
+.mentor-request-button.my-mentor-edit:hover {
+  background: #243329;
+}
+
+/* =====================================================
+   멘토가 등록한 멘토링 목록 (멘토 상세 모달, 다른 사용자 시점)
+   ===================================================== */
+
+.mentor-offering-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.mentor-offering-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid #dbe6dc;
+  border-radius: 16px;
+  background: #f4f8f5;
+  transition: 0.2s ease;
+}
+
+.mentor-offering-card:hover {
+  border-color: #9eb8a4;
+  background: #edf5ef;
+}
+
+.mentor-offering-slot-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mentor-offering-slot-list .mentor-schedule-badge {
+  padding: 6px 10px;
+  gap: 6px;
+}
+
+.mentor-offering-slot-more {
+  align-self: center;
+  color: #5c7b65;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mentor-offering-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mentor-offering-card-top strong {
+  color: #243329;
+  font-size: 14px;
+}
+
+.mentor-offering-card-top span {
+  color: #4a6352;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mentor-offering-apply-button {
+  padding: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: #243329;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentor-offering-apply-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(36, 51, 41, 0.16);
+}
+
+/* =====================================================
+   상담 가능 일정 표시 (상세 모달 및 안내)
+   ===================================================== */
+
+.mentor-available-schedule-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.mentor-schedule-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 15px;
+  border: 1px solid #dbe6dc;
+  border-radius: 14px;
+  background: #f4f8f5;
+  transition: all 0.2s ease;
+}
+
+.mentor-schedule-badge:hover {
+  border-color: #9eb8a4;
+  background: #edf5ef;
+}
+
+.badge-date {
+  color: #243329;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.badge-time {
+  color: #4a6352;
+  font-size: 12px;
+  font-weight: 600;
+  background: #e2ede5;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+.available-time-hint {
+  display: inline-block;
+  margin-left: 6px;
+  color: #5c7b65;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.reservation-time-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #dceada;
+  color: #2f4937;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* =====================================================
+   MENTORING TYPE GRID (2 columns)
+   ===================================================== */
+
+.mentoring-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mentoring-type-grid button {
+  padding: 12px;
+  border: 1px solid #dfe5df;
+  border-radius: 12px;
+  background: #fafcf9;
+  color: #4f5f54;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentoring-type-grid button:hover {
+  border-color: #9eb8a4;
+  background: #f1f7f2;
+}
+
+.mentoring-type-grid button.active {
+  border-color: #243329;
+  background: #243329;
+  color: white;
+}
+
+/* =====================================================
+   날짜별 상담 시간 설정 (등록/수정 모달)
+   ===================================================== */
+
+.schedule-config-section {
+  margin-top: 18px;
+}
+
+.schedule-config-label {
+  display: block;
+  margin-bottom: 10px;
+  color: #34483b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.schedule-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.schedule-config-item {
+  padding: 14px 16px;
+  border: 1px solid #dce7df;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(36, 51, 41, 0.04);
+}
+
+.schedule-config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.schedule-date-text {
+  color: #243329;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.schedule-delete-btn {
+  padding: 4px 10px;
+  border: 1px solid #e5c3c3;
+  border-radius: 8px;
+  background: #fff;
+  color: #a84d4d;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.schedule-delete-btn:hover {
+  background: #fdf2f2;
+  border-color: #c98282;
+}
+
+.schedule-config-item.locked {
+  background: #fafcf9;
+  border-color: #e3e9e3;
+}
+
+.schedule-lock-badge {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #f4f1e2;
+  color: #9c8130;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.schedule-config-times {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.schedule-time-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.schedule-time-field small {
+  color: #718078;
+  font-size: 11px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.schedule-time-field input[type="time"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d4dfd6;
+  border-radius: 8px;
+  background: #fafcf9;
+  color: #243329;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.schedule-time-field input[type="time"]:focus {
+  border-color: #78907d;
+  background: #fff;
+}
+
+.schedule-time-divider {
+  margin-top: 18px;
+  color: #8a968e;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.schedule-config-empty {
+  padding: 24px;
+  border: 1px dashed #d0dcd2;
+  border-radius: 14px;
+  background: #fafcf9;
+  text-align: center;
+}
+
+.schedule-config-empty p {
+  margin: 0;
+  color: #839187;
+  font-size: 12px;
+}
+
+/* =====================================================
+   태블릿
    ===================================================== */
 
 @media screen and (max-width: 900px) {
@@ -1566,8 +2977,18 @@
     flex-direction: column;
   }
 
+  .mentoring-reservation-board {
+    grid-template-columns: 1fr;
+  }
+
   .mentor-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* "내가 등록한 멘토링" / "나의 멘토링 기록" 카드 Grid는 태블릿·모바일에서도 2열을 유지한다(1열로 떨어지지 않음). */
+  .offering-manage-grid,
+  .mentoring-record-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .mentoring-value-grid {
@@ -1613,8 +3034,37 @@
     letter-spacing: -2px;
   }
 
+  .mentoring-cta-group {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .mentor-explore-button,
   .mentor-register-button {
     width: 100%;
+  }
+
+  .offering-section-header {
+    flex-wrap: wrap;
+  }
+
+  .offering-add-button {
+    width: 100%;
+  }
+
+  .offering-manage-grid,
+  .mentoring-record-grid {
+    gap: 8px;
+  }
+
+  .offering-manage-card,
+  .mentoring-record-card {
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .offering-manage-card-title strong {
+    font-size: 12px;
   }
 
   .mentor-card {
@@ -1641,10 +3091,52 @@
   .mentor-modal,
   .review-modal,
   .reservation-modal,
-  .register-modal {
+  .register-modal,
+  .reservation-detail-modal,
+  .reject-reason-modal {
     max-height: 92vh;
     padding: 30px 22px;
     border-radius: 22px;
+  }
+
+  .reservation-board-card {
+    padding: 20px;
+  }
+
+  .reservation-board-card li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .reservation-board-actions {
+    width: 100%;
+  }
+
+  .reservation-board-actions button {
+    flex: 1;
+  }
+
+  .reservation-status {
+    align-self: flex-start;
+  }
+
+  .reservation-detail-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .reservation-detail-row strong,
+  .reservation-detail-row .reservation-tag-row {
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .reject-reason-actions {
+    flex-direction: column;
+  }
+
+  .review-form-actions {
+    flex-direction: column;
   }
 
   .mentor-modal-profile {
@@ -1780,12 +3272,13 @@
   }
 
   .mentoring-value-section {
-    margin-top: 80px;
-    padding-top: 60px;
+    margin-top: 40px;
+    padding: 34px 22px;
+    border-radius: 22px;
   }
 
   .mentoring-value-section h2 {
-    font-size: 30px;
+    font-size: 26px;
   }
 
   .mentoring-page::before {

@@ -3,6 +3,7 @@ package com.easys.service;
 import com.easys.dto.StudyCreateDto;
 import com.easys.dto.StudyResponseDto;
 import com.easys.entity.Member;
+import com.easys.entity.MemberRole;
 import com.easys.entity.Study;
 import com.easys.repository.MemberRepository;
 import com.easys.repository.StudyApplicationRepository;
@@ -182,8 +183,8 @@ public class StudyService {
                         );
 
 
-        // 작성자 확인
-        checkOwner(
+        // 작성자 본인이거나 관리자만 삭제 가능
+        checkOwnerOrAdmin(
                 study,
                 email
         );
@@ -286,6 +287,33 @@ public class StudyService {
         if (!study.getMember()
                 .getEmail()
                 .equals(email)) {
+
+            throw new IllegalArgumentException(
+                    "스터디 작성자만 수정하거나 삭제할 수 있습니다."
+            );
+        }
+    }
+
+
+    // 삭제 전용: 작성자 본인이거나 관리자면 통과
+    private void checkOwnerOrAdmin(
+            Study study,
+            String email
+    ) {
+
+        if (study.getMember().getEmail().equals(email)) {
+            return;
+        }
+
+        Member requester =
+                memberRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "회원을 찾을 수 없습니다."
+                                )
+                        );
+
+        if (requester.getRole() != MemberRole.ADMIN) {
 
             throw new IllegalArgumentException(
                     "스터디 작성자만 수정하거나 삭제할 수 있습니다."

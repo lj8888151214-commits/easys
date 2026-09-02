@@ -31,4 +31,7 @@ public class MentorProfileCreateDto {
 
     private String availableStart;
     private String availableEnd;
+
+    // 날짜별 상세 일정 (JSON)
+    private String availableSchedules;
 }

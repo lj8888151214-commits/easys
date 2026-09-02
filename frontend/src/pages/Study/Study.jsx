@@ -13,6 +13,8 @@ import "./Study.css";
 import studyBg
   from "../../assets/images/study-bg.jpg";
 
+const STUDIES_PAGE_SIZE = 12;
+
 
 function Study() {
 
@@ -40,6 +42,9 @@ function Study() {
 
   const [scrollY, setScrollY] =
     useState(0);
+
+  const [studiesPage, setStudiesPage] =
+    useState(1);
 
 
   // =====================================================
@@ -322,6 +327,30 @@ function Study() {
       keyword,
       sortType
     ]);
+
+
+  // =====================================================
+  // 페이지네이션 (검색/정렬이 바뀌면 1페이지로)
+  // =====================================================
+
+  useEffect(() => {
+    setStudiesPage(1);
+  }, [filteredStudies]);
+
+  const studiesTotalPages =
+    Math.max(1, Math.ceil(filteredStudies.length / STUDIES_PAGE_SIZE));
+
+  const studiesCurrentPage =
+    Math.min(studiesPage, studiesTotalPages);
+
+  const studiesPageStart =
+    (studiesCurrentPage - 1) * STUDIES_PAGE_SIZE;
+
+  const pagedStudies =
+    filteredStudies.slice(
+      studiesPageStart,
+      studiesPageStart + STUDIES_PAGE_SIZE
+    );
 
 
   // =====================================================
@@ -741,7 +770,7 @@ function Study() {
 
             <div className="study-grid">
 
-              {filteredStudies.map(
+              {pagedStudies.map(
                 (study) => (
 
                   <article
@@ -844,6 +873,59 @@ function Study() {
               )}
 
             </div>
+
+          )}
+
+
+        {/* =================================================
+            페이지네이션
+        ================================================= */}
+
+        {!loading &&
+          !error &&
+          studiesTotalPages > 1 && (
+
+            <nav className="study-pagination" aria-label="스터디 목록 페이지">
+
+              <button
+                type="button"
+                className="study-pagination-arrow"
+                disabled={studiesCurrentPage === 1}
+                onClick={() =>
+                  setStudiesPage(studiesCurrentPage - 1)
+                }
+              >
+                ‹
+              </button>
+
+              {Array.from(
+                { length: studiesTotalPages },
+                (_, i) => i + 1
+              ).map((page) => (
+                <button
+                  type="button"
+                  key={page}
+                  className={`study-pagination-page ${
+                    page === studiesCurrentPage ? "active" : ""
+                  }`}
+                  onClick={() => setStudiesPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                className="study-pagination-arrow"
+                disabled={studiesCurrentPage === studiesTotalPages}
+                onClick={() =>
+                  setStudiesPage(studiesCurrentPage + 1)
+                }
+              >
+                ›
+              </button>
+
+            </nav>
 
           )}
 

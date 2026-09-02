@@ -2,16 +2,31 @@ package com.easys.service;
 
 import com.easys.dto.MentorProfileCreateDto;
 import com.easys.dto.MentorProfileResponseDto;
+import com.easys.dto.MentorScheduleDto;
 import com.easys.entity.Member;
 import com.easys.entity.MentorProfile;
 import com.easys.entity.MentorStatus;
+import com.easys.entity.MentoringReservation;
+import com.easys.entity.PaymentProductType;
 import com.easys.repository.MentorProfileRepository;
+import com.easys.repository.MentoringOfferingRepository;
 import com.easys.repository.MentoringReservationRepository;
+import com.easys.repository.MentoringReviewRepository;
+import com.easys.repository.PaymentRepository;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,7 +35,10 @@ import java.util.stream.Collectors;
 public class MentorProfileService {
 
     private final MentorProfileRepository mentorProfileRepository;
+    private final MentoringOfferingRepository mentoringOfferingRepository;
     private final MentoringReservationRepository mentoringReservationRepository;
+    private final MentoringReviewRepository mentoringReviewRepository;
+    private final PaymentRepository paymentRepository;
 
     // =====================================================
     // 멘토 등록
@@ -57,19 +75,20 @@ public class MentorProfileService {
                         .price(request.getPrice())
                         .mentoringType(request.getMentoringType().trim())
                         .consultationFields(request.getConsultationFields().trim())
-                        .github(trim(request.getGithub()))
-                        .velog(trim(request.getVelog()))
-                        .portfolio(trim(request.getPortfolio()))
+                        .github(normalizeLink(request.getGithub(), "github"))
+                        .velog(normalizeLink(request.getVelog(), "velog"))
+                        .portfolio(normalizeLink(request.getPortfolio(), "portfolio"))
                         .availableDays(trim(request.getAvailableDays()))
                         .availableDates(trim(request.getAvailableDates()))
                         .availableStart(trim(request.getAvailableStart()))
                         .availableEnd(trim(request.getAvailableEnd()))
+                        .availableSchedules(trim(request.getAvailableSchedules()))
                         .build();
 
         MentorProfile saved =
                 mentorProfileRepository.save(mentorProfile);
 
-        return new MentorProfileResponseDto(saved);
+        return toResponse(saved);
     }
 
     // =====================================================
@@ -90,7 +109,7 @@ public class MentorProfileService {
                                 )
                         );
 
-        return new MentorProfileResponseDto(mentorProfile);
+        return toResponse(mentorProfile);
     }
 
     // =====================================================
@@ -123,16 +142,17 @@ public class MentorProfileService {
                 request.getPrice(),
                 request.getMentoringType().trim(),
                 request.getConsultationFields().trim(),
-                trim(request.getGithub()),
-                trim(request.getVelog()),
-                trim(request.getPortfolio()),
+                normalizeLink(request.getGithub(), "github"),
+                normalizeLink(request.getVelog(), "velog"),
+                normalizeLink(request.getPortfolio(), "portfolio"),
                 trim(request.getAvailableDays()),
                 trim(request.getAvailableDates()),
                 trim(request.getAvailableStart()),
-                trim(request.getAvailableEnd())
+                trim(request.getAvailableEnd()),
+                trim(request.getAvailableSchedules())
         );
 
-        return new MentorProfileResponseDto(mentorProfile);
+        return toResponse(mentorProfile);
     }
 
     // =====================================================
@@ -153,16 +173,25 @@ public class MentorProfileService {
                                 )
                         );
 
-        // 해당 멘토에게 들어온 예약이 있다면 먼저 삭제
-        mentoringReservationRepository
-                .deleteAll(
-                        mentoringReservationRepository
-                                .findByMentorOrderByCreatedAtDesc(
-                                        mentorProfile
-                                )
-                );
+        List<MentoringReservation> reservations =
+                mentoringReservationRepository.findByMentorOrderByCreatedAtDesc(mentorProfile);
+        List<Long> reservationIds = reservations.stream()
+                .map(MentoringReservation::getId)
+                .toList();
 
-        // 예약 삭제 후 멘토 프로필 삭제
+        if (!reservationIds.isEmpty()) {
+            mentoringReviewRepository.deleteByReservationIdIn(reservationIds);
+            paymentRepository.deleteByProductTypeAndTargetIdIn(
+                    PaymentProductType.MENTORING,
+                    reservationIds
+            );
+            mentoringReservationRepository.deleteAll(reservations);
+        }
+
+        // 이 멘토가 등록한 멘토링(여러 개)도 함께 정리해야
+        // mentor_profile 삭제 시 외래키 제약에 걸리지 않는다.
+        mentoringOfferingRepository.deleteByMentor(mentorProfile);
+
         mentorProfileRepository.delete(mentorProfile);
     }
 
@@ -184,7 +213,7 @@ public class MentorProfileService {
                                 )
                         );
 
-        return new MentorProfileResponseDto(mentorProfile);
+        return toResponse(mentorProfile);
     }
 
     // =====================================================
@@ -194,11 +223,43 @@ public class MentorProfileService {
     @Transactional(readOnly = true)
     public List<MentorProfileResponseDto> getApprovedMentors() {
 
+        Map<Long, double[]> ratingStats = getMentorRatingStats();
+
         return mentorProfileRepository
                 .findByStatus(MentorStatus.APPROVED)
                 .stream()
-                .map(MentorProfileResponseDto::new)
+                .map(mentor -> {
+                    double[] stats = ratingStats.getOrDefault(mentor.getId(), new double[]{0.0, 0.0});
+                    return new MentorProfileResponseDto(
+                            mentor,
+                            Math.round(stats[0] * 10) / 10.0,
+                            (long) stats[1]
+                    );
+                })
                 .collect(Collectors.toList());
+    }
+
+    private MentorProfileResponseDto toResponse(MentorProfile mentorProfile) {
+        double[] stats = getMentorRatingStats().getOrDefault(mentorProfile.getId(), new double[]{0.0, 0.0});
+        return new MentorProfileResponseDto(
+                mentorProfile,
+                Math.round(stats[0] * 10) / 10.0,
+                (long) stats[1]
+        );
+    }
+
+    private Map<Long, double[]> getMentorRatingStats() {
+        Map<Long, double[]> ratingStats = new HashMap<>();
+        for (Object[] row : mentoringReviewRepository.findRatingStatsGroupedByMentorId()) {
+            ratingStats.put(
+                    ((Number) row[0]).longValue(),
+                    new double[]{
+                            row[1] == null ? 0.0 : ((Number) row[1]).doubleValue(),
+                            row[2] == null ? 0.0 : ((Number) row[2]).doubleValue()
+                    }
+            );
+        }
+        return ratingStats;
     }
 
     // =====================================================
@@ -262,6 +323,49 @@ public class MentorProfileService {
                     "상담 가능한 분야를 선택해주세요."
             );
         }
+
+        validateLink(request.getGithub(), "github");
+        validateLink(request.getVelog(), "velog");
+        validateLink(request.getPortfolio(), "portfolio");
+
+        if (request.getAvailableSchedules() != null && !request.getAvailableSchedules().isBlank()) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                List<MentorScheduleDto> schedules = objectMapper.readValue(
+                        request.getAvailableSchedules(),
+                        new TypeReference<List<MentorScheduleDto>>() {}
+                );
+
+                if (schedules == null || schedules.isEmpty()) {
+                    throw new IllegalArgumentException("상담 가능한 날짜를 하나 이상 등록해주세요.");
+                }
+
+                Set<String> scheduleDates = new HashSet<>();
+                for (MentorScheduleDto schedule : schedules) {
+                    if (schedule == null || schedule.getDate() == null || schedule.getDate().isBlank()
+                            || schedule.getStartTime() == null || schedule.getStartTime().isBlank()
+                            || schedule.getEndTime() == null || schedule.getEndTime().isBlank()) {
+                        throw new IllegalArgumentException("날짜별 상담 시작 시간과 종료 시간을 모두 입력해주세요.");
+                    }
+
+                    LocalDate.parse(schedule.getDate());
+                    LocalTime start = LocalTime.parse(schedule.getStartTime());
+                    LocalTime end = LocalTime.parse(schedule.getEndTime());
+                    if (!start.isBefore(end)) {
+                        throw new IllegalArgumentException(
+                                String.format("%s의 시작 시간은 종료 시간보다 빨라야 합니다.", schedule.getDate())
+                        );
+                    }
+                    if (!scheduleDates.add(schedule.getDate())) {
+                        throw new IllegalArgumentException("동일한 상담 날짜를 중복 등록할 수 없습니다.");
+                    }
+                }
+            } catch (IllegalArgumentException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new IllegalArgumentException("상담 일정 데이터 형식이 올바르지 않습니다.");
+            }
+        }
     }
 
     private String trim(String value) {
@@ -271,5 +375,48 @@ public class MentorProfileService {
         }
 
         return value.trim();
+    }
+
+    private void validateLink(String value, String service) {
+        if (!trim(value).isEmpty() && normalizeLink(value, service).isEmpty()) {
+            throw new IllegalArgumentException("올바른 형식의 링크를 입력해주세요.");
+        }
+    }
+
+    private String normalizeLink(String value, String service) {
+        String trimmedValue = trim(value);
+        if (trimmedValue.isEmpty()) {
+            return "";
+        }
+
+        String candidate = trimmedValue.matches("(?i)^https?://.*")
+                ? trimmedValue
+                : "https://" + trimmedValue;
+
+        try {
+            URI uri = URI.create(candidate);
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+            if ((!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme))
+                    || host == null || !host.contains(".")) {
+                return "";
+            }
+
+            String normalizedHost = host.toLowerCase();
+            String path = uri.getPath() == null ? "" : uri.getPath();
+            if ("github".equals(service)
+                    && (!("github.com".equals(normalizedHost) || "www.github.com".equals(normalizedHost))
+                    || path.replace("/", "").isBlank())) {
+                return "";
+            }
+            if ("velog".equals(service)
+                    && (!("velog.io".equals(normalizedHost) || "www.velog.io".equals(normalizedHost))
+                    || !path.startsWith("/@") || path.length() <= 2)) {
+                return "";
+            }
+            return uri.toString();
+        } catch (IllegalArgumentException e) {
+            return "";
+        }
     }
 }

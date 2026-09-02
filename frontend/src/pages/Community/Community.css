@@ -718,6 +718,11 @@
   font-weight: 800;
 }
 
+.post-stat-icon {
+  flex-shrink: 0;
+  vertical-align: -3px;
+}
+
 .post-like-button {
   display: inline-flex;
   align-items: center;

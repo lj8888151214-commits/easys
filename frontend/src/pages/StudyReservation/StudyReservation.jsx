@@ -1,12 +1,120 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./StudyReservation.css";
 import studyReservationBg from "../../assets/images/StudyReservation.jpg";
 
+const API_BASE = "/api";
+
+// 지역 필터 버튼 => 스터디룸 location 문자열에 하나라도 포함되어야 하는 키워드 목록
+const REGIONS = [
+  { label: "전체", keywords: [] },
+  { label: "서울", keywords: ["서울"] },
+  { label: "인천", keywords: ["인천"] },
+  { label: "경기도", keywords: ["경기", "성남", "수원", "고양", "용인", "판교"] },
+  { label: "충청도", keywords: ["충청", "충남", "충북", "대전", "세종", "청주"] },
+  { label: "전라도", keywords: ["전라", "전남", "전북", "광주", "전주"] },
+  { label: "경상도", keywords: ["경상", "경남", "경북", "부산", "대구", "울산"] },
+  { label: "제주도", keywords: ["제주"] },
+];
+
+// 예약은 1시간 단위로만 가능 (09:00 ~ 23:00 사이, 1시간씩)
+const RESERVATION_START_HOUR = 9;
+const RESERVATION_END_HOUR = 23;
+
+const TIME_SLOTS = Array.from(
+  { length: RESERVATION_END_HOUR - RESERVATION_START_HOUR },
+  (_, index) => {
+    const startHour = RESERVATION_START_HOUR + index;
+    const endHour = startHour + 1;
+
+    return {
+      startTime: `${String(startHour).padStart(2, "0")}:00`,
+      endTime: `${String(endHour).padStart(2, "0")}:00`,
+    };
+  }
+);
+
+const WEEKDAY_LABEL = ["일", "월", "화", "수", "목", "금", "토"];
+
+const ROOMS_PAGE_SIZE = 12;
+
+function buildDateOptions() {
+  const days = [];
+  const today = new Date();
+
+  for (let i = 0; i < 7; i += 1) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
+
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+
+    days.push({
+      value: `${yyyy}-${mm}-${dd}`,
+      label: `${date.getMonth() + 1}월 ${date.getDate()}일(${WEEKDAY_LABEL[date.getDay()]})`,
+    });
+  }
+
+  return days;
+}
+
+function toMinutes(hhmm) {
+  const [hour, minute] = hhmm.split(":").map(Number);
+  return hour * 60 + minute;
+}
+
+function formatPrice(price) {
+  return Math.round(Number(price)).toLocaleString("ko-KR") + "원";
+}
+
+function formatReviewDate(dateTime) {
+  return dateTime.slice(0, 10).replace(/-/g, ".");
+}
+
 function StudyReservation() {
+  const navigate = useNavigate();
+
   const [scrollY, setScrollY] = useState(0);
+
+  const dateOptions = useMemo(() => buildDateOptions(), []);
+
+  // 스터디룸 목록
+  const [rooms, setRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(true);
+  const [roomsError, setRoomsError] = useState("");
+
+  // 검색 / 필터
+  const [keyword, setKeyword] = useState("");
+  const [activeRegion, setActiveRegion] = useState("전체");
+  const [roomsPage, setRoomsPage] = useState(1);
+
+  // 선택 상태
   const [selectedPlace, setSelectedPlace] = useState(null);
-  const [selectedDate, setSelectedDate] = useState("8월 24일");
-  const [selectedTime, setSelectedTime] = useState("19:00 - 21:00");
+  const [selectedDate, setSelectedDate] = useState(dateOptions[0].value);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [peopleCount, setPeopleCount] = useState(1);
+
+  // 예약 가능 시간 조회
+  const [reservedTimes, setReservedTimes] = useState([]);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+
+  // 예약 생성
+  const [submitting, setSubmitting] = useState(false);
+  const [reservationError, setReservationError] = useState("");
+
+  // 리뷰
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [reviewsError, setReviewsError] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewContent, setReviewContent] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSubmitError, setReviewSubmitError] = useState("");
+
+  /* ================================
+     스크롤
+  ================================= */
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,60 +128,373 @@ function StudyReservation() {
     };
   }, []);
 
-  // 나중에 DB에서 받아올 장소 데이터
-  const places = [
-    {
-      id: 1,
-      name: "스터디룸 그린",
-      location: "서울 강남구",
-      description: "조용하고 쾌적한 스터디 공간",
-      capacity: "4~8명",
-      price: 12000,
-      rating: "4.8",
-      image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80",
-      tags: ["화이트보드", "Wi-Fi", "콘센트"],
-    },
-    {
-      id: 2,
-      name: "워크 라운지",
-      location: "서울 역삼동",
-      description: "프로젝트 스터디에 적합한 공간",
-      capacity: "2~6명",
-      price: 10000,
-      rating: "4.7",
-      image: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=900&q=80",
-      tags: ["모니터", "Wi-Fi", "커피"],
-    },
-    {
-      id: 3,
-      name: "코드 스페이스",
-      location: "서울 신논현",
-      description: "개발자 스터디를 위한 집중 공간",
-      capacity: "4~10명",
-      price: 15000,
-      rating: "4.9",
-      image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=900&q=80",
-      tags: ["프로젝터", "화이트보드", "Wi-Fi"],
-    },
-  ];
+  /* ================================
+     스터디룸 목록 조회
+  ================================= */
 
-  const dates = [
-    "8월 24일",
-    "8월 25일",
-    "8월 26일",
-    "8월 27일",
-    "8월 28일",
-  ];
+  const loadRooms = async (searchKeyword) => {
+    try {
+      setLoadingRooms(true);
+      setRoomsError("");
 
-  const times = [
-    "10:00 - 12:00",
-    "14:00 - 16:00",
-    "17:00 - 19:00",
-    "19:00 - 21:00",
-  ];
+      const url = searchKeyword
+        ? `${API_BASE}/study-rooms/search?keyword=${encodeURIComponent(searchKeyword)}`
+        : `${API_BASE}/study-rooms`;
 
-  const formatPrice = (price) => {
-    return price.toLocaleString("ko-KR") + "원";
+      const response = await fetch(url, { credentials: "include" });
+
+      if (!response.ok) {
+        throw new Error(`스터디룸 목록을 불러오지 못했습니다. (HTTP ${response.status})`);
+      }
+
+      const data = await response.json();
+      setRooms(data);
+    } catch (error) {
+      console.error("스터디룸 목록 조회 오류:", error);
+      setRoomsError(error.message || "스터디룸 목록을 불러오지 못했습니다.");
+      setRooms([]);
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRooms("");
+  }, []);
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    loadRooms(keyword.trim());
+  };
+
+  // 지역 필터는 이미 불러온 목록 안에서 클라이언트 사이드로 걸러낸다
+  const filteredRooms = useMemo(() => {
+    const region = REGIONS.find((item) => item.label === activeRegion);
+
+    if (!region || region.keywords.length === 0) {
+      return rooms;
+    }
+
+    return rooms.filter((room) =>
+      region.keywords.some((keyword) => room.location.includes(keyword))
+    );
+  }, [rooms, activeRegion]);
+
+  // 검색어/지역 필터가 바뀌면 1페이지로 되돌린다
+  useEffect(() => {
+    setRoomsPage(1);
+  }, [filteredRooms]);
+
+  const roomsTotalPages = Math.max(1, Math.ceil(filteredRooms.length / ROOMS_PAGE_SIZE));
+  const roomsCurrentPage = Math.min(roomsPage, roomsTotalPages);
+  const roomsPageStart = (roomsCurrentPage - 1) * ROOMS_PAGE_SIZE;
+  const pagedRooms = filteredRooms.slice(roomsPageStart, roomsPageStart + ROOMS_PAGE_SIZE);
+
+  /* ================================
+     선택한 장소가 바뀌면 초기화
+  ================================= */
+
+  useEffect(() => {
+    setSelectedSlot(null);
+    setReservationError("");
+
+    if (selectedPlace) {
+      setPeopleCount(selectedPlace.minCapacity);
+    } else {
+      setPeopleCount(1);
+    }
+  }, [selectedPlace]);
+
+  useEffect(() => {
+    setSelectedSlot(null);
+  }, [selectedDate]);
+
+  /* ================================
+     선택한 장소 + 날짜의 예약 현황 조회
+  ================================= */
+
+  useEffect(() => {
+    if (!selectedPlace) {
+      setReservedTimes([]);
+      return;
+    }
+
+    const loadAvailability = async () => {
+      try {
+        setLoadingAvailability(true);
+
+        const response = await fetch(
+          `${API_BASE}/reservations/availability?roomId=${selectedPlace.id}&date=${selectedDate}`,
+          { credentials: "include" }
+        );
+
+        if (!response.ok) {
+          throw new Error("예약 현황을 불러오지 못했습니다.");
+        }
+
+        const data = await response.json();
+        setReservedTimes(data);
+      } catch (error) {
+        console.error("예약 가능 시간 조회 오류:", error);
+        setReservedTimes([]);
+      } finally {
+        setLoadingAvailability(false);
+      }
+    };
+
+    loadAvailability();
+  }, [selectedPlace, selectedDate]);
+
+  /* ================================
+     선택한 장소의 리뷰 조회
+  ================================= */
+
+  const loadReviews = async (roomId) => {
+    try {
+      setLoadingReviews(true);
+      setReviewsError("");
+
+      const response = await fetch(
+        `${API_BASE}/study-rooms/${roomId}/reviews`,
+        { credentials: "include" }
+      );
+
+      if (!response.ok) {
+        throw new Error("리뷰를 불러오지 못했습니다.");
+      }
+
+      const data = await response.json();
+      setReviews(data);
+    } catch (error) {
+      console.error("리뷰 조회 오류:", error);
+      setReviewsError(error.message || "리뷰를 불러오지 못했습니다.");
+      setReviews([]);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  useEffect(() => {
+    setReviewRating(5);
+    setReviewContent("");
+    setReviewSubmitError("");
+
+    if (selectedPlace) {
+      loadReviews(selectedPlace.id);
+    } else {
+      setReviews([]);
+    }
+  }, [selectedPlace]);
+
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0;
+
+  const handleReviewSubmit = async (event) => {
+    event.preventDefault();
+    if (!selectedPlace || submittingReview) return;
+
+    if (!reviewContent.trim()) {
+      setReviewSubmitError("리뷰 내용을 입력해주세요.");
+      return;
+    }
+
+    setSubmittingReview(true);
+    setReviewSubmitError("");
+
+    try {
+      const response = await fetch(
+        `${API_BASE}/study-rooms/${selectedPlace.id}/reviews`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            rating: reviewRating,
+            content: reviewContent.trim(),
+          }),
+        }
+      );
+
+      if (response.status === 401) {
+        alert("로그인이 필요합니다.");
+        navigate("/login");
+        return;
+      }
+
+      const text = await response.text();
+      let data = null;
+
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        // JSON이 아닌 응답
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          (data && data.message) || text || "리뷰 등록에 실패했습니다."
+        );
+      }
+
+      setReviews((prev) => [data, ...prev]);
+      setReviewContent("");
+      setReviewRating(5);
+    } catch (error) {
+      console.error("리뷰 등록 오류:", error);
+      setReviewSubmitError(error.message || "리뷰 등록에 실패했습니다.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  // 스터디룸은 통째로 빌리는 게 아니라 정원(maxCapacity)까지 여러 사람이
+  // 같은 시간대를 나눠 쓸 수 있으므로, 겹치는 예약이 있다고 바로 마감
+  // 처리하지 않고 "이미 찬 인원"을 뺀 잔여 좌석 수로 판단한다.
+  const getRemainingCapacity = (slot) => {
+    if (!selectedPlace) return 0;
+
+    const slotStart = toMinutes(slot.startTime);
+    const slotEnd = toMinutes(slot.endTime);
+
+    const reservedPeople = reservedTimes.reduce((sum, reservation) => {
+      const reservedStart = toMinutes(reservation.startTime.slice(0, 5));
+      const reservedEnd = toMinutes(reservation.endTime.slice(0, 5));
+
+      const overlaps = slotStart < reservedEnd && slotEnd > reservedStart;
+
+      return overlaps ? sum + reservation.peopleCount : sum;
+    }, 0);
+
+    return selectedPlace.maxCapacity - reservedPeople;
+  };
+
+  // 오늘 날짜를 선택했을 때, 이미 지난 시간대는 애초에 선택하지 못하도록 막는다
+  // (서버도 동일하게 막지만, 눌러보고 나서야 에러를 보게 하는 대신 미리 비활성화한다).
+  const isPastSlot = (slot) => {
+    const now = new Date();
+    const todayValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+      now.getDate()
+    ).padStart(2, "0")}`;
+
+    if (selectedDate !== todayValue) return false;
+
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    return toMinutes(slot.startTime) < nowMinutes;
+  };
+
+  /* ================================
+     예약 인원 조절
+  ================================= */
+
+  const handlePeopleChange = (delta) => {
+    if (!selectedPlace) return;
+
+    setPeopleCount((prev) => {
+      const next = prev + delta;
+
+      if (next < selectedPlace.minCapacity) return selectedPlace.minCapacity;
+      if (next > selectedPlace.maxCapacity) return selectedPlace.maxCapacity;
+
+      return next;
+    });
+  };
+
+  // 인원수를 늘렸을 때 이미 선택해둔 시간대가 잔여 좌석보다 커지면
+  // 선택을 풀어서 다시 고르게 한다.
+  useEffect(() => {
+    if (selectedSlot && getRemainingCapacity(selectedSlot) < peopleCount) {
+      setSelectedSlot(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [peopleCount]);
+
+  /* ================================
+     예약 요약 계산
+  ================================= */
+
+  const hours = selectedSlot
+    ? (toMinutes(selectedSlot.endTime) - toMinutes(selectedSlot.startTime)) / 60
+    : 0;
+
+  const totalPrice =
+    selectedPlace && selectedSlot
+      ? Number(selectedPlace.pricePerHour) * hours * peopleCount
+      : 0;
+
+  const selectedDateLabel =
+    dateOptions.find((date) => date.value === selectedDate)?.label ||
+    selectedDate;
+
+  const canReserve =
+    !!selectedPlace &&
+    !!selectedSlot &&
+    peopleCount >= selectedPlace.minCapacity &&
+    peopleCount <= selectedPlace.maxCapacity &&
+    getRemainingCapacity(selectedSlot) >= peopleCount &&
+    !submitting;
+
+  /* ================================
+     예약 생성
+  ================================= */
+
+  const handleReserve = async () => {
+    if (!canReserve) return;
+
+    setSubmitting(true);
+    setReservationError("");
+
+    try {
+      const response = await fetch(`${API_BASE}/reservations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          studyRoomId: selectedPlace.id,
+          reservationDate: selectedDate,
+          startTime: `${selectedSlot.startTime}:00`,
+          endTime: `${selectedSlot.endTime}:00`,
+          peopleCount,
+        }),
+      });
+
+      if (response.status === 401) {
+        alert("로그인이 필요합니다.");
+        navigate("/login");
+        return;
+      }
+
+      const text = await response.text();
+      let data = null;
+
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        // JSON이 아닌 응답
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          (data && data.message) || text || "예약에 실패했습니다."
+        );
+      }
+
+      if (!data || !data.id) {
+        throw new Error("예약에 실패했습니다.");
+      }
+
+      navigate(`/payment?type=study&id=${data.id}`);
+    } catch (error) {
+      console.error("예약 생성 오류:", error);
+      setReservationError(error.message || "예약에 실패했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -103,7 +524,7 @@ function StudyReservation() {
           <h1>스터디 예약</h1>
 
           <p>
-            함께 공부할 공간을 찾고
+            이지스에서 운영하는 함께 할 공부할 공간을 찾고
             <br />
             원하는 시간에 예약해보세요.
           </p>
@@ -131,28 +552,32 @@ function StudyReservation() {
             </h2>
 
             <p>
-              원하는 스터디룸을 찾고
+              이지스에서 운영하는 스터디룸을 찾고
               <br />
               날짜와 시간을 선택해보세요.
             </p>
           </div>
 
           <div className="reservation-step">
-            <div className="step active">
+            <div className={`step ${!selectedPlace ? "active" : ""}`}>
               <span>01</span>
               장소 선택
             </div>
 
             <div className="step-line"></div>
 
-            <div className="step">
+            <div
+              className={`step ${
+                selectedPlace && !selectedSlot ? "active" : ""
+              }`}
+            >
               <span>02</span>
               일정 선택
             </div>
 
             <div className="step-line"></div>
 
-            <div className="step">
+            <div className={`step ${selectedSlot ? "active" : ""}`}>
               <span>03</span>
               결제
             </div>
@@ -172,44 +597,39 @@ function StudyReservation() {
                 FIND A PLACE
               </span>
 
-              <h2>스터디 장소 찾기</h2>
+              <h2>이지스 스터디 장소 찾기</h2>
             </div>
           </div>
 
-          <div className="place-search-box">
+          <form className="place-search-box" onSubmit={handleSearch}>
             <span>⌕</span>
 
             <input
               type="text"
               placeholder="지역이나 스터디룸을 검색해보세요"
+              value={keyword}
+              onChange={(event) => setKeyword(event.target.value)}
             />
 
-            <button type="button">
+            <button type="submit">
               검색
             </button>
-          </div>
+          </form>
 
           <div className="place-filter">
 
-            <button className="place-filter-button active">
-              전체
-            </button>
-
-            <button className="place-filter-button">
-              강남
-            </button>
-
-            <button className="place-filter-button">
-              역삼
-            </button>
-
-            <button className="place-filter-button">
-              신논현
-            </button>
-
-            <button className="place-filter-button">
-              4인 이상
-            </button>
+            {REGIONS.map((region) => (
+              <button
+                key={region.label}
+                type="button"
+                className={`place-filter-button ${
+                  activeRegion === region.label ? "active" : ""
+                }`}
+                onClick={() => setActiveRegion(region.label)}
+              >
+                {region.label}
+              </button>
+            ))}
 
           </div>
 
@@ -229,97 +649,142 @@ function StudyReservation() {
             </div>
 
             <span className="place-count">
-              {places.length}개의 공간
+              {filteredRooms.length}개의 공간
             </span>
           </div>
 
+          {loadingRooms && (
+            <p className="place-state-message">
+              스터디룸 목록을 불러오는 중입니다...
+            </p>
+          )}
 
-          <div className="place-grid">
+          {!loadingRooms && roomsError && (
+            <p className="place-state-message error">
+              {roomsError}
+            </p>
+          )}
 
-            {places.map((place) => (
-              <article
-                className={`place-card ${
-                  selectedPlace?.id === place.id ? "selected" : ""
-                }`}
-                key={place.id}
-                onClick={() => setSelectedPlace(place)}
-              >
+          {!loadingRooms && !roomsError && filteredRooms.length === 0 && (
+            <p className="place-state-message">
+              조건에 맞는 스터디룸이 없어요.
+            </p>
+          )}
 
-                <div className="place-image">
+          {!loadingRooms && !roomsError && filteredRooms.length > 0 && (
+            <div className="place-grid">
 
-                  <img
-                    src={place.image}
-                    alt={place.name}
-                  />
+              {pagedRooms.map((place) => (
+                <article
+                  className={`place-card ${
+                    selectedPlace?.id === place.id ? "selected" : ""
+                  }`}
+                  key={place.id}
+                  onClick={() => setSelectedPlace(place)}
+                >
 
-                  <span className="place-rating">
-                    ★ {place.rating}
-                  </span>
+                  <div className="place-image">
 
-                  {selectedPlace?.id === place.id && (
-                    <span className="place-selected">
-                      ✓ 선택됨
+                    <img
+                      src={place.imageUrl || studyReservationBg}
+                      alt={place.name}
+                    />
+
+                    <span className="place-rating">
+                      ★ {place.rating ? Number(place.rating).toFixed(1) : "-"}
                     </span>
-                  )}
 
-                </div>
-
-
-                <div className="place-card-content">
-
-                  <span className="place-location">
-                    {place.location}
-                  </span>
-
-                  <h3>
-                    {place.name}
-                  </h3>
-
-                  <p>
-                    {place.description}
-                  </p>
-
-
-                  <div className="place-tags">
-
-                    {place.tags.map((tag) => (
-                      <span key={tag}>
-                        {tag}
+                    {selectedPlace?.id === place.id && (
+                      <span className="place-selected">
+                        ✓ 선택됨
                       </span>
-                    ))}
+                    )}
 
                   </div>
 
 
-                  <div className="place-card-bottom">
+                  <div className="place-card-content">
 
-                    <div>
-                      <span>최대 {place.capacity}</span>
+                    <span className="place-location">
+                      {place.location}
+                    </span>
 
-                      <strong>
-                        {formatPrice(place.price)}
-                        <small>/시간</small>
-                      </strong>
+                    <h3>
+                      {place.name}
+                    </h3>
+
+                    <p>
+                      {place.description}
+                    </p>
+
+
+                    <div className="place-card-bottom">
+
+                      <div>
+                        <span>
+                          {place.minCapacity}~{place.maxCapacity}명
+                        </span>
+
+                        <strong>
+                          {formatPrice(place.pricePerHour)}
+                          <small>/시간</small>
+                        </strong>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedPlace(place);
+                        }}
+                      >
+                        선택
+                      </button>
+
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setSelectedPlace(place);
-                      }}
-                    >
-                      선택
-                    </button>
-
                   </div>
 
-                </div>
+                </article>
+              ))}
 
-              </article>
-            ))}
+            </div>
+          )}
 
-          </div>
+          {!loadingRooms && !roomsError && roomsTotalPages > 1 && (
+            <nav className="place-pagination" aria-label="스터디룸 목록 페이지">
+              <button
+                type="button"
+                className="place-pagination-arrow"
+                disabled={roomsCurrentPage === 1}
+                onClick={() => setRoomsPage(roomsCurrentPage - 1)}
+              >
+                ‹
+              </button>
+
+              {Array.from({ length: roomsTotalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  type="button"
+                  key={page}
+                  className={`place-pagination-page ${
+                    page === roomsCurrentPage ? "active" : ""
+                  }`}
+                  onClick={() => setRoomsPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                className="place-pagination-arrow"
+                disabled={roomsCurrentPage === roomsTotalPages}
+                onClick={() => setRoomsPage(roomsCurrentPage + 1)}
+              >
+                ›
+              </button>
+            </nav>
+          )}
 
         </div>
 
@@ -340,14 +805,14 @@ function StudyReservation() {
 
             <div className="date-list">
 
-              {dates.map((date) => (
+              {dateOptions.map((date) => (
                 <button
                   type="button"
-                  key={date}
-                  className={selectedDate === date ? "active" : ""}
-                  onClick={() => setSelectedDate(date)}
+                  key={date.value}
+                  className={selectedDate === date.value ? "active" : ""}
+                  onClick={() => setSelectedDate(date.value)}
                 >
-                  {date}
+                  {date.label}
                 </button>
               ))}
 
@@ -364,20 +829,48 @@ function StudyReservation() {
 
             <h2>시간을 선택하세요</h2>
 
-            <div className="time-list">
+            {!selectedPlace && (
+              <p className="place-state-message">
+                먼저 장소를 선택해주세요.
+              </p>
+            )}
 
-              {times.map((time) => (
-                <button
-                  type="button"
-                  key={time}
-                  className={selectedTime === time ? "active" : ""}
-                  onClick={() => setSelectedTime(time)}
-                >
-                  {time}
-                </button>
-              ))}
+            {selectedPlace && loadingAvailability && (
+              <p className="place-state-message">
+                예약 현황을 확인하는 중입니다...
+              </p>
+            )}
 
-            </div>
+            {selectedPlace && !loadingAvailability && (
+              <div className="time-list">
+
+                {TIME_SLOTS.map((slot) => {
+                  const past = isPastSlot(slot);
+                  const remaining = getRemainingCapacity(slot);
+                  const full = !past && remaining <= 0;
+                  const notEnoughSeats = !past && !full && remaining < peopleCount;
+                  const isActive =
+                    selectedSlot?.startTime === slot.startTime &&
+                    selectedSlot?.endTime === slot.endTime;
+
+                  return (
+                    <button
+                      type="button"
+                      key={`${slot.startTime}-${slot.endTime}`}
+                      className={isActive ? "active" : ""}
+                      disabled={past || full || notEnoughSeats}
+                      onClick={() => setSelectedSlot(slot)}
+                    >
+                      <span>{slot.startTime} - {slot.endTime}</span>
+                      {past && <small>지난 시간</small>}
+                      {full && <small>예약마감</small>}
+                      {notEnoughSeats && <small>잔여 {remaining}명</small>}
+                    </button>
+                  );
+                })}
+
+              </div>
+            )}
 
           </div>
 
@@ -409,18 +902,47 @@ function StudyReservation() {
 
             <div className="summary-row">
               <span>날짜</span>
-              <strong>{selectedDate}</strong>
+              <strong>{selectedDateLabel}</strong>
             </div>
 
             <div className="summary-row">
               <span>시간</span>
-              <strong>{selectedTime}</strong>
+              <strong>
+                {selectedSlot
+                  ? `${selectedSlot.startTime} - ${selectedSlot.endTime}`
+                  : "시간을 선택해주세요"}
+              </strong>
             </div>
 
             <div className="summary-row">
               <span>예약 인원</span>
-              <strong>4명</strong>
+
+              <div className="people-count-control">
+                <button
+                  type="button"
+                  disabled={!selectedPlace}
+                  onClick={() => handlePeopleChange(-1)}
+                >
+                  −
+                </button>
+
+                <strong>{peopleCount}명</strong>
+
+                <button
+                  type="button"
+                  disabled={!selectedPlace}
+                  onClick={() => handlePeopleChange(1)}
+                >
+                  +
+                </button>
+              </div>
             </div>
+
+            {selectedPlace && (
+              <p className="summary-hint">
+                {selectedPlace.minCapacity}명 ~ {selectedPlace.maxCapacity}명까지 예약 가능합니다.
+              </p>
+            )}
 
           </div>
 
@@ -430,25 +952,126 @@ function StudyReservation() {
             <span>예상 결제 금액</span>
 
             <strong>
-              {selectedPlace
-                ? formatPrice(selectedPlace.price * 2)
+              {selectedPlace && selectedSlot
+                ? formatPrice(totalPrice)
                 : "0원"}
             </strong>
 
+            {reservationError && (
+              <p className="reservation-error">{reservationError}</p>
+            )}
+
             <button
               type="button"
-              disabled={!selectedPlace}
+              disabled={!canReserve}
+              onClick={handleReserve}
             >
-              예약 및 결제하기 →
+              {submitting ? "예약 처리 중..." : "예약 및 결제하기 →"}
             </button>
 
             <p>
-              예약 버튼을 누르면 결제 페이지로 이동합니다.
+              예약 버튼을 누르면 예약이 접수되고, 결제 완료 시 확정됩니다.
             </p>
 
           </div>
 
         </div>
+
+
+        {/* ================================
+            리뷰
+        ================================= */}
+
+        {selectedPlace && (
+          <div className="reservation-reviews">
+
+            <div className="reviews-header">
+              <div>
+                <span className="section-label">
+                  REVIEWS
+                </span>
+
+                <h2>{selectedPlace.name} 이용 후기</h2>
+              </div>
+
+              <div className="reviews-average">
+                <strong>★ {averageRating.toFixed(1)}</strong>
+                <span>{reviews.length}개의 후기</span>
+              </div>
+            </div>
+
+            <form className="review-form" onSubmit={handleReviewSubmit}>
+
+              <div className="review-star-picker">
+                {[1, 2, 3, 4, 5].map((score) => (
+                  <button
+                    type="button"
+                    key={score}
+                    className={score <= reviewRating ? "active" : ""}
+                    onClick={() => setReviewRating(score)}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                placeholder="스터디룸 이용 후기를 남겨주세요. (예약을 이용한 스터디룸만 작성할 수 있어요)"
+                value={reviewContent}
+                onChange={(event) => setReviewContent(event.target.value)}
+                maxLength={1000}
+              />
+
+              {reviewSubmitError && (
+                <p className="reservation-error">{reviewSubmitError}</p>
+              )}
+
+              <button type="submit" disabled={submittingReview}>
+                {submittingReview ? "등록 중..." : "후기 등록하기"}
+              </button>
+
+            </form>
+
+            {loadingReviews && (
+              <p className="place-state-message">
+                후기를 불러오는 중입니다...
+              </p>
+            )}
+
+            {!loadingReviews && reviewsError && (
+              <p className="place-state-message error">
+                {reviewsError}
+              </p>
+            )}
+
+            {!loadingReviews && !reviewsError && reviews.length === 0 && (
+              <p className="place-state-message">
+                아직 등록된 후기가 없어요.
+              </p>
+            )}
+
+            {!loadingReviews && !reviewsError && reviews.length > 0 && (
+              <ul className="review-list">
+                {reviews.map((review) => (
+                  <li key={review.id}>
+                    <div className="review-item-header">
+                      <strong>{review.nickname}</strong>
+                      <span className="review-item-stars">
+                        {"★".repeat(review.rating)}
+                        {"☆".repeat(5 - review.rating)}
+                      </span>
+                      <span className="review-item-date">
+                        {formatReviewDate(review.createdAt)}
+                      </span>
+                    </div>
+                    <p>{review.content}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+          </div>
+        )}
 
       </section>
 

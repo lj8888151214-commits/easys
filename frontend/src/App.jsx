@@ -28,6 +28,11 @@ import StudyCreate from "./pages/StudyCreate/StudyCreate";
 import StudyDetail from "./pages/StudyDetail/StudyDetail";
 import StudyEdit from "./pages/StudyEdit/StudyEdit";
 import CamPage from "./pages/Streaming/CamPage";
+import Admin from "./pages/Admin/Admin";
+
+import Payment from "./pages/Payment/Payment";
+import PaymentSuccess from "./pages/Payment/PaymentSuccess";
+import PaymentFail from "./pages/Payment/PaymentFail";
 
 
 // =====================================================
@@ -189,6 +194,26 @@ function App() {
 
 
         {/* =================================================
+            결제 (멘토링/스터디 공통)
+        ================================================= */}
+
+        <Route
+          path="/payment"
+          element={<Payment />}
+        />
+
+        <Route
+          path="/payment/success"
+          element={<PaymentSuccess />}
+        />
+
+        <Route
+          path="/payment/fail"
+          element={<PaymentFail />}
+        />
+
+
+        {/* =================================================
             로그인
         ================================================= */}
 
@@ -225,6 +250,16 @@ function App() {
         <Route
           path="/profile/password"
           element={<PasswordChange />}
+        />
+
+
+        {/* =================================================
+            관리자
+        ================================================= */}
+
+        <Route
+          path="/admin"
+          element={<Admin />}
         />
 
       </Routes>

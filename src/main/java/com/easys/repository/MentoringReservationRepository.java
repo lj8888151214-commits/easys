@@ -16,6 +16,17 @@ public interface MentoringReservationRepository
             Member member
     );
 
+    // 여러 멘토링(offering)에 걸린 예약 중, 거절(REJECTED)이 아닌 것만 조회
+    // (공개 목록/내 멘토링 관리 화면에서 "날짜별 슬롯 예약 여부"를 계산하기 위함)
+    List<MentoringReservation> findByOfferingIdInAndStatusNot(
+            List<Long> offeringIds,
+            MentoringReservationStatus status
+    );
+
+    // 특정 멘토링(offering)에 걸린 예약 전체(상태 무관) — 삭제 가능 여부 확인 및
+    // 완료/거절된 과거 기록의 offering 연결 해제(detach)에 사용한다.
+    List<MentoringReservation> findByOfferingId(Long offeringId);
+
     // 특정 멘토에게 들어온 신청 목록
     List<MentoringReservation> findByMentorOrderByCreatedAtDesc(
             MentorProfile mentor

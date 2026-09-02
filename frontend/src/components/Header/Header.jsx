@@ -4,6 +4,7 @@ import "./Header.css";
 
 import logo from "../../assets/images/logo.png";
 import logoSecond from "../../assets/images/logo_second.png";
+import NotificationBell from "./NotificationBell";
 
 const NAV_ITEMS = [
   { to: "/streaming", label: "스트리밍" },
@@ -185,6 +186,9 @@ function Header() {
             {user ? (
               <div className="user-member">
 
+                {/* 알림 */}
+                <NotificationBell />
+
                 {/* 프로필 이미지 */}
                 <Link
                   to="/profile"
@@ -211,6 +215,16 @@ function Header() {
                     user.name ||
                     "마이페이지"}
                 </Link>
+
+                {/* 관리자 링크 */}
+                {user.role === "ADMIN" && (
+                  <Link
+                    to="/admin"
+                    className="admin-link"
+                  >
+                    관리자
+                  </Link>
+                )}
 
                 {/* PC 로그아웃 */}
                 <button
@@ -307,7 +321,18 @@ function Header() {
                     "마이페이지"}
                 </span>
               </Link>
-            ) : (
+            ) : null}
+
+            {user && user.role === "ADMIN" && (
+              <Link
+                to="/admin"
+                onClick={handleMenuClose}
+              >
+                관리자
+              </Link>
+            )}
+
+            {!user && (
               <>
                 <Link
                   to="/login"

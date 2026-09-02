@@ -292,6 +292,132 @@
 }
 
 /* =====================================================
+   알림
+===================================================== */
+
+.notification-bell {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.notification-bell-button {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.main-header.scrolled .notification-bell-button {
+  color: #2e4033;
+}
+
+.notification-bell-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.06);
+}
+
+.main-header.scrolled .notification-bell-button:hover {
+  background: rgba(46, 64, 51, 0.08);
+}
+
+.notification-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #d9534f;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: -10px;
+  width: 320px;
+  max-width: calc(100vw - 20px);
+  max-height: 420px;
+  overflow-y: auto;
+  border-radius: 14px;
+  background: white;
+  color: #2e4033;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+}
+
+.notification-panel-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid #edf1ed;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.notification-empty {
+  padding: 24px 16px;
+  margin: 0;
+  color: #8a958d;
+  font-size: 13px;
+  text-align: center;
+}
+
+.notification-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notification-list li {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f2f5f2;
+}
+
+.notification-list li:last-child {
+  border-bottom: 0;
+}
+
+.notification-list li.unread {
+  background: #f6faf7;
+}
+
+.notification-list li strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #2e4033;
+}
+
+.notification-list li p {
+  margin: 0 0 6px;
+  color: #5c655f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.notification-list li span {
+  color: #a5aca7;
+  font-size: 11px;
+}
+
+/* =====================================================
    로그인 후 PC 프로필
 ===================================================== */
 
@@ -350,6 +476,25 @@
 
 .user-nickname:hover {
   transform: translateY(-2px);
+}
+
+.admin-link {
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  color: white;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.main-header.scrolled .admin-link {
+  border-color: #a9c1ad;
+  color: #2e4033;
+}
+
+.admin-link:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* =====================================================
@@ -533,6 +678,7 @@
 
   /* 모바일에서는 닉네임 / 로그아웃 숨김 */
   .user-nickname,
+  .admin-link,
   .logout-btn {
     display: none;
   }
