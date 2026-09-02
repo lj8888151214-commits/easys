@@ -6,7 +6,9 @@
   overflow-x: hidden; /* 가로 스크롤 시 전체 페이지 흔들림 방지 */
 }
 
-
+/* =================================
+   HERO
+================================= */
 
 .streaming-hero {
   /*position: relative;
@@ -309,9 +311,10 @@
   width: 82px;
   height: 82px;
   margin-bottom: 20px;
-
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-
+  background: rgba(255, 255, 255, 0.08);
+  color: #d4e4d7;
   font-size: 23px;
 }
 
@@ -322,10 +325,48 @@
   font-weight: 700;
 }
 
+<<<<<<< HEAD
 .stream-start-visual > span:last-child {
   position: relative;
   z-index: 1;
   margin-top: 8px;
+=======
+
+.stream-bottom-banner button:hover {
+  background: #edf3ee;
+  transform: translateY(-2px);
+}
+=======
+/* 비디오 출력 박스 영역 */
+>>>>>>> Stashed changes
+.cam-stream-box {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000000;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+
+  position: relative; /* 비디오 태그 포지셔닝을 위해 추가 */
+
+
+}
+
+.cam-stream-img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover; /* contain에서 cover로 변경하여 화면 채우기 */
+  display: block;
+
+  object-fit: contain;
+}
+
+.cam-placeholder {
+>>>>>>> 9b29694 (feat: update latest streaming room and host mode)
   color: rgba(255, 255, 255, 0.5);
   font-size: 10px;
   letter-spacing: 0.5px;

@@ -16,19 +16,23 @@ function Login() {
     setError("");
     setLoading(true);
 
-    try {
-      const body = new URLSearchParams();
-      body.set("username", email);
-      body.set("password", password);
+   try {
+         const body = new URLSearchParams();
+         body.set("username", email);
+         body.set("password", password);
 
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: body.toString(),
-        credentials: "include",
-      });
+         // 🌟 현재 브라우저가 접속한 IP(또는 도메인)를 가져옴
+         const backendHost = window.location.hostname;
 
-      console.log("🔥 로그인 응답 상태:", response.status);
+         // 🌟 상대 경로 대신 명시적으로 8080 포트로 요청하도록 수정
+         const response = await fetch("/api/login", {
+           method: "POST",
+           headers: { "Content-Type": "application/x-www-form-urlencoded" },
+           body: body.toString(),
+           credentials: "include",
+         });
+
+         console.log("🔥 로그인 응답 상태:", response.status);
       console.log("🔥 로그인 응답 URL:", response.url);
 
       if (!response.ok) throw new Error("로그인 실패");

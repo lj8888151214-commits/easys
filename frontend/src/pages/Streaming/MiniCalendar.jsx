@@ -19,23 +19,23 @@ export function MiniCalendar({ isCalendarOpen, setIsCalendarOpen, calendarDate, 
   }
 
   return (
-    <div className={`slide-calendar-panel ${isCalendarOpen ? "open" : ""}`} style={{
-      position: "absolute",
-      top: 0,
-      right: 0,
-      width: "100%",
-      height: "calc(100% - 60px)",
-      background: "#fff",
-      transform: isCalendarOpen ? "translateX(0)" : "translateX(100%)",
-      transition: "transform 0.3s ease-in-out",
-      boxShadow: "-4px 0 15px rgba(0,0,0,0.1)",
-      zIndex: 20,
-      padding: "15px",
-      boxSizing: "border-box",
-      overflowY: "auto",
-      display: "block",
-      visibility: isCalendarOpen ? "visible" : "hidden"
-    }}>
+   <div className={`slide-calendar-panel ${isCalendarOpen ? "open" : ""}`} style={{
+         position: "absolute",
+         top: 0,
+         right: 0,
+         width: "360px",
+         height: "500px",
+         background: "#fff",
+         transform: isCalendarOpen ? "translateX(0)" : "translateX(100%)",
+         transition: "transform 0.3s ease-in-out",
+         boxShadow: "-4px 0 15px rgba(0,0,0,0.1)",
+         zIndex: 20,
+         padding: "15px",
+         boxSizing: "border-box",
+         overflowY: "auto",
+         display: "block",
+         visibility: isCalendarOpen ? "visible" : "hidden"
+       }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", borderBottom: "1px solid #eee", paddingBottom: "8px" }}>
         <h3 style={{ margin: 0, fontSize: "16px" }}>📅 모임 미니 캘린더</h3>
         <button
