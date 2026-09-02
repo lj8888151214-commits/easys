@@ -54,10 +54,12 @@ public class StudyController {
     // =====================================================
 
     @GetMapping
-    public ResponseEntity<List<StudyResponseDto>> getStudies() {
+    public ResponseEntity<List<StudyResponseDto>> getStudies(
+            @RequestParam(required = false, defaultValue = "false") boolean includeCompleted
+    ) {
 
         return ResponseEntity.ok(
-                studyService.getStudies()
+                studyService.getStudies(includeCompleted)
         );
     }
 
@@ -313,7 +315,32 @@ public class StudyController {
 
 
     // =====================================================
-    // 13. 스터디 삭제
+    // 13. 스터디 완료 처리 (방장 전용)
+    // PUT /study/{id}/complete
+    // =====================================================
+
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<StudyResponseDto> completeStudy(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        String email =
+                userDetails
+                        .getMember()
+                        .getEmail();
+
+        return ResponseEntity.ok(
+                studyService.completeStudy(
+                        id,
+                        email
+                )
+        );
+    }
+
+
+    // =====================================================
+    // 14. 스터디 삭제
     // DELETE /study/{id}
     // =====================================================
 

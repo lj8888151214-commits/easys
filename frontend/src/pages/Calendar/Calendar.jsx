@@ -1,59 +1,44 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Calendar.css";
 import calendarBg from "../../assets/images/calendar-bg.jpg";
 
 const API_URL = "http://localhost:8080/api/calendar/personal";
 const CATEGORY_STORAGE_KEY = "easys-calendar-categories";
-const GROUP_API_URL = "/api/study-groups"; // 🌟 모임 캘린더 조회/등록 API
+// 모임 캘린더 조회/등록 API
+//
+// 주의: vite.config.js의 /api 프록시는 백엔드로 전달할 때 "/api" 접두사를
+// 제거한다(rewrite). 대부분의 컨트롤러는 "/api" 없이 매핑돼 있어 그렇게
+// 동작해야 맞지만, StudyGroupApiController는 "/api/study-groups"로 매핑돼
+// 있어 접두사가 제거되면 존재하지 않는 경로("/study-groups")로 요청이
+// 가서 항상 404가 났다. API_URL(개인 캘린더)과 동일하게 절대 경로로 백엔드에
+// 직접 요청해 프록시의 접두사 제거를 우회한다.
+const GROUP_API_URL = "http://localhost:8080/api/study-groups";
 
-const groupSchedules = [
-  {
-    id: "group-1",
-    type: "study",
-    title: "Spring Boot 스터디",
-    content: "Spring Boot 기초 및 실습",
-    startAt: "2026-08-24T19:00:00",
-    endAt: "2026-08-24T21:00:00",
-    members: "8명 참여",
-  },
-  {
-    id: "group-2",
-    type: "mentoring",
-    title: "Java 멘토링",
-    content: "Java 기초 질문 및 코드 리뷰",
-    startAt: "2026-08-26T19:00:00",
-    endAt: "2026-08-26T20:30:00",
-    members: "1:1 멘토링",
-  },
-  {
-    id: "group-3",
-    type: "study",
-    title: "SQL 스터디",
-    content: "SQL 기본 문법 및 문제 풀이",
-    startAt: "2026-08-28T20:00:00",
-    endAt: "2026-08-28T22:00:00",
-    members: "6명 참여",
-  },
-  {
-    id: "group-4",
-    type: "mentoring",
-    title: "Spring 멘토링",
-    content: "Spring Security 질문",
-    startAt: "2026-08-30T18:00:00",
-    endAt: "2026-08-30T19:30:00",
-    members: "1:1 멘토링",
-  },
-];
+function toLocalDateTimeParam(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const hh = String(date.getHours()).padStart(2, "0");
+  const min = String(date.getMinutes()).padStart(2, "0");
+  const ss = String(date.getSeconds()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}`;
+}
 
 function Calendar() {
+  const navigate = useNavigate();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [schedules, setSchedules] = useState([]);
   const [activeTab, setActiveTab] = useState("personal");
   const [showModal, setShowModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 27));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [categoryMap, setCategoryMap] = useState({});
+
+  // 모임 캘린더 (스터디 예약 확정 시 자동 생성 + 수동 등록)
+  const [groupSchedules, setGroupSchedules] = useState([]);
+  const [upcomingGroupSchedules, setUpcomingGroupSchedules] = useState([]);
 
   const [form, setForm] = useState({
     title: "",
@@ -273,6 +258,75 @@ function Calendar() {
   };
 
   /* ================================
+     모임 일정 조회 (현재 보고 있는 달 범위)
+  ================================= */
+
+  const loadGroupSchedules = async () => {
+    try {
+      const start = toLocalDateTimeParam(new Date(year, month, 1, 0, 0, 0));
+      const end = toLocalDateTimeParam(new Date(year, month + 1, 0, 23, 59, 59));
+
+      const response = await fetch(
+        `${GROUP_API_URL}?start=${start}&end=${end}`,
+        { credentials: "include" }
+      );
+
+      if (!response.ok) {
+        setGroupSchedules([]);
+        return;
+      }
+
+      const data = await response.json();
+
+      setGroupSchedules(
+        Array.isArray(data)
+          ? data.map((item) => ({ ...item, type: (item.type || "study").toLowerCase() }))
+          : []
+      );
+    } catch (error) {
+      console.error("모임 일정 조회 오류:", error);
+      setGroupSchedules([]);
+    }
+  };
+
+  useEffect(() => {
+    loadGroupSchedules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year, month]);
+
+  /* ================================
+     다가오는 모임 일정 조회
+  ================================= */
+
+  const loadUpcomingGroupSchedules = async () => {
+    try {
+      const response = await fetch(`${GROUP_API_URL}/upcoming`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        setUpcomingGroupSchedules([]);
+        return;
+      }
+
+      const data = await response.json();
+
+      setUpcomingGroupSchedules(
+        Array.isArray(data)
+          ? data.map((item) => ({ ...item, type: (item.type || "study").toLowerCase() }))
+          : []
+      );
+    } catch (error) {
+      console.error("다가오는 모임 일정 조회 오류:", error);
+      setUpcomingGroupSchedules([]);
+    }
+  };
+
+  useEffect(() => {
+    loadUpcomingGroupSchedules();
+  }, []);
+
+  /* ================================
      입력값
   ================================= */
 
@@ -406,6 +460,52 @@ function Calendar() {
     }
 
     const isEdit = Boolean(editingSchedule);
+
+    // 모임 일정 등록 (수정 UI는 아직 없으므로 생성만 처리)
+    if (activeTab === "group") {
+      try {
+        const response = await fetch(GROUP_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            title: form.title.trim(),
+            description: form.content.trim(),
+            type: form.type === "mentoring" ? "MENTORING" : "STUDY",
+            startAt: form.startAt,
+            endAt: form.endAt,
+          }),
+        });
+
+        if (!response.ok) {
+          let errorMessage = "모임 일정 등록에 실패했습니다.";
+
+          try {
+            const errorData = await response.json();
+            if (errorData.message) {
+              errorMessage = errorData.message;
+            }
+          } catch {
+            // JSON 형태의 오류 응답이 아닌 경우
+          }
+
+          throw new Error(`${errorMessage} (HTTP ${response.status})`);
+        }
+
+        await Promise.all([loadGroupSchedules(), loadUpcomingGroupSchedules()]);
+
+        closeModal();
+
+        alert("모임 일정이 등록되었습니다.");
+      } catch (error) {
+        console.error("모임 일정 등록 오류:", error);
+        alert(error.message);
+      }
+
+      return;
+    }
 
     try {
       const url = isEdit
@@ -906,6 +1006,35 @@ function Calendar() {
 
         {activeTab === "group" && (
           <>
+            <section className="group-add-section">
+              <div className="group-add-card">
+                <div>
+                  <span className="section-label">
+                    GROUP SCHEDULE
+                  </span>
+
+                  <h3>
+                    새로운 모임 일정을
+                    <br />
+                    등록해보세요.
+                  </h3>
+
+                  <p>
+                    스터디룸 예약이 확정되면 자동으로 모임 일정이 등록됩니다.
+                    <br />
+                    별도의 모임 일정도 직접 등록할 수 있어요.
+                  </p>
+                </div>
+
+                <button
+                  className="add-schedule-button"
+                  onClick={openCreateModal}
+                >
+                  + 모임 일정 추가
+                </button>
+              </div>
+            </section>
+
             <section className="group-section group-upcoming-section">
               <div className="section-heading">
                 <div>
@@ -936,13 +1065,23 @@ function Calendar() {
                 </span>
               </div>
 
+              {upcomingGroupSchedules.length === 0 && (
+                <p className="group-empty-message">
+                  다가오는 모임 일정이 없습니다.
+                </p>
+              )}
+
               <div className="group-grid">
-                {groupSchedules
+                {upcomingGroupSchedules
                   .slice(0, 3)
                   .map((schedule) => (
                     <article
                       className={`group-card ${schedule.type}`}
                       key={schedule.id}
+                      onClick={() =>
+                        schedule.studyId && navigate(`/study/${schedule.studyId}`)
+                      }
+                      style={{ cursor: schedule.studyId ? "pointer" : "default" }}
                     >
                       <div className="group-card-date">
                         <span>
@@ -1090,6 +1229,15 @@ function Calendar() {
                                       key={
                                         schedule.id
                                       }
+                                      onClick={() =>
+                                        schedule.studyId &&
+                                        navigate(`/study/${schedule.studyId}`)
+                                      }
+                                      style={{
+                                        cursor: schedule.studyId
+                                          ? "pointer"
+                                          : "default"
+                                      }}
                                       title={
                                         schedule.title
                                       }
@@ -1107,34 +1255,6 @@ function Calendar() {
                     )
                   )}
                 </div>
-              </div>
-            </section>
-
-            <section className="group-add-section">
-              <div className="group-add-card">
-                <div>
-                  <span className="section-label">
-                    GROUP SCHEDULE
-                  </span>
-
-                  <h3>
-                    새로운 모임 일정을
-                    <br />
-                    등록해보세요.
-                  </h3>
-
-                  <p>
-                    멘토링과 스터디 일정은
-                    추후 예약 기능과 연결됩니다.
-                  </p>
-                </div>
-
-                <button
-                  className="add-schedule-button"
-                  onClick={openCreateModal}
-                >
-                  + 모임 일정 추가
-                </button>
               </div>
             </section>
           </>

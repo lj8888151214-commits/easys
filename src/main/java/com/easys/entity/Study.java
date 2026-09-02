@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Getter
@@ -36,6 +39,24 @@ public class Study {
     private String category;
 
 
+    // 스터디 주제
+    // 컬럼 자체는 nullable로 두어 기존(ddl-auto=update) 레거시 row가
+    // 깨지지 않게 하고, 신규 생성/수정 시에는 validateTopic()에서 필수로 검증한다.
+    @Column(length = 150)
+    private String topic;
+
+
+    // 스터디 진행 날짜 / 시작 시간 / 종료 시간
+    // 이 일정이 그대로 스터디룸 예약 시간이 되므로 1시간 단위로만 허용한다
+    // (ReservationService의 예약 시간 단위 규칙과 맞춰야 함).
+    // 컬럼은 nullable(레거시 row 보호), 신규 생성/수정 시에는 validateSchedule()에서 필수로 검증한다.
+    private LocalDate studyDate;
+
+    private LocalTime startTime;
+
+    private LocalTime endTime;
+
+
     // 최대 모집 인원
     @Column(nullable = false)
     private int maxMembers;
@@ -47,9 +68,10 @@ public class Study {
     private int currentMembers;
 
 
-    // 모집 상태
+    // 모집/진행 상태
     // RECRUITING = 모집중
-    // CLOSED = 모집완료
+    // CLOSED = 모집완료 (정원이 찼지만 스터디는 아직 진행 중)
+    // COMPLETED = 스터디 완료 (방장이 직접 종료 처리, 목록에서 제외)
     @Column(nullable = false)
     private String status;
 
@@ -77,6 +99,10 @@ public class Study {
             String title,
             String content,
             String category,
+            String topic,
+            LocalDate studyDate,
+            LocalTime startTime,
+            LocalTime endTime,
             int maxMembers,
             Member member
     ) {
@@ -84,12 +110,18 @@ public class Study {
         validateTitle(title);
         validateContent(content);
         validateCategory(category);
+        validateTopic(topic);
+        validateSchedule(studyDate, startTime, endTime);
         validateMaxMembers(maxMembers);
 
         // 실제 데이터 저장
         this.title = title;
         this.content = content;
         this.category = category;
+        this.topic = topic;
+        this.studyDate = studyDate;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.maxMembers = maxMembers;
 
 
@@ -119,6 +151,10 @@ public class Study {
             String title,
             String content,
             String category,
+            String topic,
+            LocalDate studyDate,
+            LocalTime startTime,
+            LocalTime endTime,
             int maxMembers
     ) {
 
@@ -126,6 +162,8 @@ public class Study {
         validateTitle(title);
         validateContent(content);
         validateCategory(category);
+        validateTopic(topic);
+        validateSchedule(studyDate, startTime, endTime);
         validateMaxMembers(maxMembers);
 
 
@@ -141,6 +179,10 @@ public class Study {
         this.title = title;
         this.content = content;
         this.category = category;
+        this.topic = topic;
+        this.studyDate = studyDate;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.maxMembers = maxMembers;
 
 
@@ -205,8 +247,26 @@ public class Study {
     }
 
 
+    // 8. 스터디 완료 처리 (방장이 직접 종료)
+    //
+    // 예약/결제/채팅/캘린더 등 관련 데이터는 전혀 건드리지 않고 상태값만
+    // COMPLETED로 바꾼다 - 목록 조회(StudyService.getStudies 등)에서
+    // COMPLETED 상태를 제외하는 방식으로 "진행 중 목록"에서만 감춘다.
+    public void complete() {
+
+        if ("COMPLETED".equals(this.status)) {
+            throw new IllegalArgumentException(
+                    "이미 완료된 스터디입니다."
+            );
+        }
+
+        this.status = "COMPLETED";
+        this.updatedAt = LocalDateTime.now();
+    }
+
+
     // =====================================================
-    // 8. 입력값 검증
+    // 9. 입력값 검증
     // =====================================================
 
     private void validateTitle(String title) {
@@ -246,6 +306,50 @@ public class Study {
         if (category.length() > 50) {
             throw new IllegalArgumentException(
                     "스터디 분야는 50자 이하로 입력해주세요."
+            );
+        }
+    }
+
+
+    private void validateTopic(String topic) {
+
+        if (topic == null || topic.isBlank()) {
+            throw new IllegalArgumentException(
+                    "스터디 주제를 입력해주세요."
+            );
+        }
+        if (topic.length() > 150) {
+            throw new IllegalArgumentException(
+                    "스터디 주제는 150자 이하로 입력해주세요."
+            );
+        }
+    }
+
+
+    private void validateSchedule(LocalDate studyDate, LocalTime startTime, LocalTime endTime) {
+
+        if (studyDate == null || startTime == null || endTime == null) {
+            throw new IllegalArgumentException(
+                    "스터디 날짜와 시작/종료 시간을 입력해주세요."
+            );
+        }
+
+        if (studyDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException(
+                    "지난 날짜는 스터디 일정으로 선택할 수 없습니다."
+            );
+        }
+
+        if (!startTime.isBefore(endTime)) {
+            throw new IllegalArgumentException(
+                    "시작 시간은 종료 시간보다 빨라야 합니다."
+            );
+        }
+
+        // 이 일정이 그대로 스터디룸 예약 시간이 되므로 1시간 단위로만 허용한다
+        if (Duration.between(startTime, endTime).toMinutes() % 60 != 0) {
+            throw new IllegalArgumentException(
+                    "스터디 시간은 1시간 단위로만 설정할 수 있습니다."
             );
         }
     }

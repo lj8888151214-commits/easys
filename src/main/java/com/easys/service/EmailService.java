@@ -1,6 +1,7 @@
 package com.easys.service;
 
 import com.easys.config.WebSocketConfig;
+import com.easys.entity.Member;
 import com.easys.entity.Reservation;
 import com.easys.repository.EmailVerificationRepository;
 import lombok.RequiredArgsConstructor;
@@ -171,14 +172,18 @@ public class EmailService {
     // =====================================================
     // 스터디룸 예약 승인 완료 알림
     //
-    // 관리자가 예약을 승인(CONFIRMED)하면 예약자 본인에게
-    // 최종 확정 사실을 알린다. 메일 발송 실패가 승인 처리 자체를
-    // 실패시키면 안 되므로 예외를 잡아서 로그만 남긴다.
+    // 관리자가 예약을 승인(CONFIRMED)하면 최종 확정 사실을 알린다.
+    // 개인 예약이면 예약자 본인이, 스터디 연동 예약이면 방장(예약자)뿐 아니라
+    // 승인된 스터디 참여자 각각에게도 보내야 하므로 수신자(recipient)를
+    // 인자로 받는다 - 호출부(ReservationService)가 대상자 목록을 만들어
+    // 이 메서드를 반복 호출한다.
+    // 메일 발송 실패가 승인 처리 자체를 실패시키면 안 되므로 예외를 잡아서
+    // 로그만 남긴다.
     // =====================================================
 
-    public void sendStudyReservationApprovedNotification(Reservation reservation) {
+    public void sendStudyReservationApprovedNotification(Reservation reservation, Member recipient) {
 
-        String memberEmail = reservation.getMember().getEmail();
+        String memberEmail = recipient.getEmail();
 
         if (memberEmail == null || memberEmail.isBlank()) {
             return;
@@ -191,7 +196,7 @@ public class EmailService {
             message.setTo(memberEmail);
             message.setSubject("[Easys] 스터디룸 예약이 승인되었습니다");
             message.setText(
-                    reservation.getMember().getNickname()
+                    recipient.getNickname()
                             + "님, 스터디룸 예약이 승인되어 확정되었습니다.\n\n"
                             + "스터디룸 : " + reservation.getStudyRoom().getName()
                             + " (" + reservation.getStudyRoom().getLocation() + ")\n"
@@ -203,7 +208,7 @@ public class EmailService {
 
             mailSender.send(message);
         } catch (Exception e) {
-            log.warn("스터디룸 예약 승인 알림 메일 발송 실패 (reservationId={})", reservation.getId(), e);
+            log.warn("스터디룸 예약 승인 알림 메일 발송 실패 (reservationId={}, recipient={})", reservation.getId(), memberEmail, e);
         }
     }
 

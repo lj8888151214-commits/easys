@@ -2,6 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./StudyCreate.css";
 
+// 스터디 시간은 1시간 단위로만 선택 가능 (00:00 ~ 23:00)
+const HOUR_OPTIONS = Array.from(
+  { length: 24 },
+  (_, hour) => `${String(hour).padStart(2, "0")}:00`
+);
+
 function StudyCreate() {
   const navigate = useNavigate();
 
@@ -13,6 +19,10 @@ function StudyCreate() {
     title: "",
     content: "",
     category: "",
+    topic: "",
+    studyDate: "",
+    startTime: "",
+    endTime: "",
     maxMembers: 2
   });
 
@@ -53,6 +63,10 @@ function StudyCreate() {
     const title = form.title.trim();
     const content = form.content.trim();
     const category = form.category.trim();
+    const topic = form.topic.trim();
+    const studyDate = form.studyDate;
+    const startTime = form.startTime;
+    const endTime = form.endTime;
     const maxMembers = Number(form.maxMembers);
 
     // ---------------------------------------------------
@@ -80,6 +94,50 @@ function StudyCreate() {
 
     if (category.length > 30) {
       setError("스터디 분야는 30자 이하로 입력해주세요.");
+      return;
+    }
+
+    // ---------------------------------------------------
+    // 주제 검사
+    // ---------------------------------------------------
+
+    if (!topic) {
+      setError("스터디 주제를 입력해주세요.");
+      return;
+    }
+
+    if (topic.length > 150) {
+      setError("스터디 주제는 150자 이하로 입력해주세요.");
+      return;
+    }
+
+    // ---------------------------------------------------
+    // 일정 검사
+    // ---------------------------------------------------
+
+    if (!studyDate || !startTime || !endTime) {
+      setError("스터디 날짜와 시작/종료 시간을 입력해주세요.");
+      return;
+    }
+
+    const todayValue = new Date().toISOString().slice(0, 10);
+
+    if (studyDate < todayValue) {
+      setError("지난 날짜는 스터디 일정으로 선택할 수 없습니다.");
+      return;
+    }
+
+    if (startTime >= endTime) {
+      setError("시작 시간은 종료 시간보다 빨라야 합니다.");
+      return;
+    }
+
+    const scheduleMinutes =
+      (Number(endTime.slice(0, 2)) * 60 + Number(endTime.slice(3, 5))) -
+      (Number(startTime.slice(0, 2)) * 60 + Number(startTime.slice(3, 5)));
+
+    if (scheduleMinutes % 60 !== 0) {
+      setError("스터디 시간은 1시간 단위로 설정해주세요. (예: 14:00 ~ 16:00)");
       return;
     }
 
@@ -117,6 +175,10 @@ function StudyCreate() {
         title,
         content,
         category,
+        topic,
+        studyDate,
+        startTime,
+        endTime,
         maxMembers
       });
 
@@ -130,6 +192,10 @@ function StudyCreate() {
           title,
           content,
           category,
+          topic,
+          studyDate,
+          startTime: `${startTime}:00`,
+          endTime: `${endTime}:00`,
           maxMembers
         })
       });
@@ -333,6 +399,106 @@ function StudyCreate() {
 
             <small>
               공부할 분야를 자유롭게 입력해주세요.
+            </small>
+
+          </div>
+
+          {/* =================================================
+              스터디 주제
+          ================================================= */}
+
+          <div className="form-field">
+
+            <label htmlFor="topic">
+              스터디 주제
+            </label>
+
+            <input
+              id="topic"
+              name="topic"
+              type="text"
+              value={form.topic}
+              onChange={handleChange}
+              placeholder="예: Spring Boot와 JPA 기초"
+              maxLength={150}
+              disabled={loading}
+            />
+
+            <small>
+              이번 스터디에서 다룰 구체적인 주제를 입력해주세요.
+            </small>
+
+          </div>
+
+          {/* =================================================
+              스터디 일정
+          ================================================= */}
+
+          <div className="form-field">
+
+            <label htmlFor="studyDate">
+              스터디 날짜
+            </label>
+
+            <input
+              id="studyDate"
+              name="studyDate"
+              type="date"
+              value={form.studyDate}
+              onChange={handleChange}
+              disabled={loading}
+            />
+
+          </div>
+
+          <div className="form-field study-time-field">
+
+            <label htmlFor="startTime">
+              시작 시간
+            </label>
+
+            <select
+              id="startTime"
+              name="startTime"
+              value={form.startTime}
+              onChange={handleChange}
+              disabled={loading}
+            >
+              <option value="" disabled>
+                선택
+              </option>
+
+              {HOUR_OPTIONS.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="endTime">
+              종료 시간
+            </label>
+
+            <select
+              id="endTime"
+              name="endTime"
+              value={form.endTime}
+              onChange={handleChange}
+              disabled={loading}
+            >
+              <option value="" disabled>
+                선택
+              </option>
+
+              {HOUR_OPTIONS.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </select>
+
+            <small>
+              이 일정 그대로 스터디룸 예약 시간으로 사용되며, 1시간 단위로만 설정할 수 있습니다.
             </small>
 
           </div>

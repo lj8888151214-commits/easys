@@ -5,6 +5,7 @@ import com.easys.dto.PaymentResponseDto;
 import com.easys.entity.Member;
 import com.easys.entity.Payment;
 import com.easys.entity.PaymentProductType;
+import com.easys.entity.PaymentStatus;
 import com.easys.repository.MemberRepository;
 import com.easys.repository.PaymentRepository;
 import com.easys.service.MentoringReservationService;
@@ -123,6 +124,17 @@ public class PaymentController {
     ) {
         try {
             Member member = getCurrentMember(authentication);
+
+            // 실제로 Toss에 결제 승인을 요청하기 전에, 스터디 연동 예약이면
+            // 결제 마감(스터디 시작 12시간 전)이 지나지 않았는지 먼저 검증한다.
+            // 이미 PAID인 결제(재시도/멱등 호출)는 다시 검증하지 않는다 -
+            // paymentService.confirmPayment()도 PAID면 그대로 반환하는 것과 동일한 원칙.
+            paymentRepository.findByOrderId(request.getOrderId()).ifPresent(target -> {
+                if (target.getProductType() == PaymentProductType.STUDY
+                        && target.getStatus() != PaymentStatus.PAID) {
+                    reservationService.assertPaymentDeadlineNotPassed(target.getTargetId());
+                }
+            });
 
             Payment payment = paymentService.confirmPayment(
                     request.getOrderId(),

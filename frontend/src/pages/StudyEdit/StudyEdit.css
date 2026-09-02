@@ -93,6 +93,7 @@
 ===================================================== */
 
 .study-edit-field input,
+.study-edit-field select,
 .study-edit-field textarea {
   box-sizing: border-box;
   width: 100%;
@@ -110,7 +111,8 @@
 }
 
 
-.study-edit-field input {
+.study-edit-field input,
+.study-edit-field select {
   height: 54px;
   padding: 0 16px;
 }
@@ -139,6 +141,7 @@
 ===================================================== */
 
 .study-edit-field input:focus,
+.study-edit-field select:focus,
 .study-edit-field textarea:focus {
   border-color: #9ebca6;
   background: #ffffff;
@@ -152,6 +155,7 @@
 ===================================================== */
 
 .study-edit-field input:disabled,
+.study-edit-field select:disabled,
 .study-edit-field textarea:disabled {
   background: #f3f5f3;
   color: #929a94;
@@ -428,7 +432,8 @@
   }
 
 
-  .study-edit-field input {
+  .study-edit-field input,
+  .study-edit-field select {
     height: 52px;
   }
 
@@ -482,6 +487,7 @@
 
 
   .study-edit-field input,
+  .study-edit-field select,
   .study-edit-field textarea {
     font-size: 13px;
   }

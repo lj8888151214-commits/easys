@@ -15,6 +15,16 @@ import studyBg
 
 const STUDIES_PAGE_SIZE = 12;
 
+function formatStudyDate(dateValue) {
+  if (!dateValue) return "일정 미정";
+  return dateValue.replaceAll("-", ".");
+}
+
+function formatStudyTime(startTime, endTime) {
+  if (!startTime || !endTime) return "시간 미정";
+  return `${startTime.slice(0, 5)} ~ ${endTime.slice(0, 5)}`;
+}
+
 
 function Study() {
 
@@ -816,10 +826,28 @@ function Study() {
                       {study.title}
                     </h3>
 
+                    {study.topic && (
+                      <p className="study-card-topic">
+                        주제 · {study.topic}
+                      </p>
+                    )}
 
                     <p className="study-card-content">
                       {study.content}
                     </p>
+
+
+                    <div className="study-card-schedule">
+
+                      <span>
+                        📅 {formatStudyDate(study.studyDate)}
+                      </span>
+
+                      <span>
+                        🕐 {formatStudyTime(study.startTime, study.endTime)}
+                      </span>
+
+                    </div>
 
 
                     <div className="study-info">
@@ -848,11 +876,11 @@ function Study() {
 
                     <div className="study-card-bottom">
 
-                      <span>
-                        {study.category ||
-                          "스터디"
+                      <p className="study-card-bottom-desc">
+                        {study.content ||
+                          "공부할 내용에 대한 간략한 설명이 표시됩니다."
                         }
-                      </span>
+                      </p>
 
                       <button
                         type="button"

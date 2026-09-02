@@ -698,6 +698,18 @@
 
 
 /* =====================================================
+   TOPIC
+===================================================== */
+
+.study-card-topic {
+  margin: 0 0 8px;
+  color: #3f7653;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* =====================================================
    CONTENT
 ===================================================== */
 
@@ -709,6 +721,23 @@
   line-height: 1.7;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+}
+
+
+/* =====================================================
+   SCHEDULE
+===================================================== */
+
+.study-card-schedule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #edf0ed;
+  color: #5f7064;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 
@@ -733,25 +762,29 @@
 
 .study-card-bottom {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   margin-top: 18px;
   padding-top: 18px;
   border-top: 1px solid #edf0ed;
 }
 
-.study-card-bottom > span {
-  max-width: 140px;
+.study-card-bottom-desc {
+  display: -webkit-box;
   overflow: hidden;
+  width: 100%;
+  margin: 0;
   color: #929a94;
   font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.6;
+  text-align: center;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .study-card-bottom button {
-  padding: 8px 13px;
+  padding: 8px 16px;
   border: 0;
   border-radius: 9px;
   background: #eef3ef;
