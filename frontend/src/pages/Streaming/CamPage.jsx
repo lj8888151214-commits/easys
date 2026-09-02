@@ -1,117 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-<<<<<<< Updated upstream
 import { useNavigate, useLocation } from "react-router-dom";
 import "./CamPage.css";
-=======
-import { useNavigate } from "react-router-dom";
-
-import "./Base.css";
-import "./BroadCast.css";
-import 'leaflet/dist/leaflet.css';
->>>>>>> Stashed changes
 
 import { MiniCalendar } from "./MiniCalendar";
-
-// 개별 비디오 카드 컴포넌트
-export function VideoCard({
-  label,
-  isLocal,
-  stream,
-  onStartCam,
-  onStartScreen,
-  onStop,
-  shareMode,
-  isSttActive,
-  toggleStt
-}) {
-  const cardRef = useRef(null);
-  const videoRef = useRef(null);
-
-  // 개별 카드 모니터 전체 화면 (True Fullscreen) 안정화
-  const handleCardFullScreen = () => {
-    if (!cardRef.current) return;
-
-    if (!document.fullscreenElement) {
-      cardRef.current.requestFullscreen().catch((err) => {
-        console.error("전체 화면 전환 실패:", err);
-      });
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    }
-  };
-
-  // 전체 화면 해제 시 스트림 및 DOM 강제 유지를 위한 이벤트 감지
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      if (!document.fullscreenElement && videoRef.current && stream) {
-        videoRef.current.srcObject = stream;
-      }
-    };
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
-  }, [stream]);
-
-  // stream 연결 처리
-  useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
-    }
-  }, [stream]);
-
-  return (
-    <div className="cam-card" ref={cardRef}>
-      <div className="cam-card-title">
-        <h4>{label}</h4>
-      </div>
-
-      <div className="cam-stream-box">
-        {stream ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted={isLocal}
-            className="cam-stream-img"
-          />
-        ) : (
-          <div className="cam-placeholder">
-            <span>미디어가 꺼져 있습니다</span>
-          </div>
-        )}
-      </div>
-
-      <div className="cam-btn-group">
-        {isLocal && (
-          <>
-            {shareMode === "idle" ? (
-              <>
-                <button type="button" onClick={onStartCam}>캠 켜기</button>
-                <button type="button" onClick={onStartScreen}>화면 공유</button>
-              </>
-            ) : (
-              <button type="button" onClick={onStop} style={{ background: "#ef4444" }}>
-                중지하기
-              </button>
-            )}
-            <button type="button" onClick={toggleStt} style={{ background: isSttActive ? "#10b981" : "#6b7280" }}>
-              {isSttActive ? "🎙️ STT 켜짐" : "🎙️ STT 꺼짐"}
-            </button>
-          </>
-        )}
-
-        {/* 전체 화면 버튼 */}
-        <button type="button" onClick={handleCardFullScreen} title="전체 화면">
-          ⛶ 전체 화면
-        </button>
-      </div>
-    </div>
-  );
-}
 
 const KAKAO_JS_KEY = "f7d216c9253bd3d4d3cf2eaf836373f8";
 
@@ -141,31 +32,6 @@ export function VideoCard({
       if (document.exitFullscreen) document.exitFullscreen();
     }
   };
-
-  useEffect(() => {
-    if (window.Kakao) {
-      if (!window.Kakao.isInitialized()) {
-        window.Kakao.init(KAKAO_JS_KEY);
-      }
-      return;
-    }
-
-    const scriptId = "kakao-sdk-script";
-    let script = document.getElementById(scriptId);
-
-    if (!script) {
-      script = document.createElement("script");
-      script.id = scriptId;
-      script.src = "https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js";
-      script.async = true;
-      script.onload = () => {
-        if (window.Kakao && !window.Kakao.isInitialized()) {
-          window.Kakao.init(KAKAO_JS_KEY);
-        }
-      };
-      document.head.appendChild(script);
-    }
-  }, []);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -207,7 +73,7 @@ export function VideoCard({
           )}
         </div>
 
-        <div className="cam-stream-box">
+        <div className="cam-stream-box" style={{ background: "#111", minHeight: "240px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
           {stream ? (
               <video
                   ref={videoRef}
@@ -215,9 +81,10 @@ export function VideoCard({
                   playsInline
                   muted={isLocal}
                   className="cam-stream-img"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
           ) : (
-              <div className="cam-placeholder">
+              <div className="cam-placeholder" style={{ color: "#888", fontSize: "13px" }}>
                 <span>미디어가 꺼져 있습니다</span>
               </div>
           )}
@@ -241,13 +108,13 @@ export function VideoCard({
                   🖥️ 화면 공유
                 </button>
 
-               <button
-                   type="button"
-                   className={`btn-custom ${isAudioActive ? "btn-stt-on" : "btn-stt-off"}`}
-                   onClick={onToggleAudio}
-               >
-                 {isAudioActive ? "🎙️ 마이크 켜짐" : "🔇 마이크 꺼짐"}
-               </button>
+                <button
+                    type="button"
+                    className={`btn-custom ${isAudioActive ? "btn-stt-on" : "btn-stt-off"}`}
+                    onClick={onToggleAudio}
+                >
+                  {isAudioActive ? "🎙️ 마이크 켜짐" : "🔇 마이크 꺼짐"}
+                </button>
                 <button
                     type="button"
                     className={`btn-custom ${isSttActive ? "btn-stt-on" : "btn-stt-off"}`}
@@ -302,6 +169,9 @@ export default function CamPage() {
   const recognitionRef = useRef(null);
   const chatContainerRef = useRef(null);
 
+  // 🌟 의도적인 퇴장 여부 플래그 (방 생성 직후 자동 삭제 및 목록 누락 방지용)
+  const isIntentionalLeaveRef = useRef(false);
+
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [remoteNicknames, setRemoteNicknames] = useState({});
   const [localStream, setLocalStream] = useState(null);
@@ -312,18 +182,84 @@ export default function CamPage() {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
-  // 방 제목 및 설명 상태
-  const [roomInfo, setRoomInfo] = useState({
-    title: "실시간 스터디룸",
-    description: "함께 공부하고 소통하는 공간입니다."
+  const [isHost, setIsHost] = useState(() => {
+    if (location.state?.isHost !== undefined) {
+      return location.state.isHost;
+    }
+    return false;
   });
 
+  const [roomInfo, setRoomInfo] = useState({
+    title: "실시간 스터디룸",
+    description: "함께 공부하고 소통하는 공간입니다.",
+    host: ""
+  });
+
+  // 🌟 [안전한 통합 퇴장 로직] 의도적인 액션일 때만 소켓 신호 + DB 삭제 실행
+  // 🌟 [최종 완성된 통합 퇴장 및 뒤로가기 제어 로직]
+    // 🌟 [최종 수정] 뒤로가기와 종료 버튼 모두 fetch + keepalive로 통일
+      const executeLeaveRoom = async () => {
+        if (!isIntentionalLeaveRef.current) return;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get("roomId");
+
+        // 1. 게스트들에게 종료 신호 브로드캐스트
+        if (isHost && socketRef.current?.readyState === WebSocket.OPEN) {
+          socketRef.current.send(JSON.stringify({
+            type: "stream-ended"
+          }));
+        }
+
+        // 2. DELETE 요청에 keepalive를 적용하여 뒤로가기/언마운트 시에도 유실 방지
+        if (roomId && isHost) {
+          try {
+            const backendHost = window.location.hostname;
+            await fetch(`http://${backendHost}:8080/api/streams/${roomId}`, {
+              method: "DELETE",
+              credentials: "include",
+              keepalive: true, // 🌟 페이지가 바뀌거나 닫혀도 백그라운드에서 DELETE 요청을 확실하게 완료함
+            });
+            console.log("🗑️ 방 삭제 완료:", roomId);
+          } catch (err) {
+            console.error("방 삭제 요청 실패:", err);
+          }
+        }
+      };
+
+      const handleLeaveRoom = async () => {
+        isIntentionalLeaveRef.current = true;
+        await executeLeaveRoom();
+        navigate("/streaming");
+      };
+
+      // 🌟 브라우저 뒤로 가기(popstate) 및 언마운트 시 처리
+      useEffect(() => {
+        const handlePopState = async () => {
+          isIntentionalLeaveRef.current = true;
+          if (isHost) {
+            await executeLeaveRoom();
+          }
+        };
+
+        window.addEventListener("popstate", handlePopState);
+
+        return () => {
+          window.removeEventListener("popstate", handlePopState);
+          if (isHost && isIntentionalLeaveRef.current) {
+            executeLeaveRoom();
+          }
+        };
+      }, [isHost]);
+
+  // 방 정보 조회 useEffect
   useEffect(() => {
     if (location.state && location.state.roomInfo) {
-      const { title, description } = location.state.roomInfo;
+      const { title, description, host } = location.state.roomInfo;
       setRoomInfo({
         title: title || "실시간 스터디룸",
-        description: description || "등록된 설명이 없습니다."
+        description: description || "등록된 설명이 없습니다.",
+        host: host || ""
       });
       return;
     }
@@ -331,19 +267,22 @@ export default function CamPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const roomId = urlParams.get("roomId");
     if (roomId) {
-      const saved = localStorage.getItem("myCreatedStreams");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          const found = parsed.find(item => String(item.id) === String(roomId));
-          if (found) {
-            setRoomInfo({
-              title: found.title,
-              description: found.description
-            });
+      const backendHost = window.location.hostname;
+      fetch(`http://${backendHost}:8080/api/streams`, { credentials: "include" })
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            const found = data.find(item => String(item.id) === String(roomId));
+            if (found) {
+              setRoomInfo({
+                title: found.title || "실시간 스터디룸",
+                description: found.description || "등록된 설명이 없습니다.",
+                host: found.host || ""
+              });
+            }
           }
-        } catch (e) {}
-      }
+        })
+        .catch((e) => console.error("방 정보 조회 실패:", e));
     }
   }, [location]);
 
@@ -351,64 +290,60 @@ export default function CamPage() {
   const audioStreamRef = useRef(null);
 
   const handleToggleAudio = async () => {
-      // 1. 이미 로컬 스트림(캠 또는 화면공유)이 존재하고 오디오 트랙이 있는 경우
-      if (localStreamRef.current) {
-        const audioTracks = localStreamRef.current.getAudioTracks();
-        if (audioTracks.length > 0) {
-          const nextState = !audioTracks[0].enabled;
-          audioTracks[0].enabled = nextState;
-          setIsAudioActive(nextState);
-          return;
-        }
+    if (localStreamRef.current) {
+      const audioTracks = localStreamRef.current.getAudioTracks();
+      if (audioTracks.length > 0) {
+        const nextState = !audioTracks[0].enabled;
+        audioTracks[0].enabled = nextState;
+        setIsAudioActive(nextState);
+        return;
       }
+    }
 
-      // 2. 캠이 안 켜져 있거나 오디오 트랙이 없을 때 단독 마이크 켜기/끄기
-      if (isAudioActive) {
-        if (audioStreamRef.current) {
-          audioStreamRef.current.getTracks().forEach((track) => track.stop());
-          audioStreamRef.current = null;
-        }
-        setIsAudioActive(false);
-      } else {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-          audioStreamRef.current = stream;
+    if (isAudioActive) {
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach((track) => track.stop());
+        audioStreamRef.current = null;
+      }
+      setIsAudioActive(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioStreamRef.current = stream;
 
-          // 기존 비디오 스트림이 있다면 오디오 트랙만 추가
-          if (localStreamRef.current) {
-            stream.getAudioTracks().forEach(track => {
-              localStreamRef.current.addTrack(track);
-            });
-          } else {
-            localStreamRef.current = stream;
-            setLocalStream(stream);
-          }
-
-          setIsAudioActive(true);
-
-          // 피어 커넥션들에 마이크 트랙 전송
-          Object.values(pcsRef.current).forEach((pc) => {
-            stream.getTracks().forEach((track) => {
-              pc.addTrack(track, stream);
-            });
+        if (localStreamRef.current) {
+          stream.getAudioTracks().forEach(track => {
+            localStreamRef.current.addTrack(track);
           });
-
-          if (socketRef.current?.readyState === WebSocket.OPEN) {
-            remoteUsersRef.current.forEach((peerId, index) => {
-              setTimeout(() => {
-                socketRef.current.send(JSON.stringify({
-                  type: "request-stream",
-                  senderId: myIdRef.current,
-                  target: peerId
-                }));
-              }, index * 200);
-            });
-          }
-        } catch (err) {
-          alert("마이크 권한을 허용해주세요.");
+        } else {
+          localStreamRef.current = stream;
+          setLocalStream(stream);
         }
+
+        setIsAudioActive(true);
+
+        Object.values(pcsRef.current).forEach((pc) => {
+          stream.getTracks().forEach((track) => {
+            pc.addTrack(track, stream);
+          });
+        });
+
+        if (socketRef.current?.readyState === WebSocket.OPEN) {
+          remoteUsersRef.current.forEach((peerId, index) => {
+            setTimeout(() => {
+              socketRef.current.send(JSON.stringify({
+                type: "request-stream",
+                senderId: myIdRef.current,
+                target: peerId
+              }));
+            }, index * 200);
+          });
+        }
+      } catch (err) {
+        alert("마이크 권한을 허용해주세요.");
       }
-    };
+    }
+  };
 
   const [activeWhisperId, setActiveWhisperId] = useState(null);
   const [whisperMessages, setWhisperMessages] = useState({});
@@ -418,12 +353,9 @@ export default function CamPage() {
   const [searchPlaces, setSearchPlaces] = useState([]);
   const [mapCenter, setMapCenter] = useState({ lat: 37.4563, lng: 126.7052 });
 
-  const miniMapRef = useRef(null);
-  const modalMapRef = useRef(null);
   const [miniMapInstance, setMiniMapInstance] = useState(null);
   const [modalMapInstance, setModalMapInstance] = useState(null);
 
-  // 카카오맵 SDK 동적 로드
   useEffect(() => {
     const scriptId = "kakao-map-script";
     if (document.getElementById(scriptId)) return;
@@ -647,43 +579,6 @@ export default function CamPage() {
     fetchGroupSchedules();
   }, []);
 
-<<<<<<< Updated upstream
-=======
-  // 브라우저 위치 정보 가져오기 및 서버 전송
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setMyPosition([latitude, longitude]);
-
-          if (socketRef.current?.readyState === WebSocket.OPEN) {
-            socketRef.current.send(JSON.stringify({
-              type: "location-update",
-              senderId: myIdRef.current,
-              nickname: nickname,
-              lat: latitude,
-              lng: longitude
-            }));
-          }
-        },
-        (error) => {
-          console.error("위치 정보를 가져오지 못했습니다.", error);
-        }
-      );
-    }
-  }, [nickname]);
-
-  useEffect(() => {
-    Object.values(pcsRef.current).forEach((pc) => {
-      try { pc.close(); } catch (e) {}
-    });
-    pcsRef.current = {};
-    candidateQueueRef.current = {};
-    setRemoteStreams({});
-  }, []);
-
->>>>>>> Stashed changes
   useEffect(() => {
     const fetchMe = async () => {
       try {
@@ -841,311 +736,191 @@ export default function CamPage() {
   };
 
   useEffect(() => {
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${hostname}:8080/signal`;
-    const ws = new WebSocket(wsUrl);
-    socketRef.current = ws;
+      const hostname = window.location.hostname;
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 
-    let allUsersCache = [];
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomId = urlParams.get("roomId") || "default-room";
 
-    const updateRemoteList = (newUsers) => {
-      if (!myIdRef.current) return;
-<<<<<<< Updated upstream
+      const wsUrl = `${protocol}//${hostname}:8080/signal?roomId=${roomId}`;
+      const ws = new WebSocket(wsUrl);
+      socketRef.current = ws;
 
-      const others = Array.from(new Set(newUsers)).filter(
-          (id) => id && typeof id === "string" && id !== myIdRef.current
-      );
+      let allUsersCache = [];
 
-      remoteUsersRef.current = others;
-      setRemoteUsers(others);
+      const updateRemoteList = (newUsers) => {
+        if (!myIdRef.current) return;
 
-      Object.keys(pcsRef.current).forEach((peerId) => {
-        if (!others.includes(peerId)) {
-          pcsRef.current[peerId]?.close();
-          delete pcsRef.current[peerId];
-          delete candidateQueueRef.current[peerId];
-        }
-      });
+        const others = Array.from(new Set(newUsers)).filter(
+            (id) => id && typeof id === "string" && id !== myIdRef.current
+        );
 
-      setRemoteStreams((prev) => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach((peerId) => {
+        remoteUsersRef.current = others;
+        setRemoteUsers(others);
+
+        Object.keys(pcsRef.current).forEach((peerId) => {
           if (!others.includes(peerId)) {
-            delete updated[peerId];
+            pcsRef.current[peerId]?.close();
+            delete pcsRef.current[peerId];
+            delete candidateQueueRef.current[peerId];
           }
         });
-        return updated;
-      });
 
-      setTimeout(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          others.forEach((targetId, index) => {
-            setTimeout(() => {
-              ws.send(JSON.stringify({
-                type: "request-stream",
-                senderId: myIdRef.current,
-                target: targetId
-              }));
-            }, index * 200);
+        setRemoteStreams((prev) => {
+          const updated = { ...prev };
+          Object.keys(updated).forEach((peerId) => {
+            if (!others.includes(peerId)) {
+              delete updated[peerId];
+            }
           });
+          return updated;
+        });
+
+        setTimeout(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            others.forEach((targetId, index) => {
+              setTimeout(() => {
+                ws.send(JSON.stringify({
+                  type: "request-stream",
+                  senderId: myIdRef.current,
+                  target: targetId
+                }));
+              }, index * 200);
+            });
+          }
+        }, 500);
+      };
+
+      ws.onopen = () => {
+        const currentNick = localStorage.getItem("userNickname") || nickname;
+        if (currentNick) {
+          ws.send(JSON.stringify({ type: "join", nickname: currentNick }));
         }
-      }, 500);
-    };
+      };
 
-    ws.onopen = () => {
-      const currentNick = localStorage.getItem("userNickname") || nickname;
-      if (currentNick) {
-        ws.send(JSON.stringify({ type: "join", nickname: currentNick }));
-      }
-=======
-      const uniqueUsers = Array.from(new Set(newUsers));
-      const others = uniqueUsers.filter((id) => id !== myIdRef.current);
+      ws.onmessage = async (event) => {
+        try {
+          const data = JSON.parse(event.data);
 
-      remoteUsersRef.current = others;
-      setRemoteUsers(others);
+          if (data.type === "init") {
+            myIdRef.current = data.myId;
+            updateRemoteList(allUsersCache);
+          } else if (data.type === "userList") {
+            const rawUsers = data.users || [];
+            const distinctPeerIds = [];
+            const nickMap = {};
 
-      setTimeout(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          others.forEach((targetId) => {
-            ws.send(JSON.stringify({
-              type: "request-stream",
-              senderId: myIdRef.current,
-              target: targetId
-            }));
-          });
-        }
-      }, 300);
-    };
-
-    const sendJoin = () => {
-      const currentNick = localStorage.getItem("userNickname") || nickname;
-      if (ws.readyState === WebSocket.OPEN && currentNick) {
-        ws.send(JSON.stringify({
-          type: "join",
-          nickname: currentNick
-        }));
-      }
-    };
-
-    ws.onopen = () => {
-      sendJoin();
->>>>>>> Stashed changes
-    };
-
-    ws.onmessage = async (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        if (data.type === "init") {
-          myIdRef.current = data.myId;
-          updateRemoteList(allUsersCache);
-<<<<<<< Updated upstream
-=======
-        } else if (data.type === "location-update") {
-          if (data.senderId && data.senderId !== myIdRef.current) {
-            setPeerLocations((prev) => ({
-              ...prev,
-              [data.senderId]: {
-                lat: data.lat,
-                lng: data.lng,
-                nickname: data.nickname || "참가자"
+            for (let i = 0; i < rawUsers.length; i++) {
+              const item = rawUsers[i];
+              let id = typeof item === "string" ? item : (item?.id || "");
+              let nick = typeof item === "string" ? item : (item?.nickname || "참가자");
+              if (!id || id === myIdRef.current) continue;
+              if (!distinctPeerIds.includes(id)) {
+                distinctPeerIds.push(id);
               }
-            }));
-          }
->>>>>>> Stashed changes
-        } else if (data.type === "userList") {
-          const rawUsers = data.users || [];
-          const distinctPeerIds = [];
-          const nickMap = {};
-
-          for (let i = 0; i < rawUsers.length; i++) {
-            const item = rawUsers[i];
-<<<<<<< Updated upstream
-            let id = typeof item === "string" ? item : (item?.id || "");
-            let nick = typeof item === "string" ? item : (item?.nickname || "참가자");
-            if (!id || id === myIdRef.current) continue;
-            if (!distinctPeerIds.includes(id)) {
-              distinctPeerIds.push(id);
-            }
-=======
-            let id = "";
-            let nick = "";
-
-            if (typeof item === "string") {
-              id = item;
-              nick = item;
-            } else if (item && typeof item === "object") {
-              id = item.id || "";
-              nick = item.nickname || "참가자";
+              nickMap[id] = nick;
             }
 
-            if (!id) continue;
+            allUsersCache = distinctPeerIds;
+            setRemoteNicknames((prev) => ({ ...prev, ...nickMap }));
+            updateRemoteList(allUsersCache);
+          } else if (data.type === "request-stream") {
+            if (localStreamRef.current && data.senderId && data.senderId !== myIdRef.current) {
+              sendOfferToPeer(data.senderId);
+            }
+          } else if (data.type === "offer") {
+            if (data.target && data.target !== myIdRef.current) return;
 
-            distinctPeerIds.push(id);
->>>>>>> Stashed changes
-            nickMap[id] = nick;
-          }
-
-          allUsersCache = distinctPeerIds;
-          setRemoteNicknames((prev) => ({ ...prev, ...nickMap }));
-          updateRemoteList(allUsersCache);
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
-        } else if (data.type === "request-stream") {
-          if (localStreamRef.current && data.senderId && data.senderId !== myIdRef.current) {
-            sendOfferToPeer(data.senderId);
-          }
-        } else if (data.type === "offer") {
-          if (data.target && data.target !== myIdRef.current) return;
-
-          const pc = createPeerConnection(data.senderId);
-<<<<<<< Updated upstream
-=======
-          if (pc.signalingState !== "stable") {
-            return;
-          }
-
->>>>>>> Stashed changes
-          await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-          await processQueuedCandidates(data.senderId, pc);
-
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-
-          ws.send(JSON.stringify({
-            type: "answer",
-            senderId: myIdRef.current,
-            target: data.senderId,
-            answer: answer
-          }));
-        } else if (data.type === "answer") {
-          if (data.target && data.target !== myIdRef.current) return;
-          const pc = pcsRef.current[data.senderId];
-
-<<<<<<< Updated upstream
-          if (pc) {
-=======
-          if (pc && pc.signalingState === "have-local-offer") {
->>>>>>> Stashed changes
-            await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+            const pc = createPeerConnection(data.senderId);
+            await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
             await processQueuedCandidates(data.senderId, pc);
-          }
-        } else if (data.type === "candidate") {
-          if (data.target && data.target !== myIdRef.current) return;
-          const pc = pcsRef.current[data.senderId];
 
-          if (pc && pc.remoteDescription && pc.remoteDescription.type) {
-            try {
-              await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-            } catch (e) {}
-          } else {
-            if (!candidateQueueRef.current[data.senderId]) {
-              candidateQueueRef.current[data.senderId] = [];
-            }
-            candidateQueueRef.current[data.senderId].push(data.candidate);
-          }
-        } else if (data.type === "stream-stopped") {
-          if (pcsRef.current[data.senderId]) {
-<<<<<<< Updated upstream
-            pcsRef.current[data.senderId].close();
-            delete pcsRef.current[data.senderId];
-          }
-          delete candidateQueueRef.current[data.senderId];
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
 
-=======
-            try { pcsRef.current[data.senderId].close(); } catch (e) {}
-            delete pcsRef.current[data.senderId];
-          }
->>>>>>> Stashed changes
-          setRemoteStreams((prev) => {
-            const updated = { ...prev };
-            delete updated[data.senderId];
-            return updated;
-          });
-        } else if (data.type === "chat") {
-<<<<<<< Updated upstream
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now() + Math.random(),
-              nickname: data.nickname,
-              text: data.text,
-              image: data.image,
-              time: data.time,
-              isSystem: data.isSystem || false,
-              isMe: false
-            }
-          ]);
-        } else if (data.type === "whisper") {
-          const senderId = data.senderId;
-          const senderNick = data.nickname || senderId.substring(0, 4);
-
-          setRemoteNicknames((prev) => ({ ...prev, [senderId]: senderNick }));
-
-          setWhisperMessages((prev) => {
-            const list = prev[senderId] || [];
-            return {
-              ...prev,
-              [senderId]: [...list, { sender: "other", text: data.text, time: data.time }]
-            };
-          });
-
-          setActiveWhisperId(senderId);
-=======
-          if (data.senderId && data.nickname) {
-            setRemoteNicknames((prev) => ({
-              ...prev,
-              [data.senderId]: data.nickname
+            ws.send(JSON.stringify({
+              type: "answer",
+              senderId: myIdRef.current,
+              target: data.senderId,
+              answer: answer
             }));
-          }
+          } else if (data.type === "answer") {
+            if (data.target && data.target !== myIdRef.current) return;
+            const pc = pcsRef.current[data.senderId];
 
-          const isMine = data.senderId === myIdRef.current;
-
-          setMessages((prev) => {
-            const isDuplicate = prev.slice(-3).some(
-              (m) => m.text === data.text && m.nickname === data.nickname && m.time === data.time
-            );
-
-            if (isDuplicate) {
-              return prev;
+            if (pc) {
+              await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+              await processQueuedCandidates(data.senderId, pc);
             }
+          } else if (data.type === "candidate") {
+            if (data.target && data.target !== myIdRef.current) return;
+            const pc = pcsRef.current[data.senderId];
 
-            return [
+            if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+              } catch (e) {}
+            } else {
+              if (!candidateQueueRef.current[data.senderId]) {
+                candidateQueueRef.current[data.senderId] = [];
+              }
+              candidateQueueRef.current[data.senderId].push(data.candidate);
+            }
+          } else if (data.type === "stream-stopped") {
+            if (pcsRef.current[data.senderId]) {
+              pcsRef.current[data.senderId].close();
+              delete pcsRef.current[data.senderId];
+            }
+            delete candidateQueueRef.current[data.senderId];
+
+            setRemoteStreams((prev) => {
+              const updated = { ...prev };
+              delete updated[data.senderId];
+              return updated;
+            });
+          } else if (data.type === "chat") {
+            setMessages((prev) => [
               ...prev,
               {
                 id: Date.now() + Math.random(),
                 nickname: data.nickname,
                 text: data.text,
                 image: data.image,
-                file: data.file,
                 time: data.time,
                 isSystem: data.isSystem || false,
-                isMe: isMine
+                isMe: false
               }
-            ];
-          });
->>>>>>> Stashed changes
-        }
-      } catch (e) {}
-    };
+            ]);
+          } else if (data.type === "stream-ended") {
+            alert("방장이 스트리밍을 종료했습니다.");
+            navigate("/streaming");
+          } else if (data.type === "whisper") {
+            const senderId = data.senderId;
+            const senderNick = data.nickname || senderId.substring(0, 4);
 
-    return () => {
-      stopStream();
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-<<<<<<< Updated upstream
-      ws.close();
-=======
-      if (ws.readyState === WebSocket.OPEN) {
+            setRemoteNicknames((prev) => ({ ...prev, [senderId]: senderNick }));
+
+            setWhisperMessages((prev) => {
+              const list = prev[senderId] || [];
+              return {
+                ...prev,
+                [senderId]: [...list, { sender: "other", text: data.text, time: data.time }]
+              };
+            });
+
+            setActiveWhisperId(senderId);
+          }
+        } catch (e) {}
+      };
+
+      return () => {
+        stopStream();
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+        }
         ws.close();
-      }
->>>>>>> Stashed changes
-    };
-  }, []);
+      };
+    }, [location.search]);
 
   const stopStream = () => {
     if (localStreamRef.current) {
@@ -1173,19 +948,6 @@ export default function CamPage() {
     }
   };
 
-  const handleFullScreen = () => {
-    const elem = document.querySelector(".cam-study-container");
-    if (!elem) return;
-
-    if (!document.fullscreenElement) {
-      elem.requestFullscreen().catch((err) => {
-        alert(`전체 화면 전환 실패: ${err.message}`);
-      });
-    } else {
-      document.exitFullscreen();
-    }
-  };
-
   const handleStartMedia = async (type) => {
     stopStream();
     try {
@@ -1203,7 +965,6 @@ export default function CamPage() {
 
       stream.getVideoTracks()[0].onended = () => stopStream();
 
-<<<<<<< Updated upstream
       if (socketRef.current?.readyState === WebSocket.OPEN) {
         remoteUsersRef.current.forEach((peerId, index) => {
           setTimeout(() => {
@@ -1214,10 +975,6 @@ export default function CamPage() {
             }));
           }, index * 200);
         });
-=======
-      for (const peerId of remoteUsersRef.current) {
-        await sendOfferToPeer(peerId);
->>>>>>> Stashed changes
       }
     } catch (err) {
       alert("카메라 또는 화면 공유 권한을 허용해주세요.");
@@ -1299,85 +1056,61 @@ export default function CamPage() {
   const chatBottomRef = useRef(null);
 
   return (
-<<<<<<< Updated upstream
       <main className="cam-study-container">
         <section className="cam-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "700", display: "flex", alignItems: "center", gap: "8px" }}>
-              👥 {roomInfo.title} <span style={{ fontSize: "12px", background: "#e0e7ff", color: "#4f46e5", padding: "2px 8px", borderRadius: "12px", fontWeight: "600" }}>접속자: {totalUsers}명</span>
-            </h2>
-            {roomInfo.description && (
-              <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
-                📝 {roomInfo.description}
-              </p>
-            )}
-          </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "700", display: "flex", alignItems: "center", gap: "8px" }}>
+                      👥 {roomInfo?.title || "실시간 스터디룸"}
 
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button type="button" className="btn-kakao-invite" onClick={handleKakaoInvite}>
-              <span>💬 카카오톡 초대</span>
-            </button>
-            <button
-=======
-    <main className="cam-study-container">
-      <section className="cam-header">
-        <h2>👥 실시간 스터디룸 (접속자: {totalUsers}명)</h2>
-        <button type="button" className="btn-kakao-invite" onClick={handleKakaoInvite}>
-          <span>💬 카카오톡 초대</span>
-        </button>
-        <button type="button" className="btn-kakao-invite" onClick={handleFullScreen} style={{ background: "#4f46e5" }}>
-          <span>⛶ 전체 화면 모드</span>
-        </button>
-      </section>
+                      {(roomInfo?.host === nickname || isHost) && (
+                        <span style={{ fontSize: "12px", background: "#fef3c7", color: "#d97706", padding: "2px 8px", borderRadius: "12px", fontWeight: "600" }}>
+                          host ({nickname})
+                        </span>
+                      )}
 
-      <section className="cam-main-layout">
-        <div className="cam-grid">
-          <VideoCard
-            label={`나 (${nickname})`}
-            isLocal={true}
-            stream={localStream}
-            onStartCam={() => handleStartMedia("camera")}
-            onStartScreen={() => handleStartMedia("screen")}
-            onStop={stopStream}
-            shareMode={shareMode}
-            isSttActive={isSttActive}
-            toggleStt={toggleStt}
-          />
+                      <span style={{ fontSize: "12px", background: "#e0e7ff", color: "#4f46e5", padding: "2px 8px", borderRadius: "12px", fontWeight: "600" }}>
+                        접속자: {totalUsers}명
+                      </span>
+                    </h2>
+                    {roomInfo?.description && (
+                      <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
+                        📝 {roomInfo.description}
+                      </p>
+                    )}
+                  </div>
 
-          {remoteUsers.filter(peerId => remoteStreams[peerId]).map((peerId) => (
-            <VideoCard
-              key={peerId}
-              label={`참가자 (${peerId.substring(0, 4)})`}
-              isLocal={false}
-              stream={remoteStreams[peerId]}
-              shareMode="idle"
-            />
-          ))}
-        </div>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    {isHost && (
+                      <>
+                        <button type="button" className="btn-kakao-invite" onClick={handleKakaoInvite}>
+                          <span>💬 카카오톡 초대</span>
+                        </button>
+                        <button
+                            type="button"
+                            className="btn-kakao-invite"
+                            style={{ background: "#059669", color: "#fff" }}
+                            onClick={() => setIsMapOpen((prev) => !prev)}
+                        >
+                          <span>🗺️ {isMapOpen ? "지도 닫기" : "지도 보기"}</span>
+                        </button>
+                      </>
+                    )}
 
-        <div className="cam-right-sidebar" style={{ position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-          <div className="cam-chat-panel" style={{ height: "540px", flex: 1, display: "flex", flexDirection: "column" }}>
-            <div className="chat-header">
-              <div className="chat-header-left">
-                <span>실시간 채팅</span>
-                <span className="chat-user-count-badge">{totalUsers}명 참여중</span>
-              </div>
-              <button
->>>>>>> Stashed changes
-                type="button"
-                className="btn-kakao-invite"
-                style={{ background: "#059669", color: "#fff" }}
-                onClick={() => setIsMapOpen((prev) => !prev)}
-            >
-              <span>🗺️ {isMapOpen ? "지도 닫기" : "지도 보기"}</span>
-            </button>
-          </div>
-        </section>
+                    <button
+                      type="button"
+                      className="btn-kakao-invite"
+                      style={{ background: "#ef4444", color: "#fff" }}
+                      onClick={handleLeaveRoom}
+                    >
+                      <span>🚪 스트리밍 종료 / 뒤로 가기를 누르지 말아주세요.</span>
+                    </button>
+                  </div>
+                </section>
 
         <section className="cam-main-layout">
           <div className="cam-grid">
            <VideoCard
-               label={`나 (${nickname})`}
+               label={isHost ? `👑 호스트 (${nickname})` : `나 (${nickname})`}
                isLocal={true}
                stream={localStream}
                onStartCam={() => handleStartMedia("camera")}
@@ -1390,173 +1123,186 @@ export default function CamPage() {
                onToggleAudio={handleToggleAudio}
            />
 
-            {remoteUsers.map((peerId) => (
-                <VideoCard
-                    key={peerId}
-                    peerId={peerId}
-                    label={`참가자 (${remoteNicknames[peerId] || peerId.substring(0, 4)})`}
-                    isLocal={false}
-                    stream={remoteStreams[peerId] || null}
-                    shareMode="idle"
-                    onOpenWhisper={openWhisperChat}
-                />
-            ))}
+            {remoteUsers.map((peerId) => {
+                          const currentPeerNick = remoteNicknames[peerId] || peerId.substring(0, 4);
+
+                          const roomHost = roomInfo?.host ? String(roomInfo.host).trim() : "";
+                          const peerNick = String(currentPeerNick).trim();
+                          const isThisUserHost = roomHost && (roomHost === peerNick || peerNick.includes(roomHost));
+
+                          return (
+                            <div key={peerId} style={{ display: "flex", flexDirection: "column", gap: "10px", width: "480px" }}>
+                              <VideoCard
+                                  peerId={peerId}
+                                  label={isThisUserHost ? `👑 호스트 (${currentPeerNick})` : `참가자 (${currentPeerNick})`}
+                                  isLocal={false}
+                                  stream={remoteStreams[peerId] || null}
+                                  shareMode="idle"
+                                  onOpenWhisper={openWhisperChat}
+                              />
+
+                              {activeWhisperId === peerId && (
+                                  <div className="ai-sub-chat-panel" style={{ height: "240px", width: "100%", display: "flex", flexDirection: "column", border: "2px solid #4f46e5", borderRadius: "12px", background: "#fff", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
+                                    <div className="chat-header" style={{ background: "#4f46e5", padding: "8px 12px" }}>
+                                      <span>🔒 귓속말 ({currentPeerNick})</span>
+                                      <button
+                                          type="button"
+                                          onClick={() => setActiveWhisperId(null)}
+                                          style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "14px", fontWeight: "bold" }}
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+
+                                    <div className="chat-messages-container" style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                                      {(whisperMessages[activeWhisperId] || []).map((msg, idx) => (
+                                          <div key={idx} className={`chat-bubble-row ${msg.sender === "me" ? "me" : "other"}`}>
+                                            <div className="chat-bubble">
+                                              {msg.text}
+                                            </div>
+                                          </div>
+                                      ))}
+                                    </div>
+
+                                    <form onSubmit={handleSendWhisper} style={{ padding: "6px 10px", background: "#fff", borderTop: "1px solid #e0e0e0" }}>
+                                      <div className="chat-input-form" style={{ margin: 0 }}>
+                                        <input
+                                            type="text"
+                                            className="chat-text-input"
+                                            placeholder="비밀 메시지 입력..."
+                                            value={whisperInput}
+                                            onChange={(e) => setWhisperInput(e.target.value)}
+                                        />
+                                        <button type="submit" className="chat-send-btn">전송</button>
+                                      </div>
+                                    </form>
+                                  </div>
+                              )}
+                            </div>
+                          );
+                        })}
           </div>
 
           <div className="cam-right-sidebar" style={{ position: "relative", overflow: "visible", display: "flex", flexDirection: "column", gap: "12px", width: "360px", flexShrink: 0 }}>
-            <div style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "flex-start" }}>
-              <div className="cam-chat-panel" style={{ height: "540px", width: "360px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
-                <div className="chat-header">
-                  <div className="chat-header-left">
-                    <span>실시간 채팅</span>
-                    <span className="chat-user-count-badge">{totalUsers}명 참여중</span>
-                  </div>
-                  <button
-                      type="button"
-                      onClick={() => setIsCalendarOpen((prev) => !prev)}
-                      style={{ background: "#4f46e5", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", cursor: "pointer" }}
-                  >
-                    {isCalendarOpen ? "채팅 보기" : "📅 모임 캘린더"}
-                  </button>
-                </div>
+              <div style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "flex-start" }}>
+                <div className="cam-chat-panel" style={{ height: "540px", width: "360px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
 
-                <div className="chat-messages-container" ref={chatContainerRef} style={{ flex: 1, overflowY: "auto" }}>
-                  {messages.map((msg) =>
-                      msg.isSystem ? (
-                          <div key={msg.id} className="chat-system-msg">{msg.text}</div>
-                      ) : (
-                          <div key={msg.id} className={`chat-bubble-row ${msg.isMe ? "me" : "other"}`}>
-                            <div className="chat-bubble">
-                              {!msg.isMe && <strong style={{ display: "block", fontSize: "10px", color: "#666", marginBottom: "2px" }}>{msg.nickname}</strong>}
-                              {msg.text}
-                            </div>
-                          </div>
-                      )
-                  )}
-                  <div ref={chatBottomRef} />
-                </div>
-
-                <form className="chat-input-form" onSubmit={handleSendMessage}>
-                  <input
-                      type="text"
-                      className="chat-text-input"
-                      placeholder='메시지 입력...'
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                  />
-                  <button type="submit" className="chat-send-btn">전송</button>
-                </form>
-              </div>
-
-              {activeWhisperId && (
-                  <div className="ai-sub-chat-panel" style={{ height: "540px", width: "320px", flexShrink: 0, display: "flex", flexDirection: "column", border: "2px solid #4f46e5" }}>
-                    <div className="chat-header" style={{ background: "#4f46e5" }}>
-                      <span>🔒 귓속말 ({remoteNicknames[activeWhisperId] || activeWhisperId.substring(0, 4)})</span>
+                  <div className="chat-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                    <div className="chat-header-left" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontWeight: "700", fontSize: "14px", color: "#1e293b" }}>실시간 채팅</span>
+                      <span className="chat-user-count-badge" style={{ fontSize: "11px", background: "#e0e7ff", color: "#4f46e5", padding: "2px 6px", borderRadius: "10px", fontWeight: "600" }}>{totalUsers}명 참여중</span>
+                    </div>
+                    {isHost && (
                       <button
                           type="button"
-                          onClick={() => setActiveWhisperId(null)}
-                          style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "14px", fontWeight: "bold" }}
+                          onClick={() => setIsCalendarOpen((prev) => !prev)}
+                          style={{ background: "#4f46e5", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", cursor: "pointer", fontWeight: "600" }}
                       >
-                        ✕
+                        {isCalendarOpen ? "채팅 보기" : "📅 모임 캘린더"}
                       </button>
-                    </div>
+                    )}
+                  </div>
 
-                    <div className="chat-messages-container" style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                      {(whisperMessages[activeWhisperId] || []).map((msg, idx) => (
-                          <div key={idx} className={`chat-bubble-row ${msg.sender === "me" ? "me" : "other"}`}>
-                            <div className="chat-bubble">
-                              {msg.text}
+                  <div className="chat-messages-container" ref={chatContainerRef} style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {messages.map((msg) =>
+                        msg.isSystem ? (
+                            <div key={msg.id} className="chat-system-msg" style={{ textAlign: "center", fontSize: "12px", color: "#64748b", background: "#f1f5f9", padding: "4px 8px", borderRadius: "6px" }}>{msg.text}</div>
+                        ) : (
+                            <div key={msg.id} className={`chat-bubble-row ${msg.isMe ? "me" : "other"}`} style={{ display: "flex", justifyContent: msg.isMe ? "flex-end" : "flex-start" }}>
+                              <div className="chat-bubble" style={{ maxWidth: "80%", background: msg.isMe ? "#4f46e5" : "#f1f5f9", color: msg.isMe ? "#fff" : "#1e293b", padding: "8px 12px", borderRadius: "8px", fontSize: "13px" }}>
+                                {!msg.isMe && <strong style={{ display: "block", fontSize: "10px", color: "#64748b", marginBottom: "2px" }}>{msg.nickname}</strong>}
+                                {msg.text}
+                              </div>
                             </div>
-                          </div>
-                      ))}
-                    </div>
+                        )
+                    )}
+                    <div ref={chatBottomRef} />
+                  </div>
 
-                    <form onSubmit={handleSendWhisper} style={{ padding: "8px 12px", background: "#fff", borderTop: "1px solid #e0e0e0" }}>
-                      <div className="chat-input-form" style={{ margin: 0 }}>
-                        <input
-                            type="text"
-                            className="chat-text-input"
-                            placeholder="비밀 메시지 입력..."
-                            value={whisperInput}
-                            onChange={(e) => setWhisperInput(e.target.value)}
-                        />
-                        <button type="submit" className="chat-send-btn">전송</button>
-                      </div>
-                    </form>
+                  <form className="chat-input-form" onSubmit={handleSendMessage} style={{ display: "flex", padding: "10px", borderTop: "1px solid #e2e8f0", background: "#fff" }}>
+                    <input
+                        type="text"
+                        className="chat-text-input"
+                        placeholder='메시지 입력...'
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        style={{ flex: 1, padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", outline: "none" }}
+                    />
+                    <button type="submit" className="chat-send-btn" style={{ marginLeft: "6px", background: "#4f46e5", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}>전송</button>
+                  </form>
+                </div>
+              </div>
+
+              {isHost && isMapOpen && (
+                  <div style={{ width: "100%", height: "260px", background: "#fff", border: "2px solid #ef4444", borderRadius: "16px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                    <div style={{ background: "#ef4444", color: "#fff", padding: "8px 14px", fontSize: "12px", fontWeight: "700", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span>🗺️ 스터디 위치 (카카오맵)</span>
+                      <button type="button" onClick={() => setIsMapModalOpen(true)} style={{ background: "#fff", color: "#ef4444", border: "none", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "bold", cursor: "pointer" }}>🔍 크게 보기</button>
+                    </div>
+                    <div id="kakao-mini-map" style={{ width: "100%", height: "200px" }} />
                   </div>
               )}
-            </div>
 
-            {/* 카카오 미니맵 패널 */}
-            {isMapOpen && (
-                <div style={{ width: "100%", height: "260px", background: "#fff", border: "2px solid #ef4444", borderRadius: "16px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                  <div style={{ background: "#ef4444", color: "#fff", padding: "8px 14px", fontSize: "12px", fontWeight: "700", display: "flex", justifyContent: "space-between" }}>
-                    <span>🗺️ 스터디 위치 (카카오맵)</span>
-                    <button type="button" onClick={() => setIsMapModalOpen(true)} style={{ background: "#fff", color: "#ef4444", border: "none", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "bold", cursor: "pointer" }}>🔍 크게 보기</button>
-                  </div>
-                  <div id="kakao-mini-map" style={{ width: "100%", height: "200px" }} />
-                </div>
-            )}
-
-            {/* 카카오 크게 보기 모달 */}
-            {isMapModalOpen && (
-                <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ width: "85vw", height: "85vh", background: "#fff", borderRadius: "16px", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 12px 32px rgba(0,0,0,0.3)" }}>
-                    <div style={{ background: "#ef4444", color: "#fff", padding: "14px 20px", fontSize: "16px", fontWeight: "700", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
-                      <span>🗺️ 볕자리 찾기 - 스터디 카페 & 장소 검색</span>
-                      <button type="button" onClick={() => setIsMapModalOpen(false)} style={{ background: "none", border: "none", color: "#fff", fontSize: "18px", fontWeight: "bold", cursor: "pointer" }}>✕ 닫기</button>
-                    </div>
-                    <div style={{ display: "flex", flex: 1, width: "100%", height: "calc(100% - 56px)", overflow: "hidden", position: "relative" }}>
-                      <div style={{ width: "340px", background: "#f9fafb", borderRight: "1px solid #e5e7eb", display: "flex", flexDirection: "column", padding: "16px", gap: "12px", overflowY: "auto", zIndex: 2, flexShrink: 0 }}>
-                        <div style={{ fontSize: "14px", fontWeight: "700", color: "#1f2937" }}>📍 지역 및 장소 검색</div>
-                        <div style={{ display: "flex", gap: "6px" }}>
-                          <input
-                              type="text"
-                              placeholder="예: 구월동 스터디카페"
-                              value={searchKeyword}
-                              onChange={(e) => setSearchKeyword(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === "Enter") handleSearchPlaces(); }}
-                              style={{ flex: 1, padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px" }}
-                          />
-                          <button
-                              type="button"
-                              onClick={handleSearchPlaces}
-                              style={{ background: "#ef4444", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}
-                          >
-                            검색
-                          </button>
-                        </div>
-                        <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
-                          {searchPlaces.length > 0 ? `검색된 추천 공간 (${searchPlaces.length}개)` : "원하는 지역이나 상호명을 검색해보세요."}
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                          {searchPlaces.map((place) => (
-                            <div
-                              key={place.id}
-                              onClick={() => setMapCenter({ lat: place.lat, lng: place.lng })}
-                              style={{ background: "#fff", padding: "10px", borderRadius: "8px", border: "1px solid #e5e7eb", cursor: "pointer" }}
-                            >
-                              <div style={{ fontWeight: "700", fontSize: "13px", color: "#111827" }}>{place.name}</div>
-                              <div style={{ fontSize: "11px", color: "#4b5563", marginTop: "2px" }}>{place.address}</div>
-                              <div style={{ fontSize: "10px", color: "#9ca3af", marginTop: "2px" }}>📞 {place.phone}</div>
-                            </div>
-                          ))}
-                        </div>
+              {isMapModalOpen && (
+                  <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: "85vw", height: "85vh", background: "#fff", borderRadius: "16px", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 12px 32px rgba(0,0,0,0.3)" }}>
+                      <div style={{ background: "#ef4444", color: "#fff", padding: "14px 20px", fontSize: "16px", fontWeight: "700", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+                        <span>🗺️ 볕자리 찾기 - 스터디 카페 & 장소 검색</span>
+                        <button type="button" onClick={() => setIsMapModalOpen(false)} style={{ background: "none", border: "none", color: "#fff", fontSize: "18px", fontWeight: "bold", cursor: "pointer" }}>✕ 닫기</button>
                       </div>
-                      <div id="kakao-modal-map" style={{ flex: 1, position: "relative", height: "100%" }} />
+                      <div style={{ display: "flex", flex: 1, width: "100%", height: "calc(100% - 56px)", overflow: "hidden", position: "relative" }}>
+                        <div style={{ width: "340px", background: "#f9fafb", borderRight: "1px solid #e5e7eb", display: "flex", flexDirection: "column", padding: "16px", gap: "12px", overflowY: "auto", zIndex: 2, flexShrink: 0 }}>
+                          <div style={{ fontSize: "14px", fontWeight: "700", color: "#1f2937" }}>📍 지역 및 장소 검색</div>
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            <input
+                                type="text"
+                                placeholder="예: 구월동 스터디카페"
+                                value={searchKeyword}
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === "Enter") handleSearchPlaces(); }}
+                                style={{ flex: 1, padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "13px" }}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleSearchPlaces}
+                                style={{ background: "#ef4444", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}
+                            >
+                              검색
+                            </button>
+                          </div>
+                          <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+                            {searchPlaces.length > 0 ? `검색된 추천 공간 (${searchPlaces.length}개)` : "원하는 지역이나 상호명을 검색해보세요."}
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                            {searchPlaces.map((place) => (
+                              <div
+                                key={place.id}
+                                onClick={() => setMapCenter({ lat: place.lat, lng: place.lng })}
+                                style={{ background: "#fff", padding: "10px", borderRadius: "8px", border: "1px solid #e5e7eb", cursor: "pointer" }}
+                              >
+                                <div style={{ fontWeight: "700", fontSize: "13px", color: "#111827" }}>{place.name}</div>
+                                <div style={{ fontSize: "11px", color: "#4b5563", marginTop: "2px" }}>{place.address}</div>
+                                <div style={{ fontSize: "10px", color: "#9ca3af", marginTop: "2px" }}>📞 {place.phone}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div id="kakao-modal-map" style={{ flex: 1, position: "relative", height: "100%" }} />
+                      </div>
                     </div>
                   </div>
-                </div>
-            )}
+              )}
 
-            <MiniCalendar
-                calendarDate={calendarDate}
-                groupSchedules={groupSchedules}
-                isCalendarOpen={isCalendarOpen}
-                moveMiniMonth={moveMiniMonth}
-                setIsCalendarOpen={setIsCalendarOpen}
-            />
-          </div>
+              {isHost && (
+                <MiniCalendar
+                    calendarDate={calendarDate}
+                    groupSchedules={groupSchedules}
+                    isCalendarOpen={isCalendarOpen}
+                    moveMiniMonth={moveMiniMonth}
+                    setIsCalendarOpen={setIsCalendarOpen}
+                />
+              )}
+            </div>
         </section>
       </main>
   );

@@ -70,12 +70,23 @@
    영상
 ================================= */
 
+/* 썸네일 기준점 및 번호 뱃지 가시성 확보 */
 .stream-thumbnail {
-  position: relative;
-  width: 100%;
-  height: 210px;
-  overflow: hidden;
-  background: #1a261e;
+  position: relative !important;
+  overflow: visible !important; /* 뱃지가 잘리지 않도록 설정 */
+}
+
+.stream-number-badge {
+  position: absolute !important;
+  top: 70px !important;
+  left: 16px !important;
+  z-index: 10 !important;
+  color: #ffffff !important;
+  font-size: 70px !important;
+  font-weight: 900 !important;
+  font-style: italic !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+  pointer-events: none !important;
 }
 
 .stream-video {
