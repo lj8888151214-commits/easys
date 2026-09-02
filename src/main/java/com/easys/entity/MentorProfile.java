@@ -87,6 +87,10 @@ public class MentorProfile {
     @Column(length = 10)
     private String availableEnd;
 
+    // 날짜별 상세 일정 (JSON 형식: [{"date":"2026-08-27","day":"목","startTime":"10:00","endTime":"12:00"}, ...])
+    @Column(length = 3000)
+    private String availableSchedules;
+
     // 멘토 등록 상태
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -118,7 +122,8 @@ public class MentorProfile {
             String availableDays,
             String availableDates,
             String availableStart,
-            String availableEnd
+            String availableEnd,
+            String availableSchedules
     ) {
         this.member = member;
         this.title = title;
@@ -137,6 +142,7 @@ public class MentorProfile {
         this.availableDates = availableDates;
         this.availableStart = availableStart;
         this.availableEnd = availableEnd;
+        this.availableSchedules = availableSchedules;
 
         // 관리자 승인 없이 바로 등록
         this.status = MentorStatus.APPROVED;
@@ -162,7 +168,8 @@ public class MentorProfile {
             String availableDays,
             String availableDates,
             String availableStart,
-            String availableEnd
+            String availableEnd,
+            String availableSchedules
     ) {
         this.title = title;
         this.introduction = introduction;
@@ -180,6 +187,7 @@ public class MentorProfile {
         this.availableDates = availableDates;
         this.availableStart = availableStart;
         this.availableEnd = availableEnd;
+        this.availableSchedules = availableSchedules;
 
         this.updatedAt = LocalDateTime.now();
     }

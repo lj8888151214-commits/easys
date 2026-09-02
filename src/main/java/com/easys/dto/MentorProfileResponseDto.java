@@ -33,7 +33,12 @@ public class MentorProfileResponseDto {
     private String availableStart;
     private String availableEnd;
 
+    // 날짜별 상세 일정 (JSON)
+    private String availableSchedules;
+
     private String status;
+    private double averageRating;
+    private long reviewCount;
 
     public MentorProfileResponseDto(MentorProfile mentorProfile) {
 
@@ -96,8 +101,21 @@ public class MentorProfileResponseDto {
         this.availableEnd =
                 mentorProfile.getAvailableEnd();
 
+        this.availableSchedules =
+                mentorProfile.getAvailableSchedules();
+
         this.status =
                 mentorProfile.getStatus().name();
+    }
+
+    public MentorProfileResponseDto(
+            MentorProfile mentorProfile,
+            double averageRating,
+            long reviewCount
+    ) {
+        this(mentorProfile);
+        this.averageRating = averageRating;
+        this.reviewCount = reviewCount;
     }
 }
 
