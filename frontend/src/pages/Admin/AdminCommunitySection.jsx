@@ -167,17 +167,19 @@ function AdminCommunitySection() {
                       {post.viewCount} / {post.likeCount} / {post.commentCount}
                     </td>
                     <td>{formatDate(post.createdAt)}</td>
-                    <td className="admin-row-actions">
-                      <button type="button" onClick={() => toggleComments(post.id)}>
-                        {expandedPostId === post.id ? "댓글 닫기" : "댓글 보기"}
-                      </button>
-                      <button
-                        type="button"
-                        className="danger"
-                        onClick={() => handleDeletePost(post)}
-                      >
-                        삭제
-                      </button>
+                    <td>
+                      <div className="admin-row-actions">
+                        <button type="button" onClick={() => toggleComments(post.id)}>
+                          {expandedPostId === post.id ? "댓글 닫기" : "댓글 보기"}
+                        </button>
+                        <button
+                          type="button"
+                          className="danger"
+                          onClick={() => handleDeletePost(post)}
+                        >
+                          삭제
+                        </button>
+                      </div>
                     </td>
                   </tr>
 

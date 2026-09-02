@@ -9,6 +9,7 @@ import com.easys.repository.MemberRepository;
 import com.easys.repository.PaymentRepository;
 import com.easys.service.MentoringReservationService;
 import com.easys.service.PaymentService;
+import com.easys.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -34,6 +35,7 @@ public class PaymentController {
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
     private final MentoringReservationService mentoringReservationService;
+    private final ReservationService reservationService;
 
     private Member getCurrentMember(Authentication authentication) {
         if (authentication == null ||
@@ -78,6 +80,35 @@ public class PaymentController {
     }
 
     // =====================================================
+    // 스터디룸 예약에 연결된 결제 정보 조회
+    // (결제 페이지가 상품명/금액을 표시하기 위해 사용)
+    // GET /payments/study/{reservationId}
+    // =====================================================
+
+    @GetMapping("/study/{reservationId}")
+    public ResponseEntity<?> getStudyPayment(
+            Authentication authentication,
+            @PathVariable Long reservationId
+    ) {
+        try {
+            Member member = getCurrentMember(authentication);
+
+            Payment payment = paymentRepository
+                    .findByProductTypeAndTargetId(PaymentProductType.STUDY, reservationId)
+                    .orElseThrow(() -> new IllegalArgumentException("결제 정보를 찾을 수 없습니다."));
+
+            if (!payment.getMember().getId().equals(member.getId())) {
+                throw new IllegalArgumentException("본인의 결제 정보만 조회할 수 있습니다.");
+            }
+
+            return ResponseEntity.ok(new PaymentResponseDto(payment));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // =====================================================
     // 토스 결제 승인 확정
     // POST /payments/confirm
     //
@@ -102,12 +133,16 @@ public class PaymentController {
 
             if (payment.getProductType() == PaymentProductType.MENTORING) {
                 mentoringReservationService.onMentoringPaymentConfirmed(payment.getTargetId());
+            } else if (payment.getProductType() == PaymentProductType.STUDY) {
+                reservationService.onStudyPaymentConfirmed(payment.getTargetId());
             }
-            // STUDY는 아직 결제와 연결되어 있지 않으므로(추후 연동 예정) 처리하지 않는다.
 
             return ResponseEntity.ok(new PaymentResponseDto(payment));
 
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // IllegalStateException은 TOSS_SECRET_KEY 미설정처럼 서버 설정
+            // 문제일 때 발생한다 - 이 경우도 프론트에 원인 메시지를 그대로
+            // 내려줘야 "결제에 실패했습니다"로만 뭉뚱그려지지 않는다.
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }

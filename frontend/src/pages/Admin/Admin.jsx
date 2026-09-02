@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import "./Admin.css";
 import { useAdminGuard } from "./useAdminGuard";
 import AdminStudyRoomSection from "./AdminStudyRoomSection";
+import AdminStudyReservationSection from "./AdminStudyReservationSection";
 import AdminCommunitySection from "./AdminCommunitySection";
 import AdminStudySection from "./AdminStudySection";
 
 const TABS = [
   { key: "rooms", label: "스터디룸 관리" },
+  { key: "reservations", label: "스터디룸 예약 관리" },
   { key: "community", label: "커뮤니티 관리" },
   { key: "study", label: "스터디 관리" },
 ];
@@ -50,6 +52,7 @@ function Admin() {
       </nav>
 
       {activeTab === "rooms" && <AdminStudyRoomSection />}
+      {activeTab === "reservations" && <AdminStudyReservationSection />}
       {activeTab === "community" && <AdminCommunitySection />}
       {activeTab === "study" && <AdminStudySection />}
     </main>

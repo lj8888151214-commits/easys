@@ -18,6 +18,9 @@ public interface StudyRoomReviewRepository
             StudyRoom studyRoom
     );
 
+    // 관리자 삭제 시 하드 삭제 가능 여부 판단용 (리뷰 이력이 있으면 FK 때문에 하드 삭제 불가)
+    boolean existsByStudyRoom(StudyRoom studyRoom);
+
     // 특정 회원이 특정 스터디룸에 남긴 리뷰 (한 룸당 하나만 허용)
     Optional<StudyRoomReview> findByStudyRoomAndMember(
             StudyRoom studyRoom,
