@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "./CamPage.css";
-
 import { MiniCalendar } from "./MiniCalendar";
 
 // Leaflet 기본 마커 이미지 경로 설정 오류 방지
@@ -15,9 +14,16 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-const KAKAO_JS_KEY = "f7d216c9253bd3d4d3cf2eaf836373f8"; // 🌟 누락되었던 JS 키 추가
+const KAKAO_JS_KEY = "f7d216c9253bd3d4d3cf2eaf836373f8";
+const KAKAO_REST_KEY = "128822f9bfdfb4b70d794c947ef21231";
 
-// 지도 중심 이동용 헬퍼 컴포넌트
+const rtcConfig = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" }
+  ],
+};
+
 function MapRecenter({ center }) {
   const map = useMap();
   useEffect(() => {
@@ -26,7 +32,6 @@ function MapRecenter({ center }) {
   return null;
 }
 
-// 개별 비디오 카드 컴포넌트
 export function VideoCard({
                             peerId,
                             label,
@@ -38,7 +43,9 @@ export function VideoCard({
                             shareMode,
                             isSttActive,
                             toggleStt,
-                            onOpenWhisper
+                            onOpenWhisper,
+                            isAudioActive,
+                            onToggleAudio
                           }) {
   const cardRef = useRef(null);
   const videoRef = useRef(null);
@@ -51,32 +58,6 @@ export function VideoCard({
       if (document.exitFullscreen) document.exitFullscreen();
     }
   };
-
-// 카카오 SDK 동적 로드 보장
-  useEffect(() => {
-    if (window.Kakao) {
-      if (!window.Kakao.isInitialized()) {
-        window.Kakao.init(KAKAO_JS_KEY);
-      }
-      return;
-    }
-
-    const scriptId = "kakao-sdk-script";
-    let script = document.getElementById(scriptId);
-
-    if (!script) {
-      script = document.createElement("script");
-      script.id = scriptId;
-      script.src = "https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js";
-      script.async = true;
-      script.onload = () => {
-        if (window.Kakao && !window.Kakao.isInitialized()) {
-          window.Kakao.init(KAKAO_JS_KEY);
-        }
-      };
-      document.head.appendChild(script);
-    }
-  }, []);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -118,7 +99,7 @@ export function VideoCard({
           )}
         </div>
 
-        <div className="cam-stream-box">
+        <div className="cam-stream-box" style={{ background: "#111", minHeight: "240px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
           {stream ? (
               <video
                   ref={videoRef}
@@ -126,9 +107,10 @@ export function VideoCard({
                   playsInline
                   muted={isLocal}
                   className="cam-stream-img"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
           ) : (
-              <div className="cam-placeholder">
+              <div className="cam-placeholder" style={{ color: "#888", fontSize: "13px" }}>
                 <span>미디어가 꺼져 있습니다</span>
               </div>
           )}
@@ -153,10 +135,17 @@ export function VideoCard({
                 </button>
                 <button
                     type="button"
+                    className={`btn-custom ${isAudioActive ? "btn-stt-on" : "btn-stt-off"}`}
+                    onClick={onToggleAudio}
+                >
+                  {isAudioActive ? "🎙️ 마이크 켜짐" : "🔇 마이크 꺼짐"}
+                </button>
+                <button
+                    type="button"
                     className={`btn-custom ${isSttActive ? "btn-stt-on" : "btn-stt-off"}`}
                     onClick={toggleStt}
                 >
-                  {isSttActive ? "🎙️ STT 켜짐" : "🎙️ STT 꺼짐"}
+                  {isSttActive ? "🎙️ 목소리로 채팅 켜짐" : "🎙️ 목소리로 채팅 꺼짐"}
                 </button>
                 {shareMode !== "idle" && (
                     <button
@@ -184,25 +173,20 @@ export function VideoCard({
   );
 }
 
-const KAKAO_REST_KEY = "128822f9bfdfb4b70d794c947ef21231"; // 장소 검색용 카카오 REST API 유지
-
-const rtcConfig = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" }
-  ],
-};
-
 export default function CamPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const socketRef = useRef(null);
   const myIdRef = useRef("");
   const remoteUsersRef = useRef([]);
   const localStreamRef = useRef(null);
+  const audioStreamRef = useRef(null);
   const pcsRef = useRef({});
   const candidateQueueRef = useRef({});
   const recognitionRef = useRef(null);
   const chatContainerRef = useRef(null);
+  const chatBottomRef = useRef(null);
 
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [remoteNicknames, setRemoteNicknames] = useState({});
@@ -211,18 +195,117 @@ export default function CamPage() {
   const [shareMode, setShareMode] = useState("idle");
   const [isSttActive, setIsSttActive] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isAudioActive, setIsAudioActive] = useState(false);
+
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
-  // 1:1 비밀 대화 관련 상태
   const [activeWhisperId, setActiveWhisperId] = useState(null);
   const [whisperMessages, setWhisperMessages] = useState({});
   const [whisperInput, setWhisperInput] = useState("");
 
-  // 지도 및 검색 관련 상태
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchPlaces, setSearchPlaces] = useState([]);
   const [mapCenter, setMapCenter] = useState({ lat: 37.4563, lng: 126.7052 });
+
+  const [roomInfo, setRoomInfo] = useState({
+    title: "실시간 스터디룸",
+    description: "함께 공부하고 소통하는 공간입니다."
+  });
+
+  const [nickname, setNickname] = useState(() => {
+    const nick = localStorage.getItem("userNickname");
+    const email = localStorage.getItem("userEmail");
+    if (nick && nick.trim()) return nick.trim();
+    if (email && email.trim()) return email.includes("@") ? email.split("@")[0] : email.trim();
+    return "게스트";
+  });
+
+  const [calendarDate, setCalendarDate] = useState(new Date(2026, 7, 27));
+  const [groupSchedules, setGroupSchedules] = useState([]);
+  const [messages, setMessages] = useState([
+    { id: 1, text: "스터디룸에 입장했습니다.", isSystem: true }
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
+
+  const calYear = calendarDate.getFullYear();
+  const calMonth = calendarDate.getMonth();
+
+  const moveMiniMonth = (amount) => {
+    setCalendarDate(new Date(calYear, calMonth + amount, 1));
+  };
+
+  const handleLeaveRoom = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get("roomId");
+
+    if (roomId) {
+      try {
+        const backendHost = window.location.hostname;
+        await fetch(`http://${backendHost}:8080/api/streams/${roomId}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+      } catch (err) {
+        console.error("방 삭제 요청 실패:", err);
+      }
+    }
+    navigate("/streaming");
+  };
+
+  useEffect(() => {
+    if (location.state && location.state.roomInfo) {
+      const { title, description } = location.state.roomInfo;
+      setRoomInfo({
+        title: title || "실시간 스터디룸",
+        description: description || "등록된 설명이 없습니다."
+      });
+      return;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get("roomId");
+    if (roomId) {
+      const saved = localStorage.getItem("myCreatedStreams");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const found = parsed.find(item => String(item.id) === String(roomId));
+          if (found) {
+            setRoomInfo({
+              title: found.title,
+              description: found.description
+            });
+          }
+        } catch (e) {}
+      }
+    }
+  }, [location]);
+
+  useEffect(() => {
+    if (window.Kakao) {
+      if (!window.Kakao.isInitialized()) {
+        window.Kakao.init(KAKAO_JS_KEY);
+      }
+      return;
+    }
+
+    const scriptId = "kakao-sdk-script";
+    let script = document.getElementById(scriptId);
+
+    if (!script) {
+      script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js";
+      script.async = true;
+      script.onload = () => {
+        if (window.Kakao && !window.Kakao.isInitialized()) {
+          window.Kakao.init(KAKAO_JS_KEY);
+        }
+      };
+      document.head.appendChild(script);
+    }
+  }, []);
 
   const handleSearchPlaces = async () => {
     if (!searchKeyword.trim()) {
@@ -232,12 +315,12 @@ export default function CamPage() {
 
     try {
       const response = await fetch(
-        `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(searchKeyword)}&y=${mapCenter.lat}&x=${mapCenter.lng}&radius=5000`,
-        {
-          headers: {
-            Authorization: `KakaoAK ${KAKAO_REST_KEY}`
+          `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(searchKeyword)}&y=${mapCenter.lat}&x=${mapCenter.lng}&radius=5000`,
+          {
+            headers: {
+              Authorization: `KakaoAK ${KAKAO_REST_KEY}`
+            }
           }
-        }
       );
       const data = await response.json();
 
@@ -263,7 +346,6 @@ export default function CamPage() {
     }
   };
 
-  // 'ㄷㄹ' 단축키로 캘린더 토글 기능
   useEffect(() => {
     let keyBuffer = [];
     let timer = null;
@@ -285,6 +367,7 @@ export default function CamPage() {
       if (lastTwo === "ㄷㄹ") {
         setIsCalendarOpen((prev) => !prev);
         keyBuffer = [];
+        e.preventDefault();
       }
 
       clearTimeout(timer);
@@ -300,64 +383,42 @@ export default function CamPage() {
     };
   }, []);
 
-  const [calendarDate, setCalendarDate] = useState(new Date(2026, 7, 27));
-  const calYear = calendarDate.getFullYear();
-  const calMonth = calendarDate.getMonth();
-
-  const moveMiniMonth = (amount) => {
-    setCalendarDate(new Date(calYear, calMonth + amount, 1));
-  };
-
-  const [groupSchedules, setGroupSchedules] = useState([]);
-  const [messages, setMessages] = useState([
-    { id: 1, text: "스터디룸에 입장했습니다.", isSystem: true }
-  ]);
-  const [inputMessage, setInputMessage] = useState("");
-
-  const [nickname, setNickname] = useState(() => {
-    const nick = localStorage.getItem("userNickname");
-    const email = localStorage.getItem("userEmail");
-    if (nick && nick.trim()) return nick.trim();
-    if (email && email.trim()) return email.includes("@") ? email.split("@")[0] : email.trim();
-    return "게스트";
-  });
-
   const handleKakaoInvite = () => {
-      if (!window.Kakao) {
-        alert("카카오 SDK가 아직 로드되지 않았습니다. 잠시 후 다시 시도해 주세요.");
-        return;
-      }
+    if (!window.Kakao) {
+      alert("카카오 SDK가 아직 로드되지 않았습니다. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
 
-      if (!window.Kakao.isInitialized()) {
-        window.Kakao.init(KAKAO_JS_KEY);
-      }
+    if (!window.Kakao.isInitialized()) {
+      window.Kakao.init(KAKAO_JS_KEY);
+    }
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const roomId = urlParams.get("roomId") || "default-room";
-      const inviteUrl = `${window.location.origin}/streaming/cam?roomId=${roomId}`;
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get("roomId") || "default-room";
+    const inviteUrl = `${window.location.origin}/streaming/cam?roomId=${roomId}`;
 
-      window.Kakao.Share.sendDefault({
-        objectType: "feed",
-        content: {
-          title: "👥 [이지스] 실시간 화상 스터디 초대",
-          description: `${nickname}님이 화상 스터디룸으로 초대했습니다. 함께 참여해 주세요!`,
-          imageUrl: "https://t1.daumcdn.net/kakaotalk/resource/tmpl/default/friends.png",
+    window.Kakao.Share.sendDefault({
+      objectType: "feed",
+      content: {
+        title: "👥 [이지스] 실시간 화상 스터디 초대",
+        description: `${nickname}님이 화상 스터디룸으로 초대했습니다. 함께 참여해 주세요!`,
+        imageUrl: "https://t1.daumcdn.net/kakaotalk/resource/tmpl/default/friends.png",
+        link: {
+          mobileWebUrl: inviteUrl,
+          webUrl: inviteUrl,
+        },
+      },
+      buttons: [
+        {
+          title: "스터디룸 입장하기",
           link: {
             mobileWebUrl: inviteUrl,
             webUrl: inviteUrl,
           },
         },
-        buttons: [
-          {
-            title: "스터디룸 입장하기",
-            link: {
-              mobileWebUrl: inviteUrl,
-              webUrl: inviteUrl,
-            },
-          },
-        ],
-      });
-    };
+      ],
+    });
+  };
 
   useEffect(() => {
     const fetchGroupSchedules = async () => {
@@ -399,61 +460,59 @@ export default function CamPage() {
     fetchMe();
   }, []);
 
-  const sendSpeechChat = (transcriptText) => {
-    if (!transcriptText.trim()) return;
-
-    const now = new Date();
-    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-
-    const msgData = {
-      type: "chat",
-      senderId: myIdRef.current,
-      nickname: nickname,
-      text: `🎙️ ${transcriptText}`,
-      image: null,
-      time: timeStr
-    };
-
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify(msgData));
+  const handleToggleAudio = async () => {
+    if (localStreamRef.current) {
+      const audioTracks = localStreamRef.current.getAudioTracks();
+      if (audioTracks.length > 0) {
+        const nextState = !audioTracks[0].enabled;
+        audioTracks[0].enabled = nextState;
+        setIsAudioActive(nextState);
+        return;
+      }
     }
 
-    setMessages((prev) => [...prev, { id: Date.now(), ...msgData, isMe: true }]);
-  };
-
-  const toggleStt = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("현재 브라우저는 음성 인식을 지원하지 않습니다.");
-      return;
-    }
-
-    if (isSttActive) {
-      recognitionRef.current?.stop();
-      setIsSttActive(false);
+    if (isAudioActive) {
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach((track) => track.stop());
+        audioStreamRef.current = null;
+      }
+      setIsAudioActive(false);
     } else {
-      const recognition = new SpeechRecognition();
-      recognition.lang = "ko-KR";
-      recognition.continuous = true;
-      recognition.interimResults = false;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioStreamRef.current = stream;
 
-      recognition.onresult = (event) => {
-        const lastResult = event.results[event.results.length - 1];
-        if (lastResult.isFinal) {
-          const transcript = lastResult[0].transcript.trim();
-          sendSpeechChat(transcript);
+        if (localStreamRef.current) {
+          stream.getAudioTracks().forEach(track => {
+            localStreamRef.current.addTrack(track);
+          });
+        } else {
+          localStreamRef.current = stream;
+          setLocalStream(stream);
         }
-      };
 
-      recognition.onend = () => {
-        if (isSttActive) {
-          try { recognition.start(); } catch (err) {}
+        setIsAudioActive(true);
+
+        Object.values(pcsRef.current).forEach((pc) => {
+          stream.getTracks().forEach((track) => {
+            pc.addTrack(track, stream);
+          });
+        });
+
+        if (socketRef.current?.readyState === WebSocket.OPEN) {
+          remoteUsersRef.current.forEach((peerId, index) => {
+            setTimeout(() => {
+              socketRef.current.send(JSON.stringify({
+                type: "request-stream",
+                senderId: myIdRef.current,
+                target: peerId
+              }));
+            }, index * 200);
+          });
         }
-      };
-
-      recognition.start();
-      recognitionRef.current = recognition;
-      setIsSttActive(true);
+      } catch (err) {
+        alert("마이크 권한을 허용해주세요.");
+      }
     }
   };
 
@@ -485,6 +544,7 @@ export default function CamPage() {
         }));
       }
     };
+
     pc.onicecandidate = (event) => {
       if (event.candidate && socketRef.current?.readyState === WebSocket.OPEN) {
         socketRef.current.send(JSON.stringify({
@@ -533,7 +593,10 @@ export default function CamPage() {
   useEffect(() => {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${hostname}:8080/signal`;
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get("roomId") || "default-room";
+
+    const wsUrl = `${protocol}//${hostname}:8080/signal?roomId=${roomId}`;
     const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
 
@@ -670,18 +733,27 @@ export default function CamPage() {
             return updated;
           });
         } else if (data.type === "chat") {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now() + Math.random(),
-              nickname: data.nickname,
-              text: data.text,
-              image: data.image,
-              time: data.time,
-              isSystem: data.isSystem || false,
-              isMe: false
-            }
-          ]);
+          const isMine = data.senderId === myIdRef.current;
+          setMessages((prev) => {
+            const isDuplicate = prev.slice(-3).some(
+                (m) => m.text === data.text && m.nickname === data.nickname && m.time === data.time
+            );
+            if (isDuplicate) return prev;
+
+            return [
+              ...prev,
+              {
+                id: Date.now() + Math.random(),
+                nickname: data.nickname,
+                text: data.text,
+                image: data.image,
+                file: data.file,
+                time: data.time,
+                isSystem: data.isSystem || false,
+                isMe: isMine
+              }
+            ];
+          });
         } else if (data.type === "whisper") {
           const senderId = data.senderId;
           const senderNick = data.nickname || senderId.substring(0, 4);
@@ -708,7 +780,7 @@ export default function CamPage() {
       }
       ws.close();
     };
-  }, []);
+  }, [location.search]);
 
   const stopStream = () => {
     if (localStreamRef.current) {
@@ -764,6 +836,64 @@ export default function CamPage() {
       }
     } catch (err) {
       alert("카메라 또는 화면 공유 권한을 허용해주세요.");
+    }
+  };
+
+  const sendSpeechChat = (transcriptText) => {
+    if (!transcriptText.trim()) return;
+
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+    const msgData = {
+      type: "chat",
+      senderId: myIdRef.current,
+      nickname: nickname,
+      text: `🎙️ ${transcriptText}`,
+      image: null,
+      time: timeStr
+    };
+
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(msgData));
+    }
+
+    setMessages((prev) => [...prev, { id: Date.now(), ...msgData, isMe: true }]);
+  };
+
+  const toggleStt = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("현재 브라우저는 음성 인식을 지원하지 않습니다.");
+      return;
+    }
+
+    if (isSttActive) {
+      recognitionRef.current?.stop();
+      setIsSttActive(false);
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "ko-KR";
+      recognition.continuous = true;
+      recognition.interimResults = false;
+
+      recognition.onresult = (event) => {
+        const lastResult = event.results[event.results.length - 1];
+        if (lastResult.isFinal) {
+          const transcript = lastResult[0].transcript.trim();
+          sendSpeechChat(transcript);
+        }
+      };
+
+      recognition.onend = () => {
+        if (isSttActive) {
+          try { recognition.start(); } catch (err) {}
+        }
+      };
+
+      recognition.start();
+      recognitionRef.current = recognition;
+      setIsSttActive(true);
     }
   };
 
@@ -839,12 +969,21 @@ export default function CamPage() {
   }, [messages]);
 
   const totalUsers = 1 + remoteUsers.length;
-  const chatBottomRef = useRef(null);
 
   return (
       <main className="cam-study-container">
-        <section className="cam-header">
-          <h2>👥 실시간 스터디룸 (접속자: {totalUsers}명)</h2>
+        <section className="cam-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "700", display: "flex", alignItems: "center", gap: "8px" }}>
+              👥 {roomInfo.title} <span style={{ fontSize: "12px", background: "#e0e7ff", color: "#4f46e5", padding: "2px 8px", borderRadius: "12px", fontWeight: "600" }}>접속자: {totalUsers}명</span>
+            </h2>
+            {roomInfo.description && (
+                <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
+                  📝 {roomInfo.description}
+                </p>
+            )}
+          </div>
+
           <div style={{ display: "flex", gap: "8px" }}>
             <button type="button" className="btn-kakao-invite" onClick={handleKakaoInvite}>
               <span>💬 카카오톡 초대</span>
@@ -856,6 +995,14 @@ export default function CamPage() {
                 onClick={() => setIsMapOpen((prev) => !prev)}
             >
               <span>🗺️ {isMapOpen ? "지도 닫기" : "지도 보기"}</span>
+            </button>
+            <button
+                type="button"
+                className="btn-kakao-invite"
+                style={{ background: "#ef4444", color: "#fff" }}
+                onClick={handleLeaveRoom}
+            >
+              <span>🚪 방 나가기</span>
             </button>
           </div>
         </section>
@@ -872,18 +1019,59 @@ export default function CamPage() {
                 shareMode={shareMode}
                 isSttActive={isSttActive}
                 toggleStt={toggleStt}
+                isAudioActive={isAudioActive}
+                onToggleAudio={handleToggleAudio}
             />
 
             {remoteUsers.map((peerId) => (
-                <VideoCard
-                    key={peerId}
-                    peerId={peerId}
-                    label={`참가자 (${remoteNicknames[peerId] || peerId.substring(0, 4)})`}
-                    isLocal={false}
-                    stream={remoteStreams[peerId] || null}
-                    shareMode="idle"
-                    onOpenWhisper={openWhisperChat}
-                />
+                <div key={peerId} style={{ display: "flex", flexDirection: "column", gap: "10px", width: "480px" }}>
+                  <VideoCard
+                      peerId={peerId}
+                      label={`참가자 (${remoteNicknames[peerId] || peerId.substring(0, 4)})`}
+                      isLocal={false}
+                      stream={remoteStreams[peerId] || null}
+                      shareMode="idle"
+                      onOpenWhisper={openWhisperChat}
+                  />
+
+                  {activeWhisperId === peerId && (
+                      <div className="ai-sub-chat-panel" style={{ height: "240px", width: "100%", display: "flex", flexDirection: "column", border: "2px solid #4f46e5", borderRadius: "12px", background: "#fff", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
+                        <div className="chat-header" style={{ background: "#4f46e5", padding: "8px 12px" }}>
+                          <span>🔒 귓속말 ({remoteNicknames[peerId] || peerId.substring(0, 4)})</span>
+                          <button
+                              type="button"
+                              onClick={() => setActiveWhisperId(null)}
+                              style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "14px", fontWeight: "bold" }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        <div className="chat-messages-container" style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                          {(whisperMessages[activeWhisperId] || []).map((msg, idx) => (
+                              <div key={idx} className={`chat-bubble-row ${msg.sender === "me" ? "me" : "other"}`}>
+                                <div className="chat-bubble">
+                                  {msg.text}
+                                </div>
+                              </div>
+                          ))}
+                        </div>
+
+                        <form onSubmit={handleSendWhisper} style={{ padding: "6px 10px", background: "#fff", borderTop: "1px solid #e0e0e0" }}>
+                          <div className="chat-input-form" style={{ margin: 0 }}>
+                            <input
+                                type="text"
+                                className="chat-text-input"
+                                placeholder="비밀 메시지 입력..."
+                                value={whisperInput}
+                                onChange={(e) => setWhisperInput(e.target.value)}
+                            />
+                            <button type="submit" className="chat-send-btn">전송</button>
+                          </div>
+                        </form>
+                      </div>
+                  )}
+                </div>
             ))}
           </div>
 
@@ -931,47 +1119,8 @@ export default function CamPage() {
                   <button type="submit" className="chat-send-btn">전송</button>
                 </form>
               </div>
-
-              {activeWhisperId && (
-                  <div className="ai-sub-chat-panel" style={{ height: "540px", width: "320px", flexShrink: 0, display: "flex", flexDirection: "column", border: "2px solid #4f46e5" }}>
-                    <div className="chat-header" style={{ background: "#4f46e5" }}>
-                      <span>🔒 귓속말 ({remoteNicknames[activeWhisperId] || activeWhisperId.substring(0, 4)})</span>
-                      <button
-                          type="button"
-                          onClick={() => setActiveWhisperId(null)}
-                          style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "14px", fontWeight: "bold" }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="chat-messages-container" style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                      {(whisperMessages[activeWhisperId] || []).map((msg, idx) => (
-                          <div key={idx} className={`chat-bubble-row ${msg.sender === "me" ? "me" : "other"}`}>
-                            <div className="chat-bubble">
-                              {msg.text}
-                            </div>
-                          </div>
-                      ))}
-                    </div>
-
-                    <form onSubmit={handleSendWhisper} style={{ padding: "8px 12px", background: "#fff", borderTop: "1px solid #e0e0e0" }}>
-                      <div className="chat-input-form" style={{ margin: 0 }}>
-                        <input
-                            type="text"
-                            className="chat-text-input"
-                            placeholder="비밀 메시지 입력..."
-                            value={whisperInput}
-                            onChange={(e) => setWhisperInput(e.target.value)}
-                        />
-                        <button type="submit" className="chat-send-btn">전송</button>
-                      </div>
-                    </form>
-                  </div>
-              )}
             </div>
 
-            {/* Leaflet 미니맵 패널 */}
             {isMapOpen && (
                 <div style={{ width: "100%", height: "260px", background: "#fff", border: "2px solid #ef4444", borderRadius: "16px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
                   <div style={{ background: "#ef4444", color: "#fff", padding: "8px 14px", fontSize: "12px", fontWeight: "700", display: "flex", justifyContent: "space-between" }}>
@@ -983,16 +1132,15 @@ export default function CamPage() {
                       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                       <MapRecenter center={[mapCenter.lat, mapCenter.lng]} />
                       {searchPlaces.map((p) => (
-                        <Marker key={p.id} position={[p.lat, p.lng]}>
-                          <Popup>{p.name}</Popup>
-                        </Marker>
+                          <Marker key={p.id} position={[p.lat, p.lng]}>
+                            <Popup>{p.name}</Popup>
+                          </Marker>
                       ))}
                     </MapContainer>
                   </div>
                 </div>
             )}
 
-            {/* Leaflet 크게 보기 모달 */}
             {isMapModalOpen && (
                 <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ width: "85vw", height: "85vh", background: "#fff", borderRadius: "16px", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 12px 32px rgba(0,0,0,0.3)" }}>
@@ -1025,15 +1173,15 @@ export default function CamPage() {
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                           {searchPlaces.map((place) => (
-                            <div
-                              key={place.id}
-                              onClick={() => setMapCenter({ lat: place.lat, lng: place.lng })}
-                              style={{ background: "#fff", padding: "10px", borderRadius: "8px", border: "1px solid #e5e7eb", cursor: "pointer" }}
-                            >
-                              <div style={{ fontWeight: "700", fontSize: "13px", color: "#111827" }}>{place.name}</div>
-                              <div style={{ fontSize: "11px", color: "#4b5563", marginTop: "2px" }}>{place.address}</div>
-                              <div style={{ fontSize: "10px", color: "#9ca3af", marginTop: "2px" }}>📞 {place.phone}</div>
-                            </div>
+                              <div
+                                  key={place.id}
+                                  onClick={() => setMapCenter({ lat: place.lat, lng: place.lng })}
+                                  style={{ background: "#fff", padding: "10px", borderRadius: "8px", border: "1px solid #e5e7eb", cursor: "pointer" }}
+                              >
+                                <div style={{ fontWeight: "700", fontSize: "13px", color: "#111827" }}>{place.name}</div>
+                                <div style={{ fontSize: "11px", color: "#4b5563", marginTop: "2px" }}>{place.address}</div>
+                                <div style={{ fontSize: "10px", color: "#9ca3af", marginTop: "2px" }}>📞 {place.phone}</div>
+                              </div>
                           ))}
                         </div>
                       </div>
@@ -1042,9 +1190,9 @@ export default function CamPage() {
                           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                           <MapRecenter center={[mapCenter.lat, mapCenter.lng]} />
                           {searchPlaces.map((p) => (
-                            <Marker key={p.id} position={[p.lat, p.lng]}>
-                              <Popup>{p.name}</Popup>
-                            </Marker>
+                              <Marker key={p.id} position={[p.lat, p.lng]}>
+                                <Popup>{p.name}</Popup>
+                              </Marker>
                           ))}
                         </MapContainer>
                       </div>

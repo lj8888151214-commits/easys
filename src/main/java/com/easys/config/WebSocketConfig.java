@@ -78,15 +78,13 @@ public class WebSocketConfig implements WebSocketConfigurer {
     }
 
     public static class SignalWebSocketHandler extends TextWebSocketHandler {
-        // 방 번호별로 세션 관리 (Key: roomId, Value: 세션맵)
         private static final Map<String, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
-        private static final Map<String, String> sessionRooms = new ConcurrentHashMap<>(); // 세션ID -> 방ID
+        private static final Map<String, String> sessionRooms = new ConcurrentHashMap<>();
         private static final Map<String, String> userNicknames = new ConcurrentHashMap<>();
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Override
         public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-            // URL 쿼리에서 roomId 파싱 (예: /signal?roomId=123)
             String query = session.getUri().getQuery();
             String roomId = "default-room";
             if (query != null) {
@@ -174,7 +172,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
             if (roomId != null && rooms.containsKey(roomId)) {
                 rooms.get(roomId).remove(session.getId());
 
-                // 🌟 방에 남은 사람이 0명이면 메모리(rooms)와 스트림 목록(StreamController)에서 완전 삭제
                 if (rooms.get(roomId).isEmpty()) {
                     rooms.remove(roomId);
                     com.easys.controller.StreamController.removeStream(roomId);
@@ -217,7 +214,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
             } catch (Exception e) {}
         }
 
-        // 🌟 모든 클라이언트에게 실시간 방송 목록 전송 (클래스 내부로 정상 이동됨)
         public static void broadcastStreamList(List<Map<String, Object>> streams) {
             try {
                 String payload = new ObjectMapper().writeValueAsString(Map.of(
