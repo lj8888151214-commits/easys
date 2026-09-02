@@ -36,6 +36,8 @@ const TIME_SLOTS = Array.from(
 
 const WEEKDAY_LABEL = ["일", "월", "화", "수", "목", "금", "토"];
 
+const ROOMS_PAGE_SIZE = 12;
+
 function buildDateOptions() {
   const days = [];
   const today = new Date();
@@ -85,6 +87,7 @@ function StudyReservation() {
   // 검색 / 필터
   const [keyword, setKeyword] = useState("");
   const [activeRegion, setActiveRegion] = useState("전체");
+  const [roomsPage, setRoomsPage] = useState(1);
 
   // 선택 상태
   const [selectedPlace, setSelectedPlace] = useState(null);
@@ -176,6 +179,16 @@ function StudyReservation() {
       region.keywords.some((keyword) => room.location.includes(keyword))
     );
   }, [rooms, activeRegion]);
+
+  // 검색어/지역 필터가 바뀌면 1페이지로 되돌린다
+  useEffect(() => {
+    setRoomsPage(1);
+  }, [filteredRooms]);
+
+  const roomsTotalPages = Math.max(1, Math.ceil(filteredRooms.length / ROOMS_PAGE_SIZE));
+  const roomsCurrentPage = Math.min(roomsPage, roomsTotalPages);
+  const roomsPageStart = (roomsCurrentPage - 1) * ROOMS_PAGE_SIZE;
+  const pagedRooms = filteredRooms.slice(roomsPageStart, roomsPageStart + ROOMS_PAGE_SIZE);
 
   /* ================================
      선택한 장소가 바뀌면 초기화
@@ -338,16 +351,39 @@ function StudyReservation() {
     }
   };
 
-  const isSlotTaken = (slot) => {
+  // 스터디룸은 통째로 빌리는 게 아니라 정원(maxCapacity)까지 여러 사람이
+  // 같은 시간대를 나눠 쓸 수 있으므로, 겹치는 예약이 있다고 바로 마감
+  // 처리하지 않고 "이미 찬 인원"을 뺀 잔여 좌석 수로 판단한다.
+  const getRemainingCapacity = (slot) => {
+    if (!selectedPlace) return 0;
+
     const slotStart = toMinutes(slot.startTime);
     const slotEnd = toMinutes(slot.endTime);
 
-    return reservedTimes.some((reservation) => {
+    const reservedPeople = reservedTimes.reduce((sum, reservation) => {
       const reservedStart = toMinutes(reservation.startTime.slice(0, 5));
       const reservedEnd = toMinutes(reservation.endTime.slice(0, 5));
 
-      return slotStart < reservedEnd && slotEnd > reservedStart;
-    });
+      const overlaps = slotStart < reservedEnd && slotEnd > reservedStart;
+
+      return overlaps ? sum + reservation.peopleCount : sum;
+    }, 0);
+
+    return selectedPlace.maxCapacity - reservedPeople;
+  };
+
+  // 오늘 날짜를 선택했을 때, 이미 지난 시간대는 애초에 선택하지 못하도록 막는다
+  // (서버도 동일하게 막지만, 눌러보고 나서야 에러를 보게 하는 대신 미리 비활성화한다).
+  const isPastSlot = (slot) => {
+    const now = new Date();
+    const todayValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+      now.getDate()
+    ).padStart(2, "0")}`;
+
+    if (selectedDate !== todayValue) return false;
+
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    return toMinutes(slot.startTime) < nowMinutes;
   };
 
   /* ================================
@@ -366,6 +402,15 @@ function StudyReservation() {
       return next;
     });
   };
+
+  // 인원수를 늘렸을 때 이미 선택해둔 시간대가 잔여 좌석보다 커지면
+  // 선택을 풀어서 다시 고르게 한다.
+  useEffect(() => {
+    if (selectedSlot && getRemainingCapacity(selectedSlot) < peopleCount) {
+      setSelectedSlot(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [peopleCount]);
 
   /* ================================
      예약 요약 계산
@@ -389,6 +434,7 @@ function StudyReservation() {
     !!selectedSlot &&
     peopleCount >= selectedPlace.minCapacity &&
     peopleCount <= selectedPlace.maxCapacity &&
+    getRemainingCapacity(selectedSlot) >= peopleCount &&
     !submitting;
 
   /* ================================
@@ -438,12 +484,11 @@ function StudyReservation() {
         );
       }
 
-      alert("예약이 접수되었습니다. 결제 완료 시 예약이 확정됩니다.");
-
-      if (data) {
-        setReservedTimes((prev) => [...prev, data]);
+      if (!data || !data.id) {
+        throw new Error("예약에 실패했습니다.");
       }
-      setSelectedSlot(null);
+
+      navigate(`/payment?type=study&id=${data.id}`);
     } catch (error) {
       console.error("예약 생성 오류:", error);
       setReservationError(error.message || "예약에 실패했습니다.");
@@ -629,7 +674,7 @@ function StudyReservation() {
           {!loadingRooms && !roomsError && filteredRooms.length > 0 && (
             <div className="place-grid">
 
-              {filteredRooms.map((place) => (
+              {pagedRooms.map((place) => (
                 <article
                   className={`place-card ${
                     selectedPlace?.id === place.id ? "selected" : ""
@@ -706,6 +751,41 @@ function StudyReservation() {
             </div>
           )}
 
+          {!loadingRooms && !roomsError && roomsTotalPages > 1 && (
+            <nav className="place-pagination" aria-label="스터디룸 목록 페이지">
+              <button
+                type="button"
+                className="place-pagination-arrow"
+                disabled={roomsCurrentPage === 1}
+                onClick={() => setRoomsPage(roomsCurrentPage - 1)}
+              >
+                ‹
+              </button>
+
+              {Array.from({ length: roomsTotalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  type="button"
+                  key={page}
+                  className={`place-pagination-page ${
+                    page === roomsCurrentPage ? "active" : ""
+                  }`}
+                  onClick={() => setRoomsPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                className="place-pagination-arrow"
+                disabled={roomsCurrentPage === roomsTotalPages}
+                onClick={() => setRoomsPage(roomsCurrentPage + 1)}
+              >
+                ›
+              </button>
+            </nav>
+          )}
+
         </div>
 
 
@@ -765,7 +845,10 @@ function StudyReservation() {
               <div className="time-list">
 
                 {TIME_SLOTS.map((slot) => {
-                  const taken = isSlotTaken(slot);
+                  const past = isPastSlot(slot);
+                  const remaining = getRemainingCapacity(slot);
+                  const full = !past && remaining <= 0;
+                  const notEnoughSeats = !past && !full && remaining < peopleCount;
                   const isActive =
                     selectedSlot?.startTime === slot.startTime &&
                     selectedSlot?.endTime === slot.endTime;
@@ -775,11 +858,13 @@ function StudyReservation() {
                       type="button"
                       key={`${slot.startTime}-${slot.endTime}`}
                       className={isActive ? "active" : ""}
-                      disabled={taken}
+                      disabled={past || full || notEnoughSeats}
                       onClick={() => setSelectedSlot(slot)}
                     >
                       <span>{slot.startTime} - {slot.endTime}</span>
-                      {taken && <small>예약마감</small>}
+                      {past && <small>지난 시간</small>}
+                      {full && <small>예약마감</small>}
+                      {notEnoughSeats && <small>잔여 {remaining}명</small>}
                     </button>
                   );
                 })}

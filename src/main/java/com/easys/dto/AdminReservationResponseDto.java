@@ -9,9 +9,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-public record ReservationResponseDto(
+// 관리자 페이지에서 "누가 몇 시에 어느 스터디룸을 예약했는지"를
+// 한눈에 보여주기 위한 응답 DTO.
+public record AdminReservationResponseDto(
 
         Long id,
+
+        Long memberId,
+
+        String memberNickname,
+
+        String memberEmail,
 
         Long studyRoomId,
 
@@ -31,26 +39,18 @@ public record ReservationResponseDto(
 
         ReservationStatus status,
 
-        Long personalScheduleId,
-
-        LocalDateTime createdAt,
-
-        // 결제 관련 정보 (연결된 Payment가 없으면 모두 null)
-        String orderId,
-
         String paymentStatus,
 
-        Integer amount
+        LocalDateTime createdAt
 ) {
 
-    public static ReservationResponseDto from(Reservation reservation) {
-        return from(reservation, null);
-    }
+    public static AdminReservationResponseDto from(Reservation reservation, Payment payment) {
 
-    public static ReservationResponseDto from(Reservation reservation, Payment payment) {
-
-        return new ReservationResponseDto(
+        return new AdminReservationResponseDto(
                 reservation.getId(),
+                reservation.getMember().getId(),
+                reservation.getMember().getNickname(),
+                reservation.getMember().getEmail(),
                 reservation.getStudyRoom().getId(),
                 reservation.getStudyRoom().getName(),
                 reservation.getStudyRoom().getLocation(),
@@ -60,13 +60,8 @@ public record ReservationResponseDto(
                 reservation.getPeopleCount(),
                 reservation.getTotalPrice(),
                 reservation.getStatus(),
-                reservation.getPersonalSchedule() != null
-                        ? reservation.getPersonalSchedule().getId()
-                        : null,
-                reservation.getCreatedAt(),
-                payment == null ? null : payment.getOrderId(),
                 payment == null ? null : payment.getStatus().name(),
-                payment == null ? null : payment.getAmount()
+                reservation.getCreatedAt()
         );
     }
 }

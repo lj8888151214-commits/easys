@@ -245,9 +245,22 @@
   color: #a35c50;
 }
 
+.admin-status.pending {
+  background: #edf1ed;
+  color: #8a958d;
+}
+
+.admin-status.paid {
+  background: #f3e9d2;
+  color: #93701f;
+}
+
 .admin-row-actions {
   display: flex;
+  align-items: center;
   gap: 6px;
+  min-width: 120px;
+  color: #c3cac5;
 }
 
 .admin-row-actions button {
@@ -279,6 +292,23 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.admin-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.admin-cell-stack strong {
+  color: #2e4033;
+  font-size: 13px;
+}
+
+.admin-cell-stack small {
+  color: #8a958d;
+  font-size: 11px;
 }
 
 .admin-comment-panel {

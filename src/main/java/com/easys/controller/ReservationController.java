@@ -122,25 +122,6 @@ public class ReservationController {
     }
 
     /*
-     * 결제 성공 후 예약 확정
-     *
-     * 결제 담당자가 결제 성공 시 호출할 API
-     *
-     * 현재는 개발 단계이므로 단순 endpoint로 만들어둔다.
-     */
-    @PostMapping("/{reservationId}/confirm")
-    public ResponseEntity<?> confirmReservation(
-            @PathVariable Long reservationId
-    ) {
-
-        return ResponseEntity.ok(
-                reservationService.confirmReservation(
-                        reservationId
-                )
-        );
-    }
-
-    /*
      * 예약 취소
      */
     @DeleteMapping("/{reservationId}")
