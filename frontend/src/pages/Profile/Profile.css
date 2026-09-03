@@ -290,6 +290,7 @@
 
 .secondary-button {
   width: 100%;
+  margin-top: 15px;
   padding: 13px;
   border: 1px solid #dce5de;
   border-radius: 10px;
@@ -303,12 +304,6 @@
 .secondary-button:hover {
   background: #f1f5f2;
   border-color: #b9c8bc;
-}
-
-.security-card p {
-  margin: 0 0 20px;
-  color: #89958d;
-  font-size: 14px;
 }
 
 /* =====================================================

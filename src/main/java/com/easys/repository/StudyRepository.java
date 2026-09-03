@@ -15,6 +15,8 @@ public interface StudyRepository
 
     // 최신 스터디부터 조회
     List<Study> findAllByOrderByCreatedAtDesc();
+    // 내가 만든(방장인) 스터디, 최신순
+    List<Study> findByMemberIdOrderByCreatedAtDesc(Long memberId);
     // 제목으로 검색
     List<Study> findByTitleContainingIgnoreCase(String keyword);
     // 분야로 검색

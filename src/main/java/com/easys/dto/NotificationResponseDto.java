@@ -10,6 +10,7 @@ public record NotificationResponseDto(
         String content,
         String type,
         Long targetId,
+        Long studyId,
         boolean read,
         LocalDateTime createdAt
 ) {
@@ -22,6 +23,7 @@ public record NotificationResponseDto(
                 notification.getContent(),
                 notification.getType(),
                 notification.getTargetId(),
+                notification.getStudyId(),
                 notification.isRead(),
                 notification.getCreatedAt()
         );

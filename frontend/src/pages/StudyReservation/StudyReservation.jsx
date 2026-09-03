@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import "./StudyReservation.css";
 import studyReservationBg from "../../assets/images/StudyReservation.jpg";
 
@@ -21,6 +21,11 @@ const REGIONS = [
 const RESERVATION_START_HOUR = 9;
 const RESERVATION_END_HOUR = 23;
 
+// 이용 시작 후 10분까지만 신규 예약 가능 (백엔드 ReservationService의
+// RESERVATION_GRACE_PERIOD_MINUTES와 동일한 기준. 실제 최종 검증은 반드시
+// 서버에서 이루어지며, 여기서는 UX 보조용으로 미리 비활성화만 한다).
+const RESERVATION_GRACE_PERIOD_MINUTES = 10;
+
 const TIME_SLOTS = Array.from(
   { length: RESERVATION_END_HOUR - RESERVATION_START_HOUR },
   (_, index) => {
@@ -40,7 +45,7 @@ function buildDateOptions() {
   const days = [];
   const today = new Date();
 
-  for (let i = 0; i < 7; i += 1) {
+  for (let i = 0; i < 14; i += 1) {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
 
@@ -72,10 +77,19 @@ function formatReviewDate(dateTime) {
 
 function StudyReservation() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const studyId = searchParams.get("studyId");
+  const isStudyMode = !!studyId;
 
   const [scrollY, setScrollY] = useState(0);
 
   const dateOptions = useMemo(() => buildDateOptions(), []);
+
+  // 스터디 예약 모드 전용 상태
+  const [study, setStudy] = useState(null);
+  const [studyLoading, setStudyLoading] = useState(isStudyMode);
+  const [studyError, setStudyError] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
 
   // 스터디룸 목록
   const [rooms, setRooms] = useState([]);
@@ -89,7 +103,9 @@ function StudyReservation() {
   // 선택 상태
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [selectedDate, setSelectedDate] = useState(dateOptions[0].value);
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  // 선택된 시작 시각들 (예: ["15:00", "16:00"]). 각 시각을 개별로
+  // 선택/해제할 수 있고, 연속된 시간을 선택하면 그만큼 이용 시간이 된다.
+  const [selectedHours, setSelectedHours] = useState([]);
   const [peopleCount, setPeopleCount] = useState(1);
 
   // 예약 가능 시간 조회
@@ -165,7 +181,7 @@ function StudyReservation() {
   };
 
   // 지역 필터는 이미 불러온 목록 안에서 클라이언트 사이드로 걸러낸다
-  const filteredRooms = useMemo(() => {
+  const displayRooms = useMemo(() => {
     const region = REGIONS.find((item) => item.label === activeRegion);
 
     if (!region || region.keywords.length === 0) {
@@ -177,23 +193,80 @@ function StudyReservation() {
     );
   }, [rooms, activeRegion]);
 
+
+  // 검색어/지역 필터가 바뀌면 1페이지로 되돌린다
+  useEffect(() => {
+    setRoomsPage(1);
+  }, [displayRooms]);
+
+  const roomsTotalPages = Math.max(1, Math.ceil(displayRooms.length / ROOMS_PAGE_SIZE));
+  const roomsCurrentPage = Math.min(roomsPage, roomsTotalPages);
+  const roomsPageStart = (roomsCurrentPage - 1) * ROOMS_PAGE_SIZE;
+  const pagedRooms = displayRooms.slice(roomsPageStart, roomsPageStart + ROOMS_PAGE_SIZE);
+
   /* ================================
-     선택한 장소가 바뀌면 초기화
+     스터디 예약 모드: 스터디 정보 + 현재 사용자 조회
   ================================= */
 
   useEffect(() => {
-    setSelectedSlot(null);
+    if (!isStudyMode) return;
+
+    const loadStudyAndUser = async () => {
+      try {
+        setStudyLoading(true);
+        setStudyError("");
+
+        const [studyRes, userRes] = await Promise.all([
+          fetch(`${API_BASE}/study/${studyId}`, { credentials: "include" }),
+          fetch(`${API_BASE}/member/me`, { credentials: "include" }),
+        ]);
+
+        if (!studyRes.ok) {
+          throw new Error("스터디 정보를 불러오지 못했습니다.");
+        }
+
+        const studyData = await studyRes.json();
+        setStudy(studyData);
+        setPeopleCount(Math.max(1, Number(studyData.currentMembers) || 1));
+
+        if (userRes.ok) {
+          setCurrentUser(await userRes.json());
+        } else {
+          setCurrentUser(null);
+        }
+      } catch (error) {
+        console.error("스터디 정보 조회 오류:", error);
+        setStudyError(error.message || "스터디 정보를 불러오지 못했습니다.");
+      } finally {
+        setStudyLoading(false);
+      }
+    };
+
+    loadStudyAndUser();
+  }, [isStudyMode, studyId]);
+
+  const isStudyOwner =
+    !!study && !!currentUser && Number(study.memberId) === Number(currentUser.id);
+
+
+  /* ================================
+     선택한 장소 / 날짜가 바뀌면 시간 선택 초기화
+  ================================= */
+
+  useEffect(() => {
+    setSelectedHours([]);
     setReservationError("");
 
-    if (selectedPlace) {
+    if (selectedPlace && !isStudyMode) {
       setPeopleCount(selectedPlace.minCapacity);
-    } else {
+    } else if (!selectedPlace && !isStudyMode) {
       setPeopleCount(1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPlace]);
 
   useEffect(() => {
-    setSelectedSlot(null);
+    setSelectedHours([]);
   }, [selectedDate]);
 
   /* ================================
@@ -346,8 +419,32 @@ function StudyReservation() {
       const reservedStart = toMinutes(reservation.startTime.slice(0, 5));
       const reservedEnd = toMinutes(reservation.endTime.slice(0, 5));
 
+
       return slotStart < reservedEnd && slotEnd > reservedStart;
     });
+
+      const overlaps = slotStart < reservedEnd && slotEnd > reservedStart;
+
+      return overlaps ? sum + reservation.peopleCount : sum;
+    }, 0);
+
+    return selectedPlace.maxCapacity - reservedPeople;
+  };
+
+  // 이용 시작 후 여유 시간(10분)이 지난 시간대는 신규 예약 대상에서 제외한다.
+  // (서버도 동일하게 최종 검증하지만, 눌러보고 나서야 에러를 보게 하는
+  // 대신 미리 비활성화한다.)
+  const isSlotPastDeadline = (slot) => {
+    const slotStart = new Date(`${selectedDate}T${slot.startTime}:00`);
+
+    if (Number.isNaN(slotStart.getTime())) return true;
+
+    const deadline = new Date(
+      slotStart.getTime() + RESERVATION_GRACE_PERIOD_MINUTES * 60 * 1000
+    );
+
+    return new Date() >= deadline;
+
   };
 
   /* ================================
@@ -367,28 +464,94 @@ function StudyReservation() {
     });
   };
 
+
+
+  // 인원수를 늘렸을 때 이미 선택해둔 시간대 중 잔여 좌석이 부족해진
+  // 시간대가 있으면 선택에서 제외한다.
+  useEffect(() => {
+    setSelectedHours((prev) =>
+      prev.filter((startTime) => {
+        const slot = TIME_SLOTS.find((s) => s.startTime === startTime);
+        return !!slot && getRemainingCapacity(slot) >= peopleCount;
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [peopleCount]);
+
+
+  /* ================================
+     시간 선택/해제 (여러 시간대를 각각 토글)
+  ================================= */
+
+  const toggleHour = (slot) => {
+    setSelectedHours((prev) =>
+      prev.includes(slot.startTime)
+        ? prev.filter((startTime) => startTime !== slot.startTime)
+        : [...prev, slot.startTime].sort((a, b) => toMinutes(a) - toMinutes(b))
+    );
+  };
+
   /* ================================
      예약 요약 계산
   ================================= */
 
-  const hours = selectedSlot
-    ? (toMinutes(selectedSlot.endTime) - toMinutes(selectedSlot.startTime)) / 60
+  // 선택된 시간대가 서로 끊김 없이 이어져 있는지 (하나의 예약 시간대가
+  // 되려면 연속되어야 한다 - 1시간 단위 정책은 유지된다).
+  const isContiguousSelection = useMemo(() => {
+    if (selectedHours.length === 0) return false;
+
+    for (let i = 1; i < selectedHours.length; i += 1) {
+      const prevIndex = TIME_SLOTS.findIndex((s) => s.startTime === selectedHours[i - 1]);
+      const currentIndex = TIME_SLOTS.findIndex((s) => s.startTime === selectedHours[i]);
+
+      if (currentIndex !== prevIndex + 1) {
+        return false;
+      }
+    }
+
+    return true;
+  }, [selectedHours]);
+
+  // 선택된 시간대들을 하나의 예약 시간대(시작~종료)로 합친다.
+  // 연속되지 않은 시간을 선택했으면 null(예약 불가)이 된다.
+  const effectiveSlot = useMemo(() => {
+    if (!isContiguousSelection) return null;
+
+    const firstSlot = TIME_SLOTS.find((s) => s.startTime === selectedHours[0]);
+    const lastSlot = TIME_SLOTS.find(
+      (s) => s.startTime === selectedHours[selectedHours.length - 1]
+    );
+
+    if (!firstSlot || !lastSlot) return null;
+
+    return {
+      startTime: firstSlot.startTime,
+      endTime: lastSlot.endTime,
+    };
+  }, [isContiguousSelection, selectedHours]);
+
+  const hours = effectiveSlot
+    ? (toMinutes(effectiveSlot.endTime) - toMinutes(effectiveSlot.startTime)) / 60
     : 0;
 
   const totalPrice =
-    selectedPlace && selectedSlot
+    selectedPlace && effectiveSlot
       ? Number(selectedPlace.pricePerHour) * hours * peopleCount
       : 0;
 
   const selectedDateLabel =
-    dateOptions.find((date) => date.value === selectedDate)?.label ||
-    selectedDate;
+    dateOptions.find((date) => date.value === selectedDate)?.label || selectedDate;
 
   const canReserve =
     !!selectedPlace &&
-    !!selectedSlot &&
+    !!effectiveSlot &&
+    (!isStudyMode || (!!study && isStudyOwner)) &&
     peopleCount >= selectedPlace.minCapacity &&
     peopleCount <= selectedPlace.maxCapacity &&
+
+
+    getRemainingCapacity(effectiveSlot) >= peopleCount &&
+
     !submitting;
 
   /* ================================
@@ -410,9 +573,10 @@ function StudyReservation() {
         credentials: "include",
         body: JSON.stringify({
           studyRoomId: selectedPlace.id,
+          studyId: isStudyMode ? Number(studyId) : null,
           reservationDate: selectedDate,
-          startTime: `${selectedSlot.startTime}:00`,
-          endTime: `${selectedSlot.endTime}:00`,
+          startTime: `${effectiveSlot.startTime}:00`,
+          endTime: `${effectiveSlot.endTime}:00`,
           peopleCount,
         }),
       });
@@ -476,7 +640,7 @@ function StudyReservation() {
             EASYS STUDY SPACE
           </span>
 
-          <h1>스터디 예약</h1>
+          <h1>카페 예약</h1>
 
           <p>
             이지스에서 운영하는 함께 할 공부할 공간을 찾고
@@ -523,7 +687,7 @@ function StudyReservation() {
 
             <div
               className={`step ${
-                selectedPlace && !selectedSlot ? "active" : ""
+                selectedPlace && !effectiveSlot ? "active" : ""
               }`}
             >
               <span>02</span>
@@ -532,12 +696,38 @@ function StudyReservation() {
 
             <div className="step-line"></div>
 
-            <div className={`step ${selectedSlot ? "active" : ""}`}>
+            <div className={`step ${effectiveSlot ? "active" : ""}`}>
               <span>03</span>
               결제
             </div>
           </div>
         </div>
+
+        {/* ================================
+            스터디 예약 모드 안내
+        ================================= */}
+
+        {isStudyMode && (
+          <div className="place-state-message" style={{ textAlign: "left" }}>
+            {studyLoading && "스터디 정보를 불러오는 중입니다..."}
+
+            {!studyLoading && studyError && (
+              <span className="error">{studyError}</span>
+            )}
+
+            {!studyLoading && !studyError && study && (
+              <>
+                <strong>{study.title}</strong> 스터디의 공간을 예약합니다. 아래에서
+                예약할 장소와 날짜, 시간을 선택해주세요.
+                {!isStudyOwner && (
+                  <p className="reservation-error">
+                    스터디 대표자만 스터디룸을 예약할 수 있습니다.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
 
         {/* ================================
@@ -604,7 +794,7 @@ function StudyReservation() {
             </div>
 
             <span className="place-count">
-              {filteredRooms.length}개의 공간
+              {displayRooms.length}개의 공간
             </span>
           </div>
 
@@ -620,13 +810,13 @@ function StudyReservation() {
             </p>
           )}
 
-          {!loadingRooms && !roomsError && filteredRooms.length === 0 && (
+          {!loadingRooms && !roomsError && displayRooms.length === 0 && (
             <p className="place-state-message">
               조건에 맞는 스터디룸이 없어요.
             </p>
           )}
 
-          {!loadingRooms && !roomsError && filteredRooms.length > 0 && (
+          {!loadingRooms && !roomsError && displayRooms.length > 0 && (
             <div className="place-grid">
 
               {filteredRooms.map((place) => (
@@ -710,7 +900,7 @@ function StudyReservation() {
 
 
         {/* ================================
-            날짜 / 시간
+            날짜 / 시간 선택
         ================================= */}
 
         <div className="reservation-schedule">
@@ -747,7 +937,7 @@ function StudyReservation() {
               TIME
             </span>
 
-            <h2>시간을 선택하세요</h2>
+            <h2>이용할 시작 시간을 선택하세요</h2>
 
             {!selectedPlace && (
               <p className="place-state-message">
@@ -765,26 +955,50 @@ function StudyReservation() {
               <div className="time-list">
 
                 {TIME_SLOTS.map((slot) => {
+
                   const taken = isSlotTaken(slot);
                   const isActive =
                     selectedSlot?.startTime === slot.startTime &&
                     selectedSlot?.endTime === slot.endTime;
 
+                  const pastDeadline = isSlotPastDeadline(slot);
+                  const remaining = getRemainingCapacity(slot);
+                  const full = remaining < peopleCount;
+                  const disabled = pastDeadline || full;
+                  const isActive = selectedHours.includes(slot.startTime);
+
+
                   return (
                     <button
                       type="button"
-                      key={`${slot.startTime}-${slot.endTime}`}
+                      key={slot.startTime}
                       className={isActive ? "active" : ""}
+
                       disabled={taken}
                       onClick={() => setSelectedSlot(slot)}
                     >
                       <span>{slot.startTime} - {slot.endTime}</span>
                       {taken && <small>예약마감</small>}
+
+                      disabled={disabled}
+                      onClick={() => toggleHour(slot)}
+                    >
+                      <span>{slot.startTime}</span>
+                      {pastDeadline && <small>예약마감</small>}
+                      {!pastDeadline && full && <small>정원마감</small>}
+
                     </button>
                   );
                 })}
 
               </div>
+            )}
+
+            {selectedPlace && !loadingAvailability && selectedHours.length > 0
+              && !isContiguousSelection && (
+              <p className="reservation-error">
+                연속된 시간대를 선택해주세요.
+              </p>
             )}
 
           </div>
@@ -823,8 +1037,8 @@ function StudyReservation() {
             <div className="summary-row">
               <span>시간</span>
               <strong>
-                {selectedSlot
-                  ? `${selectedSlot.startTime} - ${selectedSlot.endTime}`
+                {effectiveSlot
+                  ? `${effectiveSlot.startTime} - ${effectiveSlot.endTime}`
                   : "시간을 선택해주세요"}
               </strong>
             </div>
@@ -867,7 +1081,7 @@ function StudyReservation() {
             <span>예상 결제 금액</span>
 
             <strong>
-              {selectedPlace && selectedSlot
+              {selectedPlace && effectiveSlot
                 ? formatPrice(totalPrice)
                 : "0원"}
             </strong>
@@ -885,7 +1099,8 @@ function StudyReservation() {
             </button>
 
             <p>
-              예약 버튼을 누르면 예약이 접수되고, 결제 완료 시 확정됩니다.
+              예약 버튼을 누르면 예약이 접수되고, 결제 완료 시 확정됩니다. 예약은
+              이용 시작 후 {RESERVATION_GRACE_PERIOD_MINUTES}분까지만 가능합니다.
             </p>
 
           </div>

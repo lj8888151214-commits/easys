@@ -41,6 +41,13 @@ public record AdminReservationResponseDto(
 
         String paymentStatus,
 
+        // 스터디 예약이면 연결된 스터디 정보 (개인 예약이면 모두 null)
+        Long studyId,
+
+        String studyTitle,
+
+        Long groupScheduleId,
+
         LocalDateTime createdAt
 ) {
 
@@ -61,6 +68,9 @@ public record AdminReservationResponseDto(
                 reservation.getTotalPrice(),
                 reservation.getStatus(),
                 payment == null ? null : payment.getStatus().name(),
+                reservation.getStudy() != null ? reservation.getStudy().getId() : null,
+                reservation.getStudy() != null ? reservation.getStudy().getTitle() : null,
+                reservation.getGroupSchedule() != null ? reservation.getGroupSchedule().getId() : null,
                 reservation.getCreatedAt()
         );
     }

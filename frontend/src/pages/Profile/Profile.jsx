@@ -2,6 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Profile.css";
 
+
+
+const RESERVATION_STATUS = {
+  PENDING: { label: "결제 대기", className: "pending" },
+  PAID: { label: "승인 대기", className: "paid" },
+  CONFIRMED: { label: "확정", className: "confirmed" },
+  CANCELLED: { label: "취소됨", className: "cancelled" },
+};
+
+const RESERVATIONS_PAGE_SIZE = 5;
+const MY_STUDIES_PAGE_SIZE = 6;
+
+function formatPrice(price) {
+  return Math.round(Number(price)).toLocaleString("ko-KR") + "원";
+}
+
+
 function Profile() {
 
   const navigate = useNavigate();
@@ -53,6 +70,28 @@ function Profile() {
   const [loading, setLoading] = useState(true);
 
   // =====================================================
+
+
+  // 내 예약 내역 (스터디룸)
+  // =====================================================
+
+  const [reservations, setReservations] = useState([]);
+  const [loadingReservations, setLoadingReservations] = useState(true);
+  const [reservationsError, setReservationsError] = useState("");
+  const [cancellingReservationId, setCancellingReservationId] = useState(null);
+  const [reservationsPage, setReservationsPage] = useState(1);
+
+  // =====================================================
+  // 내가 참여중인 스터디
+  // =====================================================
+
+  const [myStudies, setMyStudies] = useState([]);
+  const [loadingMyStudies, setLoadingMyStudies] = useState(true);
+  const [myStudiesError, setMyStudiesError] = useState("");
+  const [myStudiesPage, setMyStudiesPage] = useState(1);
+
+  // =====================================================
+
   // 사용자 정보 조회
   // =====================================================
 
@@ -144,6 +183,187 @@ function Profile() {
 
 
   // =====================================================
+
+
+  // 내 예약 내역 (스터디룸) 조회
+  // =====================================================
+
+  const loadReservations = async () => {
+
+    try {
+
+      setLoadingReservations(true);
+      setReservationsError("");
+
+      const response = await fetch(
+        "/api/reservations/me",
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (response.status === 401) {
+        setReservations([]);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("예약 내역을 불러오지 못했습니다.");
+      }
+
+      setReservations(await response.json());
+
+    } catch (error) {
+
+      console.error("예약 내역 조회 오류:", error);
+      setReservationsError(error.message || "예약 내역을 불러오지 못했습니다.");
+      setReservations([]);
+
+    } finally {
+
+      setLoadingReservations(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReservations();
+  }, []);
+
+
+  // =====================================================
+  // 내가 참여중인 스터디 조회
+  // =====================================================
+
+  const loadMyStudies = async () => {
+
+    try {
+
+      setLoadingMyStudies(true);
+      setMyStudiesError("");
+
+      const [applicationsResponse, ownedResponse] = await Promise.all([
+        fetch("/api/study/my-applications", {
+          method: "GET",
+          credentials: "include",
+        }),
+        fetch("/api/study/my-owned", {
+          method: "GET",
+          credentials: "include",
+        }),
+      ]);
+
+      if (applicationsResponse.status === 401 || ownedResponse.status === 401) {
+        setMyStudies([]);
+        return;
+      }
+
+      if (!applicationsResponse.ok || !ownedResponse.ok) {
+        throw new Error("참여중인 스터디를 불러오지 못했습니다.");
+      }
+
+      const applications = await applicationsResponse.json();
+      const ownedStudies = await ownedResponse.json();
+
+      // 신청해서 승인된 스터디(참여자) + 내가 방장인 스터디를 합쳐서 보여준다.
+      const joined = applications
+        .filter((application) => application.status === "APPROVED")
+        .map((application) => ({
+          key: `application-${application.id}`,
+          studyId: application.studyId,
+          studyTitle: application.studyTitle,
+          isOwner: false,
+          enteredAt: application.joinedAt,
+        }));
+
+      const owned = ownedStudies.map((study) => ({
+        key: `owned-${study.id}`,
+        studyId: study.id,
+        studyTitle: study.title,
+        isOwner: true,
+        enteredAt: study.createdAt,
+      }));
+
+      // 내가 들어간(방장이 된/승인된) 시간 기준 최신순으로 정렬한다.
+      const merged = [...owned, ...joined].sort(
+        (a, b) => new Date(b.enteredAt) - new Date(a.enteredAt)
+      );
+
+      setMyStudies(merged);
+
+    } catch (error) {
+
+      console.error("참여중인 스터디 조회 오류:", error);
+      setMyStudiesError(error.message || "참여중인 스터디를 불러오지 못했습니다.");
+      setMyStudies([]);
+
+    } finally {
+
+      setLoadingMyStudies(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMyStudies();
+  }, []);
+
+
+  // =====================================================
+  // 예약 취소
+  // =====================================================
+
+  const handleCancelReservation = async (reservation) => {
+
+    if (
+      !window.confirm(
+        `"${reservation.studyRoomName}" 예약을 취소할까요? 결제가 완료된 경우 취소 처리됩니다.`
+      )
+    ) {
+      return;
+    }
+
+    setCancellingReservationId(reservation.id);
+
+    try {
+
+      const response = await fetch(
+        `/api/reservations/${reservation.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+
+        const text = await response.text();
+        let data = null;
+
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch {
+          // JSON이 아닌 응답
+        }
+
+        throw new Error((data && data.message) || text || "예약 취소에 실패했습니다.");
+      }
+
+      loadReservations();
+
+    } catch (error) {
+
+      console.error("예약 취소 오류:", error);
+      alert(error.message || "예약 취소에 실패했습니다.");
+
+    } finally {
+
+      setCancellingReservationId(null);
+    }
+  };
+
+
+  // =====================================================
+
   // 프로필 수정 시작
   // =====================================================
 
@@ -571,6 +791,40 @@ function Profile() {
 
 
   // =====================================================
+
+
+  // 예약 내역 페이지네이션
+  // =====================================================
+
+  const reservationsTotalPages = Math.max(
+    1,
+    Math.ceil(reservations.length / RESERVATIONS_PAGE_SIZE)
+  );
+  const reservationsCurrentPage = Math.min(reservationsPage, reservationsTotalPages);
+  const reservationsPageStart = (reservationsCurrentPage - 1) * RESERVATIONS_PAGE_SIZE;
+  const pagedReservations = reservations.slice(
+    reservationsPageStart,
+    reservationsPageStart + RESERVATIONS_PAGE_SIZE
+  );
+
+  // =====================================================
+  // 내가 참여중인 스터디 페이지네이션
+  // =====================================================
+
+  const myStudiesTotalPages = Math.max(
+    1,
+    Math.ceil(myStudies.length / MY_STUDIES_PAGE_SIZE)
+  );
+  const myStudiesCurrentPage = Math.min(myStudiesPage, myStudiesTotalPages);
+  const myStudiesPageStart = (myStudiesCurrentPage - 1) * MY_STUDIES_PAGE_SIZE;
+  const pagedMyStudies = myStudies.slice(
+    myStudiesPageStart,
+    myStudiesPageStart + MY_STUDIES_PAGE_SIZE
+  );
+
+
+  // =====================================================
+
   // 화면
   // =====================================================
 
@@ -662,6 +916,14 @@ function Profile() {
                 onClick={handleEditStart}
               >
                 프로필 수정
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => navigate("/profile/password")}
+              >
+                비밀번호 변경
               </button>
 
             </>
@@ -856,10 +1118,15 @@ function Profile() {
 
 
         {/* =================================================
+
             비밀번호 변경
+
+            내 예약 내역 (스터디룸)
+
         ================================================= */}
 
         {!isEditing && (
+
 
           <section className="profile-card security-card">
 
@@ -878,6 +1145,231 @@ function Profile() {
             >
               비밀번호 변경
             </button>
+
+          <section className="profile-card reservations-card">
+
+            <h2>
+              내 예약 내역
+            </h2>
+
+            {loadingReservations && (
+              <p className="reservations-state">
+                예약 내역을 불러오는 중입니다...
+              </p>
+            )}
+
+            {!loadingReservations && reservationsError && (
+              <p className="reservations-state error">
+                {reservationsError}
+              </p>
+            )}
+
+            {!loadingReservations && !reservationsError && reservations.length === 0 && (
+              <p className="reservations-state">
+                아직 예약한 내역이 없어요.
+              </p>
+            )}
+
+            {!loadingReservations && !reservationsError && reservations.length > 0 && (
+
+              <ul className="reservation-list">
+
+                {pagedReservations.map((reservation) => {
+
+                  const statusInfo =
+                    RESERVATION_STATUS[reservation.status] || {
+                      label: reservation.status,
+                      className: "",
+                    };
+
+                  const cancellable = reservation.status !== "CANCELLED";
+
+                  return (
+
+                    <li key={reservation.id}>
+
+                      <div className="reservation-list-info">
+                        <strong>{reservation.studyRoomName}</strong>
+                        <span>{reservation.location}</span>
+                        <span>
+                          {reservation.reservationDate} ·{" "}
+                          {reservation.startTime.slice(0, 5)} ~{" "}
+                          {reservation.endTime.slice(0, 5)}
+                        </span>
+                        <span>
+                          {reservation.peopleCount}명 ·{" "}
+                          {formatPrice(reservation.totalPrice)}
+                        </span>
+                      </div>
+
+                      <div className="reservation-list-actions">
+                        <span className={`reservation-status ${statusInfo.className}`}>
+                          {statusInfo.label}
+                        </span>
+
+                        {cancellable && (
+                          <button
+                            type="button"
+                            className="reservation-cancel-button"
+                            onClick={() => handleCancelReservation(reservation)}
+                            disabled={cancellingReservationId === reservation.id}
+                          >
+                            {cancellingReservationId === reservation.id
+                              ? "취소 중..."
+                              : "예약 취소"}
+                          </button>
+                        )}
+                      </div>
+
+                    </li>
+                  );
+                })}
+
+              </ul>
+            )}
+
+            {!loadingReservations && !reservationsError && reservationsTotalPages > 1 && (
+
+              <nav className="reservation-pagination" aria-label="예약 내역 페이지">
+
+                <button
+                  type="button"
+                  className="reservation-pagination-arrow"
+                  disabled={reservationsCurrentPage === 1}
+                  onClick={() => setReservationsPage(reservationsCurrentPage - 1)}
+                >
+                  ‹
+                </button>
+
+                {Array.from({ length: reservationsTotalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    type="button"
+                    key={page}
+                    className={`reservation-pagination-page ${
+                      page === reservationsCurrentPage ? "active" : ""
+                    }`}
+                    onClick={() => setReservationsPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  className="reservation-pagination-arrow"
+                  disabled={reservationsCurrentPage === reservationsTotalPages}
+                  onClick={() => setReservationsPage(reservationsCurrentPage + 1)}
+                >
+                  ›
+                </button>
+
+              </nav>
+            )}
+
+          </section>
+
+        )}
+
+
+        {/* =================================================
+            내가 참여중인 스터디
+        ================================================= */}
+
+        {!isEditing && (
+
+          <section className="profile-card my-studies-card">
+
+            <h2>
+              내가 참여중인 스터디
+            </h2>
+
+            {loadingMyStudies && (
+              <p className="reservations-state">
+                참여중인 스터디를 불러오는 중입니다...
+              </p>
+            )}
+
+            {!loadingMyStudies && myStudiesError && (
+              <p className="reservations-state error">
+                {myStudiesError}
+              </p>
+            )}
+
+            {!loadingMyStudies && !myStudiesError && myStudies.length === 0 && (
+              <p className="reservations-state">
+                아직 참여중인 스터디가 없어요.
+              </p>
+            )}
+
+            {!loadingMyStudies && !myStudiesError && myStudies.length > 0 && (
+
+              <ul className="reservation-list">
+
+                {pagedMyStudies.map((item) => (
+
+                  <li key={item.key}>
+
+                    <div className="reservation-list-info">
+                      <strong>{item.studyTitle}</strong>
+                      {item.isOwner && (
+                        <span className="reservation-status confirmed">방장</span>
+                      )}
+                    </div>
+
+                    <div className="reservation-list-actions">
+                      <button
+                        type="button"
+                        className="reservation-cancel-button"
+                        onClick={() => navigate(`/study/${item.studyId}`)}
+                      >
+                        스터디 채팅으로 이동
+                      </button>
+                    </div>
+
+                  </li>
+                ))}
+
+              </ul>
+            )}
+
+            {!loadingMyStudies && !myStudiesError && myStudiesTotalPages > 1 && (
+
+              <nav className="reservation-pagination" aria-label="참여중인 스터디 페이지">
+
+                <button
+                  type="button"
+                  className="reservation-pagination-arrow"
+                  disabled={myStudiesCurrentPage === 1}
+                  onClick={() => setMyStudiesPage(myStudiesCurrentPage - 1)}
+                >
+                  ‹
+                </button>
+
+                {Array.from({ length: myStudiesTotalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    type="button"
+                    key={page}
+                    className={`reservation-pagination-page ${
+                      page === myStudiesCurrentPage ? "active" : ""
+                    }`}
+                    onClick={() => setMyStudiesPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  className="reservation-pagination-arrow"
+                  disabled={myStudiesCurrentPage === myStudiesTotalPages}
+                  onClick={() => setMyStudiesPage(myStudiesCurrentPage + 1)}
+                >
+                  ›
+                </button>
+
+              </nav>
+            )}
+
 
           </section>
 

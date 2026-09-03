@@ -16,7 +16,7 @@ function AdminStudySection() {
       setLoadingStudies(true);
       setStudiesError("");
 
-      const response = await fetch(`${API_BASE}/study`, {
+      const response = await fetch(`${API_BASE}/study?includeCompleted=true`, {
         credentials: "include",
       });
 
@@ -103,7 +103,11 @@ function AdminStudySection() {
                         study.status === "RECRUITING" ? "on" : "off"
                       }`}
                     >
-                      {study.status === "RECRUITING" ? "모집중" : "모집완료"}
+                      {study.status === "RECRUITING"
+                        ? "모집중"
+                        : study.status === "COMPLETED"
+                        ? "완료"
+                        : "모집완료"}
                     </span>
                   </td>
                   <td>{formatDate(study.createdAt)}</td>

@@ -19,8 +19,13 @@ public class EmailVerificationService {
     private final EmailVerificationRepository emailVerificationRepository;
     private final JavaMailSender mailSender;
 
+
     // application.properties의 발신자 계정 주입
     @Value("${spring.mail.username:yeunjun37@gmail.com}")
+
+    // application.properties의 발신자 계정 주입 (실제 값은 GMAIL_USERNAME 환경변수로 설정)
+    @Value("${spring.mail.username}")
+
     private String fromEmail;
 
     /*

@@ -1,8 +1,37 @@
 .study-reservation-page {
+  position: relative;
   width: 100%;
   min-height: 100vh;
   background: #f8f9f7;
   color: #2e4033;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.study-reservation-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 8% 28%, rgba(212, 228, 215, 0.48) 0, rgba(212, 228, 215, 0.48) 90px, transparent 91px),
+    radial-gradient(circle at 92% 42%, rgba(202, 223, 208, 0.42) 0, rgba(202, 223, 208, 0.42) 120px, transparent 121px),
+    radial-gradient(circle at 18% 82%, rgba(212, 228, 215, 0.38) 0, rgba(212, 228, 215, 0.38) 150px, transparent 151px),
+    radial-gradient(circle at 86% 88%, rgba(202, 223, 208, 0.35) 0, rgba(202, 223, 208, 0.35) 100px, transparent 101px);
+}
+
+.study-reservation-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 27% 55%, rgba(212, 228, 215, 0.25) 0, rgba(212, 228, 215, 0.25) 35px, transparent 36px),
+    radial-gradient(circle at 76% 22%, rgba(202, 223, 208, 0.3) 0, rgba(202, 223, 208, 0.3) 48px, transparent 49px),
+    radial-gradient(circle at 60% 75%, rgba(212, 228, 215, 0.25) 0, rgba(212, 228, 215, 0.25) 65px, transparent 66px),
+    radial-gradient(circle at 5% 65%, rgba(202, 223, 208, 0.25) 0, rgba(202, 223, 208, 0.25) 45px, transparent 46px);
 }
 
 

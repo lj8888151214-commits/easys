@@ -235,18 +235,6 @@ function StudyCreate() {
     <main className="study-create-page">
 
       {/* =================================================
-          BACKGROUND DROPS
-          커뮤니티보다 적게 배치
-      ================================================= */}
-
-      <div className="study-create-drops" aria-hidden="true">
-        <span className="study-create-drop study-drop-1"></span>
-        <span className="study-create-drop study-drop-2"></span>
-        <span className="study-create-drop study-drop-3"></span>
-        <span className="study-create-drop study-drop-4"></span>
-      </div>
-
-      {/* =================================================
           CONTAINER
       ================================================= */}
 

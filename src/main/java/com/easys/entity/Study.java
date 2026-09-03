@@ -47,9 +47,10 @@ public class Study {
     private int currentMembers;
 
 
-    // 모집 상태
+    // 모집/진행 상태
     // RECRUITING = 모집중
-    // CLOSED = 모집완료
+    // CLOSED = 모집완료 (정원이 찼지만 스터디는 아직 진행 중)
+    // COMPLETED = 스터디 완료 (방장이 직접 종료 처리, 목록에서 제외)
     @Column(nullable = false)
     private String status;
 
@@ -205,8 +206,28 @@ public class Study {
     }
 
 
+    // 8. 스터디 완료 처리 (방장이 직접 종료)
+    //
+    // 스터디 카드 자체는 더 이상 날짜/시간 일정을 갖지 않으므로(스터디룸
+    // 예약이 별도로 이루어진다), 완료 처리는 시간 조건 없이 방장이 원하는
+    // 시점에 할 수 있다. 예약/결제/채팅/캘린더 등 관련 데이터는 전혀 건드리지
+    // 않고 상태값만 COMPLETED로 바꾼다 - 목록 조회(StudyService.getStudies 등)에서
+    // COMPLETED 상태를 제외하는 방식으로 "진행 중 목록"에서만 감춘다.
+    public void complete() {
+
+        if ("COMPLETED".equals(this.status)) {
+            throw new IllegalArgumentException(
+                    "이미 완료된 스터디입니다."
+            );
+        }
+
+        this.status = "COMPLETED";
+        this.updatedAt = LocalDateTime.now();
+    }
+
+
     // =====================================================
-    // 8. 입력값 검증
+    // 9. 입력값 검증
     // =====================================================
 
     private void validateTitle(String title) {

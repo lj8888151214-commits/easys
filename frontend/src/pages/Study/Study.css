@@ -9,80 +9,33 @@
   background: #f7f9f7;
   color: #243329;
   overflow: hidden;
+  isolation: isolate;
 }
 
-
-/* =====================================================
-   BACKGROUND DROPS
-   Community보다 적게 배치
-===================================================== */
-
-.study-drops {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.study-drop {
-  position: absolute;
-  display: block;
-  border-radius: 50%;
-  background: rgba(204, 224, 209, 0.34);
-  box-shadow:
-    inset -8px -8px 18px rgba(170, 196, 177, 0.1),
-    inset 7px 7px 13px rgba(255, 255, 255, 0.3);
-  filter: blur(1px);
-}
-
-.study-drop::after {
+.study-page::before {
   content: "";
   position: absolute;
-  top: 18%;
-  left: 22%;
-  width: 28%;
-  height: 28%;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.42);
-  filter: blur(2px);
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 8% 28%, rgba(212, 228, 215, 0.48) 0, rgba(212, 228, 215, 0.48) 90px, transparent 91px),
+    radial-gradient(circle at 92% 42%, rgba(202, 223, 208, 0.42) 0, rgba(202, 223, 208, 0.42) 120px, transparent 121px),
+    radial-gradient(circle at 18% 82%, rgba(212, 228, 215, 0.38) 0, rgba(212, 228, 215, 0.38) 150px, transparent 151px),
+    radial-gradient(circle at 86% 88%, rgba(202, 223, 208, 0.35) 0, rgba(202, 223, 208, 0.35) 100px, transparent 101px);
 }
 
-
-/* =====================================================
-   DROP POSITION
-   4개만 사용
-===================================================== */
-
-.study-drop-1 {
-  width: 190px;
-  height: 190px;
-  top: 22%;
-  left: -85px;
-}
-
-.study-drop-2 {
-  width: 115px;
-  height: 115px;
-  top: 43%;
-  right: -35px;
-}
-
-.study-drop-3 {
-  width: 150px;
-  height: 150px;
-  top: 68%;
-  left: 7%;
-}
-
-.study-drop-4 {
-  width: 95px;
-  height: 95px;
-  top: 84%;
-  right: 13%;
+.study-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 27% 55%, rgba(212, 228, 215, 0.25) 0, rgba(212, 228, 215, 0.25) 35px, transparent 36px),
+    radial-gradient(circle at 76% 22%, rgba(202, 223, 208, 0.3) 0, rgba(202, 223, 208, 0.3) 48px, transparent 49px),
+    radial-gradient(circle at 60% 75%, rgba(212, 228, 215, 0.25) 0, rgba(212, 228, 215, 0.25) 65px, transparent 66px),
+    radial-gradient(circle at 5% 65%, rgba(202, 223, 208, 0.25) 0, rgba(202, 223, 208, 0.25) 45px, transparent 46px);
 }
 
 
@@ -693,25 +646,29 @@
 
 .study-card-bottom {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   margin-top: 18px;
   padding-top: 18px;
   border-top: 1px solid #edf0ed;
 }
 
-.study-card-bottom > span {
-  max-width: 140px;
+.study-card-bottom-desc {
+  display: -webkit-box;
   overflow: hidden;
+  width: 100%;
+  margin: 0;
   color: #929a94;
   font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.6;
+  text-align: center;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .study-card-bottom button {
-  padding: 8px 13px;
+  padding: 8px 16px;
   border: 0;
   border-radius: 9px;
   background: #eef3ef;
@@ -839,14 +796,6 @@
       repeat(2, minmax(0, 1fr));
   }
 
-  .study-drop-3 {
-    left: -70px;
-  }
-
-  .study-drop-4 {
-    right: -30px;
-  }
-
 }
 
 
@@ -926,35 +875,6 @@
     min-height: 300px;
     padding: 22px;
     border-radius: 20px;
-  }
-
-
-  /* ================================================
-     모바일 물방울
-  ================================================ */
-
-  .study-drop-1 {
-    width: 110px;
-    height: 110px;
-    left: -55px;
-  }
-
-  .study-drop-2 {
-    width: 70px;
-    height: 70px;
-    right: -25px;
-  }
-
-  .study-drop-3 {
-    width: 95px;
-    height: 95px;
-    left: -35px;
-  }
-
-  .study-drop-4 {
-    width: 65px;
-    height: 65px;
-    right: 8%;
   }
 
 }

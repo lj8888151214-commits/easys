@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE = "/api/notifications";
 const POLL_INTERVAL_MS = 30000;
@@ -9,6 +10,7 @@ function formatCreatedAt(dateTime) {
 }
 
 function NotificationBell() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -81,6 +83,13 @@ function NotificationBell() {
     }
   };
 
+  const handleNotificationClick = (notification) => {
+    if (notification.studyId) {
+      setOpen(false);
+      navigate(`/study/${notification.studyId}`);
+    }
+  };
+
   return (
     <div className="notification-bell" ref={wrapperRef}>
       <button
@@ -127,7 +136,10 @@ function NotificationBell() {
               {notifications.map((notification) => (
                 <li
                   key={notification.id}
-                  className={notification.read ? "" : "unread"}
+                  className={`${notification.read ? "" : "unread"} ${
+                    notification.studyId ? "clickable" : ""
+                  }`.trim()}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <strong>{notification.title}</strong>
                   <p>{notification.content}</p>

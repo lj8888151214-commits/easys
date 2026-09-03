@@ -915,7 +915,7 @@ function CommunityDetail({
             deleting || saving
           }
         >
-          ← 목록으로
+          ←
         </button>
 
         <div className="community-detail-top">
