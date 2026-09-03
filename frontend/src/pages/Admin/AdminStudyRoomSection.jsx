@@ -184,7 +184,6 @@ function AdminStudyRoomSection() {
       {formMode && (
         <form className="admin-room-form" onSubmit={handleSubmit}>
           <h3>{formMode === "edit" ? "스터디룸 수정" : "새 스터디룸 등록"}</h3>
-
           <div className="admin-form-grid">
             <label>
               이름
