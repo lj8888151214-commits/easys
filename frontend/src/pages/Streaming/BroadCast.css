@@ -322,20 +322,18 @@
   font-weight: 700;
 }
 
-<<<<<<< Updated upstream
 .stream-start-visual > span:last-child {
   position: relative;
   z-index: 1;
   margin-top: 8px;
-=======
+}
 
 .stream-bottom-banner button:hover {
   background: #edf3ee;
   transform: translateY(-2px);
 }
-=======
+
 /* 비디오 출력 박스 영역 */
->>>>>>> Stashed changes
 .cam-stream-box {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -363,7 +361,6 @@
 }
 
 .cam-placeholder {
->>>>>>> Stashed changes
   color: rgba(255, 255, 255, 0.5);
   font-size: 10px;
   letter-spacing: 0.5px;
