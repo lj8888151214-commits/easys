@@ -1,6 +1,5 @@
 package com.easys.service;
 
-import com.easys.config.WebSocketConfig;
 import com.easys.entity.Member;
 import com.easys.entity.Reservation;
 import com.easys.repository.EmailVerificationRepository;
