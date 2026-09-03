@@ -15,6 +15,10 @@ const CATEGORY_STORAGE_KEY = "easys-calendar-categories";
 // 직접 요청해 프록시의 접두사 제거를 우회한다.
 const GROUP_API_URL = "http://localhost:8080/api/study-groups";
 
+// 날짜 칸 하나에 실제로 표시할 일정 개수. 이보다 많으면 "+N개"로 접어서
+// 일정이 아무리 많아도 날짜 칸 높이가 계속 늘어나지 않게 한다.
+const MAX_VISIBLE_DAY_EVENTS = 3;
+
 function toLocalDateTimeParam(date) {
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -33,6 +37,9 @@ function Calendar() {
   const [activeTab, setActiveTab] = useState("personal");
   const [showModal, setShowModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
+  // 날짜 칸의 "+N개" 클릭 시 그 날짜의 전체 일정을 보여주는 모달.
+  // { date, schedules, kind } (kind: "personal" | "group")
+  const [dayScheduleModal, setDayScheduleModal] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [categoryMap, setCategoryMap] = useState({});
 
@@ -742,6 +749,21 @@ function Calendar() {
   };
 
   /* ================================
+     날짜 칸 "+N개" -> 해당 날짜 전체 일정 모달
+  ================================= */
+
+  const openDayScheduleModal = (date, daySchedules, kind) => {
+    const sorted = [...daySchedules].sort(
+      (a, b) => new Date(a.startAt) - new Date(b.startAt)
+    );
+    setDayScheduleModal({ date, schedules: sorted, kind });
+  };
+
+  const closeDayScheduleModal = () => {
+    setDayScheduleModal(null);
+  };
+
+  /* ================================
      렌더링
   ================================= */
 
@@ -985,8 +1007,21 @@ function Calendar() {
 
                 <div className="calendar-grid">
                   {calendarDays.map(
-                    (date, index) => (
-                      <div
+                    (date, index) => {
+                      const daySchedules = date
+                        ? schedules.filter((schedule) =>
+                            isScheduleOnDate(schedule, date)
+                          )
+                        : [];
+                      const visibleDaySchedules = daySchedules.slice(
+                        0,
+                        MAX_VISIBLE_DAY_EVENTS
+                      );
+                      const hiddenDayScheduleCount =
+                        daySchedules.length - visibleDaySchedules.length;
+
+                      return (
+                    <div
                         className={`calendar-day ${
                           isToday(date)
                             ? "today"
@@ -1001,15 +1036,7 @@ function Calendar() {
                             </span>
 
                             <div className="day-events">
-                              {schedules
-                                .filter(
-                                  (schedule) =>
-                                    isScheduleOnDate(
-                                      schedule,
-                                      date
-                                    )
-                                )
-                                .map(
+                              {visibleDaySchedules.map(
                                   (schedule) => {
                                     const type =
                                       getPersonalType(
@@ -1033,11 +1060,29 @@ function Calendar() {
                                     );
                                   }
                                 )}
+
+                              {hiddenDayScheduleCount > 0 && (
+                                <button
+                                  type="button"
+                                  className="calendar-day-more"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    openDayScheduleModal(
+                                      date,
+                                      daySchedules,
+                                      "personal"
+                                    );
+                                  }}
+                                >
+                                  +{hiddenDayScheduleCount}개
+                                </button>
+                              )}
                             </div>
                           </>
                         )}
                       </div>
-                    )
+                      );
+                    }
                   )}
                 </div>
               </div>
@@ -1051,35 +1096,6 @@ function Calendar() {
 
         {activeTab === "group" && (
           <>
-            <section className="group-add-section">
-              <div className="group-add-card">
-                <div>
-                  <span className="section-label">
-                    GROUP SCHEDULE
-                  </span>
-
-                  <h3>
-                    새로운 모임 일정을
-                    <br />
-                    등록해보세요.
-                  </h3>
-
-                  <p>
-                    스터디룸 예약이 확정되면 자동으로 모임 일정이 등록됩니다.
-                    <br />
-                    별도의 모임 일정도 직접 등록할 수 있어요.
-                  </p>
-                </div>
-
-                <button
-                  className="add-schedule-button"
-                  onClick={openCreateModal}
-                >
-                  + 모임 일정 추가
-                </button>
-              </div>
-            </section>
-
             <section className="group-section group-upcoming-section">
               <div className="section-heading">
                 <div>
@@ -1090,12 +1106,21 @@ function Calendar() {
                   <h2>다가오는 모임</h2>
                 </div>
 
-                <a
-                  href="/study"
-                  className="more-link"
-                >
-                  전체보기 →
-                </a>
+                <div className="group-heading-actions">
+                  <button
+                    className="add-schedule-button"
+                    onClick={openCreateModal}
+                  >
+                    + 모임 일정 추가
+                  </button>
+
+                  <a
+                    href="/study"
+                    className="more-link"
+                  >
+                    스터디 모집 →
+                  </a>
+                </div>
               </div>
 
               <div className="calendar-legend group-legend">
@@ -1243,8 +1268,21 @@ function Calendar() {
 
                 <div className="calendar-grid">
                   {calendarDays.map(
-                    (date, index) => (
-                      <div
+                    (date, index) => {
+                      const daySchedules = date
+                        ? groupSchedules.filter((schedule) =>
+                            isScheduleOnDate(schedule, date)
+                          )
+                        : [];
+                      const visibleDaySchedules = daySchedules.slice(
+                        0,
+                        MAX_VISIBLE_DAY_EVENTS
+                      );
+                      const hiddenDayScheduleCount =
+                        daySchedules.length - visibleDaySchedules.length;
+
+                      return (
+                    <div
                         className={`calendar-day ${
                           isToday(date)
                             ? "today"
@@ -1259,15 +1297,7 @@ function Calendar() {
                             </span>
 
                             <div className="day-events">
-                              {groupSchedules
-                                .filter(
-                                  (schedule) =>
-                                    isScheduleOnDate(
-                                      schedule,
-                                      date
-                                    )
-                                )
-                                .map(
+                              {visibleDaySchedules.map(
                                   (schedule) => (
                                     <div
                                       className={`calendar-event group ${schedule.type}`}
@@ -1293,11 +1323,29 @@ function Calendar() {
                                     </div>
                                   )
                                 )}
+
+                              {hiddenDayScheduleCount > 0 && (
+                                <button
+                                  type="button"
+                                  className="calendar-day-more"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    openDayScheduleModal(
+                                      date,
+                                      daySchedules,
+                                      "group"
+                                    );
+                                  }}
+                                >
+                                  +{hiddenDayScheduleCount}개
+                                </button>
+                              )}
                             </div>
                           </>
                         )}
                       </div>
-                    )
+                      );
+                    }
                   )}
                 </div>
               </div>
@@ -1576,6 +1624,84 @@ function Calendar() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================
+          날짜 칸 "+N개" 클릭 시 해당 날짜의 전체 일정 모달
+      ================================================== */}
+
+      {dayScheduleModal && (
+        <div
+          className="schedule-modal-overlay"
+          onClick={closeDayScheduleModal}
+        >
+          <div
+            className="schedule-modal day-schedule-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="schedule-modal-header">
+              <div>
+                <span className="modal-label">
+                  {dayScheduleModal.kind === "personal"
+                    ? "MY SCHEDULE"
+                    : "GROUP SCHEDULE"}
+                </span>
+
+                <h2>
+                  {dayScheduleModal.date.getMonth() + 1}월{" "}
+                  {dayScheduleModal.date.getDate()}일 일정
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                className="schedule-modal-close"
+                onClick={closeDayScheduleModal}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="schedule-list day-schedule-list">
+              {dayScheduleModal.schedules.map((schedule) => {
+                const type =
+                  dayScheduleModal.kind === "personal"
+                    ? getPersonalType(schedule)
+                    : schedule.type;
+                const isClickableStudy =
+                  dayScheduleModal.kind === "group" && schedule.studyId;
+
+                return (
+                  <div
+                    className="schedule-item day-schedule-item"
+                    key={schedule.id}
+                    onClick={
+                      isClickableStudy
+                        ? () => {
+                            closeDayScheduleModal();
+                            navigate(`/study/${schedule.studyId}`);
+                          }
+                        : undefined
+                    }
+                    style={{
+                      cursor: isClickableStudy ? "pointer" : "default",
+                    }}
+                  >
+                    <div className="schedule-time">
+                      {formatTime(schedule.startAt)}
+                    </div>
+
+                    <div className={`schedule-color ${type}`} />
+
+                    <div className="schedule-info">
+                      <strong>{schedule.title}</strong>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

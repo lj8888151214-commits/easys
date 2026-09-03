@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Client } from "@stomp/stompjs";
 import "./Mentoring.css";
 import mentoringBg from "../../assets/images/mentoring-bg.jpg";
 
@@ -14,6 +15,12 @@ function Mentoring() {
   const [reviewMentor, setReviewMentor] = useState(null);
   // 예약 상세보기 모달: { item, role } (role: "mentor" | "applicant")
   const [detailReservation, setDetailReservation] = useState(null);
+  // 멘토링 채팅 모달: { item, role } (role: "mentor" | "applicant")
+  const [chatReservation, setChatReservation] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const chatBottomRef = useRef(null);
   // 거절 사유 입력 모달 대상 예약
   const [rejectingReservation, setRejectingReservation] = useState(null);
   // 삭제 확인 모달 대상 멘토링(offering)
@@ -2036,6 +2043,161 @@ function Mentoring() {
     setDetailReservation({ item, role });
   };
 
+  // =====================================================
+  // 멘토링 채팅
+  //
+  // 결제가 완료된 예약에 대해서만 버튼이 노출되지만(프론트),
+  // 실제 조회/전송 권한은 서버(MentoringChatService)가 다시 검증한다.
+  // =====================================================
+
+  const openChat = (item, role) => {
+    setChatReservation({ item, role });
+  };
+
+  const closeChat = () => {
+    setChatReservation(null);
+    setChatMessages([]);
+    setChatInput("");
+  };
+
+  useEffect(() => {
+    if (!chatReservation) return;
+
+    const fetchChatMessages = async () => {
+      setChatLoading(true);
+      try {
+        const response = await fetch(
+          `/api/mentor/reservation/${chatReservation.item.id}/chat/messages`,
+          { credentials: "include" }
+        );
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          alert(data?.message || "채팅 메시지를 불러오는 중 오류가 발생했습니다.");
+          setChatReservation(null);
+          return;
+        }
+
+        setChatMessages(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("멘토링 채팅 조회 오류:", error);
+        alert("서버와 통신하는 중 오류가 발생했습니다.");
+        setChatReservation(null);
+      } finally {
+        setChatLoading(false);
+      }
+    };
+
+    fetchChatMessages();
+  }, [chatReservation?.item?.id]);
+
+  // =====================================================
+  // 멘토링 채팅 실시간 수신 (STOMP over WebSocket)
+  //
+  // 메시지 "전송"은 여전히 REST(handleSendChatMessage)가 담당하고, 이 효과는
+  // 채팅창이 열려 있는 동안 해당 reservationId의 "/topic/mentoring/{id}"만
+  // 구독해 상대방(그리고 내가 보낸 메시지의 서버 echo)을 실시간으로 받는 역할만 한다.
+  //
+  // chatReservation.item.id가 바뀌거나(다른 예약으로 교체) 채팅창이 닫히면
+  // (chatReservation이 null이 되면) 아래 cleanup이 항상 먼저 실행되어 구독 해제 +
+  // 연결 종료가 보장되므로, 다시 열어도 중복 연결이 쌓이지 않는다.
+  // =====================================================
+  useEffect(() => {
+    if (!chatReservation) return;
+
+    const reservationId = chatReservation.item.id;
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+
+    const client = new Client({
+      brokerURL: `${protocol}//${hostname}:8080/ws-chat`,
+      reconnectDelay: 4000,
+      onConnect: () => {
+        client.subscribe(`/topic/mentoring/${reservationId}`, (frame) => {
+          try {
+            const incoming = JSON.parse(frame.body);
+            // 내가 REST로 보낸 메시지가 구독을 통해 다시 돌아오는 경우(에코) 및
+            // 재연결 시 중복 수신을 id 기준으로 걸러 화면에 두 번 표시되지 않게 한다.
+            setChatMessages((prev) =>
+              prev.some((message) => message.id === incoming.id)
+                ? prev
+                : [...prev, incoming]
+            );
+          } catch (error) {
+            console.error("멘토링 채팅 실시간 메시지 처리 오류:", error);
+          }
+        });
+      },
+      onStompError: (frame) => {
+        console.error("멘토링 채팅 WebSocket 오류:", frame.headers?.message);
+      },
+    });
+
+    client.activate();
+
+    return () => {
+      client.deactivate();
+    };
+  }, [chatReservation?.item?.id]);
+
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [chatMessages]);
+
+  const handleSendChatMessage = async (event) => {
+    event.preventDefault();
+    if (!chatReservation || !chatInput.trim()) return;
+
+    try {
+      const response = await fetch(
+        `/api/mentor/reservation/${chatReservation.item.id}/chat/messages`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ content: chatInput.trim() })
+        }
+      );
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        alert(data?.message || "메시지 전송 중 오류가 발생했습니다.");
+        return;
+      }
+
+      // WebSocket 구독이 이 메시지를 조금 더 빨리 전달했을 수도 있으므로
+      // id 기준으로 중복 여부를 확인한 뒤 추가한다.
+      setChatMessages((prev) =>
+        prev.some((message) => message.id === data.id) ? prev : [...prev, data]
+      );
+      setChatInput("");
+    } catch (error) {
+      console.error("멘토링 채팅 전송 오류:", error);
+      alert("서버와 통신하는 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 알림 클릭("/mentor?chatReservationId=123")으로 들어왔을 때
+  // 내가 신청한 목록/받은 신청 목록이 로드되면 해당 예약의 채팅을 바로 연다.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const chatId = Number(params.get("chatReservationId"));
+    if (!chatId) return;
+
+    const asApplicant = myReservations.find((item) => item.id === chatId);
+    const asMentor = receivedReservations.find((item) => item.id === chatId);
+
+    if (asApplicant) {
+      setChatReservation({ item: asApplicant, role: "applicant" });
+    } else if (asMentor) {
+      setChatReservation({ item: asMentor, role: "mentor" });
+    } else {
+      return;
+    }
+
+    navigate("/mentor", { replace: true });
+  }, [myReservations, receivedReservations]);
+
   // "나의 멘토링 기록"에서 삭제 — 예약 데이터 자체를 지우는 것이 아니라
   // 본인 화면에서만 숨긴다(상대방의 기록/후기/캘린더는 그대로 유지).
   const hideMyRecord = async (reservationId) => {
@@ -2802,6 +2964,15 @@ function Mentoring() {
                             >
                               상세보기
                             </button>
+                            {item.paymentStatus === "PAID" && (
+                              <button
+                                type="button"
+                                className="mentoring-record-chat-link"
+                                onClick={() => openChat(item, "applicant")}
+                              >
+                                💬 채팅
+                              </button>
+                            )}
                           </div>
                         </article>
                             );
@@ -2878,6 +3049,15 @@ function Mentoring() {
                             >
                               상세보기
                             </button>
+                            {item.paymentStatus === "PAID" && (
+                              <button
+                                type="button"
+                                className="mentoring-record-chat-link"
+                                onClick={() => openChat(item, "mentor")}
+                              >
+                                💬 채팅
+                              </button>
+                            )}
                           </div>
                         </article>
                             );
@@ -2929,6 +3109,13 @@ function Mentoring() {
                                   onClick={() => openReservationDetail(item, "mentor")}
                                 >
                                   상세보기
+                                </button>
+                                <button
+                                  type="button"
+                                  className="mentoring-record-chat-link"
+                                  onClick={() => openChat(item, "mentor")}
+                                >
+                                  💬 채팅
                                 </button>
                                 <button
                                   type="button"
@@ -3012,6 +3199,13 @@ function Mentoring() {
                               }
                             >
                               상세보기
+                            </button>
+                            <button
+                              type="button"
+                              className="mentoring-record-chat-link"
+                              onClick={() => openChat(item, "applicant")}
+                            >
+                              💬 채팅
                             </button>
                             <button
                               type="button"
@@ -4791,6 +4985,87 @@ function Mentoring() {
                 </>
               );
             })()}
+          </div>
+        </div>
+      )}
+
+      {chatReservation && (
+        <div className="modal-background" onClick={closeChat}>
+          <div
+            className="mentoring-chat-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button type="button" className="modal-close" onClick={closeChat}>
+              ×
+            </button>
+
+            <span className="section-label">MENTORING CHAT</span>
+            <h2>
+              {chatReservation.role === "mentor"
+                ? chatReservation.item.memberNickname
+                : chatReservation.item.mentorName}
+            </h2>
+
+            <div className="mentoring-chat-meta">
+              <span>
+                {chatReservation.item.offeringTitle ||
+                  (chatReservation.item.skills
+                    ? `${chatReservation.item.skills} 멘토링`
+                    : "멘토링")}
+              </span>
+              <span>
+                {chatReservation.item.reservationDate} ·{" "}
+                {chatReservation.item.reservationTime}
+              </span>
+            </div>
+
+            <div className="mentoring-chat-messages">
+              {chatLoading && (
+                <p className="mentoring-chat-empty">불러오는 중입니다...</p>
+              )}
+
+              {!chatLoading && chatMessages.length === 0 && (
+                <p className="mentoring-chat-empty">
+                  아직 주고받은 메시지가 없습니다.
+                  <br />첫 메시지를 보내보세요.
+                </p>
+              )}
+
+              {!chatLoading &&
+                chatMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`mentoring-chat-bubble-row ${
+                      message.senderId === user?.id ? "me" : ""
+                    }`}
+                  >
+                    <div className="mentoring-chat-bubble">
+                      <p>{message.content}</p>
+                      <span>
+                        {message.createdAt
+                          ? message.createdAt.slice(11, 16)
+                          : ""}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+              <div ref={chatBottomRef} />
+            </div>
+
+            <form
+              className="mentoring-chat-input-form"
+              onSubmit={handleSendChatMessage}
+            >
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(event) => setChatInput(event.target.value)}
+                placeholder="메시지를 입력하세요..."
+                maxLength={1000}
+              />
+              <button type="submit">전송</button>
+            </form>
           </div>
         </div>
       )}
