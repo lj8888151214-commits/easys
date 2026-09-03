@@ -702,16 +702,6 @@ function StudyDetail() {
     return "모집중";
   }
 
-  // 서버(StudyService.completeStudy)와 동일한 기준(studyDate + endTime)으로
-  // 종료 여부를 판단한다. 실제 차단은 반드시 서버에서 이루어지고, 이건
-  // 버튼을 미리 비활성화해 불필요한 요청/오류 메시지를 줄이기 위한 UX 보조용이다.
-  function isStudyEnded(study) {
-    if (!study?.studyDate || !study?.endTime) return false;
-    const endAt = new Date(`${study.studyDate}T${study.endTime}`);
-    if (Number.isNaN(endAt.getTime())) return false;
-    return new Date() >= endAt;
-  }
-
   async function handleCompleteStudy() {
     if (!window.confirm("스터디를 완료 처리하시겠습니까? 완료 후에는 진행 중인 스터디 목록에서 사라집니다.")) return;
 
@@ -812,12 +802,7 @@ function StudyDetail() {
               {study.status !== "COMPLETED" && (
                 <button
                   onClick={handleCompleteStudy}
-                  disabled={completing || !isStudyEnded(study)}
-                  title={
-                    isStudyEnded(study)
-                      ? undefined
-                      : "스터디 종료 시간 이후에 완료 처리할 수 있습니다."
-                  }
+                  disabled={completing}
                 >
                   {completing ? "처리 중..." : "스터디 완료"}
                 </button>
@@ -844,22 +829,6 @@ function StudyDetail() {
           <div>
             <span>분야</span>
             <strong>{study.category}</strong>
-          </div>
-          <div>
-            <span>주제</span>
-            <strong>{study.topic || "일정 미정"}</strong>
-          </div>
-          <div>
-            <span>일정</span>
-            <strong>{study.studyDate ? study.studyDate.replaceAll("-", ".") : "일정 미정"}</strong>
-          </div>
-          <div>
-            <span>시간</span>
-            <strong>
-              {study.startTime && study.endTime
-                ? `${study.startTime.slice(0, 5)} ~ ${study.endTime.slice(0, 5)}`
-                : "일정 미정"}
-            </strong>
           </div>
         </section>
 
