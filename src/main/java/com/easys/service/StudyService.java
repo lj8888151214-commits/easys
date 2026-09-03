@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -70,10 +69,6 @@ public class StudyService {
                         request.getTitle(),
                         request.getContent(),
                         request.getCategory(),
-                        request.getTopic(),
-                        request.getStudyDate(),
-                        request.getStartTime(),
-                        request.getEndTime(),
                         request.getMaxMembers(),
                         member
                 );
@@ -173,10 +168,6 @@ public class StudyService {
                 request.getTitle(),
                 request.getContent(),
                 request.getCategory(),
-                request.getTopic(),
-                request.getStudyDate(),
-                request.getStartTime(),
-                request.getEndTime(),
                 request.getMaxMembers()
         );
 
@@ -264,15 +255,13 @@ public class StudyService {
 
 
     // =====================================================
-    // 스터디 완료 처리 (방장 전용, 스터디 종료 시간 이후에만 가능)
+    // 스터디 완료 처리 (방장 전용)
     //
-    // 예약/결제/채팅/캘린더 데이터는 전혀 건드리지 않고 상태만 COMPLETED로
-    // 바꾼다. 목록(getStudies/searchStudy)에서 COMPLETED 상태를 제외하는
-    // 방식으로 "진행 중 스터디 목록"에서만 사라지게 한다.
-    //
-    // 스터디의 종료 시점은 새 필드를 추가하지 않고 기존 studyDate(LocalDate)
-    // + endTime(LocalTime) 조합을 그대로 사용해 판단한다(Study.validateSchedule()에서
-    // 이미 신규/수정 시 필수값으로 검증하는 필드들이다).
+    // 스터디 카드 자체는 더 이상 날짜/시간 일정을 갖지 않으므로(스터디룸
+    // 예약이 별도로 이루어진다), 방장은 시간 조건 없이 원하는 시점에 완료
+    // 처리할 수 있다. 예약/결제/채팅/캘린더 데이터는 전혀 건드리지 않고
+    // 상태만 COMPLETED로 바꾼다. 목록(getStudies/searchStudy)에서 COMPLETED
+    // 상태를 제외하는 방식으로 "진행 중 스터디 목록"에서만 사라지게 한다.
     // =====================================================
 
     @Transactional
@@ -290,28 +279,10 @@ public class StudyService {
                                 )
                         );
 
-        // 1. 반드시 방장 본인만 완료 처리할 수 있다 (프론트 버튼 숨김과 별개로 서버에서도 검증)
+        // 반드시 방장 본인만 완료 처리할 수 있다 (프론트 버튼 숨김과 별개로 서버에서도 검증)
         if (!study.getMember().getEmail().equals(email)) {
             throw new IllegalArgumentException(
                     "스터디 방장만 완료 처리할 수 있습니다."
-            );
-        }
-
-        // 2. 일정(날짜/종료 시간)이 없는 레거시 스터디는 종료 여부를 판단할 수 없으므로
-        //    완료 처리를 막는다.
-        if (study.getStudyDate() == null || study.getEndTime() == null) {
-            throw new IllegalArgumentException(
-                    "스터디 일정(날짜/종료 시간)이 설정되지 않아 완료 처리할 수 없습니다."
-            );
-        }
-
-        // 3. 스터디 종료 시간이 지나야만 완료 처리할 수 있다 (시작 전/진행 중에는 불가)
-        LocalDateTime studyEndAt =
-                study.getStudyDate().atTime(study.getEndTime());
-
-        if (LocalDateTime.now().isBefore(studyEndAt)) {
-            throw new IllegalArgumentException(
-                    "스터디가 아직 종료되지 않아 완료 처리할 수 없습니다. (종료 예정: " + studyEndAt + ")"
             );
         }
 
