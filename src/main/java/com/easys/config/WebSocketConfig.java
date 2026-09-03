@@ -78,15 +78,18 @@ public class WebSocketConfig implements WebSocketConfigurer {
     }
 
     public static class SignalWebSocketHandler extends TextWebSocketHandler {
-        // 방 번호별로 세션 관리 (Key: roomId, Value: 세션맵)
         private static final Map<String, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
-        private static final Map<String, String> sessionRooms = new ConcurrentHashMap<>(); // 세션ID -> 방ID
+        private static final Map<String, String> sessionRooms = new ConcurrentHashMap<>();
         private static final Map<String, String> userNicknames = new ConcurrentHashMap<>();
+
+        // 🌟 방 생성 시각 및 최소 입장 인원 기록 맵
+        private static final Map<String, Long> roomCreationTime = new ConcurrentHashMap<>();
+        private static final Map<String, Boolean> hasUserEntered = new ConcurrentHashMap<>(); // 실제 유저가 들어온 적 있는지 체크
+
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         @Override
         public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-            // URL 쿼리에서 roomId 파싱 (예: /signal?roomId=123)
             String query = session.getUri().getQuery();
             String roomId = "default-room";
             if (query != null) {
@@ -99,6 +102,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
             }
 
             rooms.putIfAbsent(roomId, new ConcurrentHashMap<>());
+
+            // 🌟 최초 1회만 생성 시간 기록 (절대 putIfAbsent로 덮어씌워지지 않게 고정)
+            if (!roomCreationTime.containsKey(roomId)) {
+                roomCreationTime.put(roomId, System.currentTimeMillis());
+            }
+
             Map<String, WebSocketSession> roomSessions = rooms.get(roomId);
 
             String initialNick = (String) session.getAttributes().get("nickname");
@@ -110,7 +119,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
             sessionRooms.put(session.getId(), roomId);
             userNicknames.put(session.getId(), initialNick);
 
-            System.out.println("🟢 [WS 연결] 방: " + roomId + " | ID: " + session.getId() + " | 닉네임: " + initialNick);
+            // 🌟 세션이 안정적으로 1명 이상 유지되면 "유저가 정상 입장함"으로 마킹
+            if (roomSessions.size() >= 1) {
+                hasUserEntered.put(roomId, true);
+            }
 
             session.sendMessage(new TextMessage("{\"type\":\"init\",\"myId\":\"" + session.getId() + "\"}"));
             broadcastUserList(roomId);
@@ -125,12 +137,32 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 String target = (String) map.get("target");
                 String roomId = sessionRooms.get(session.getId());
 
-                if ("join".equals(type)) {
-                    String nickname = (String) map.get("nickname");
-                    if (nickname != null && !nickname.isBlank() && !"게스트".equals(nickname)) {
-                        userNicknames.put(session.getId(), nickname);
+                // 🌟 호스트가 스트리밍을 종료하거나 뒤로 갈 때 브로드캐스트 및 DB 삭제 수행
+                // 🌟 호스트가 스트리밍 종료/뒤로가기로 인해 'stream-ended' 신호를 보낼 때
+                if ("stream-ended".equals(type)) {
+                    Map<String, WebSocketSession> roomSessions = rooms.get(roomId);
+                    if (roomSessions != null) {
+                        for (WebSocketSession s : roomSessions.values()) {
+                            if (s.isOpen()) {
+                                s.sendMessage(message);
+                            }
+                        }
                     }
-                    broadcastUserList(roomId);
+
+                    // 🚀 소켓 통신 시점에서 확실하게 서버 내부에서 DB 삭제 요청 수행
+                    if (roomId != null) {
+                        try {
+                            String backendUrl = "http://localhost:8080/api/streams/" + roomId;
+                            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) new java.net.URL(backendUrl).openConnection();
+                            conn.setRequestMethod("DELETE");
+                            conn.setConnectTimeout(2000);
+                            conn.setReadTimeout(2000);
+                            int responseCode = conn.getResponseCode();
+                            System.out.println("🗑️ [소켓 연동 DB 삭제] 방(" + roomId + ") 삭제 완료, 응답 코드: " + responseCode);
+                        } catch (Exception e) {
+                            System.err.println("⚠️ 소켓 기반 DB 방 삭제 실패: " + e.getMessage());
+                        }
+                    }
                     return;
                 }
 
@@ -161,9 +193,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                         s.sendMessage(message);
                     }
                 }
-            } catch (Exception e) {
-                System.err.println("메시지 처리 에러: " + e.getMessage());
-            }
+            } catch (Exception e) {}
         }
 
         @Override
@@ -172,17 +202,22 @@ public class WebSocketConfig implements WebSocketConfigurer {
             userNicknames.remove(session.getId());
 
             if (roomId != null && rooms.containsKey(roomId)) {
-                rooms.get(roomId).remove(session.getId());
+                Map<String, WebSocketSession> roomSessions = rooms.get(roomId);
+                roomSessions.remove(session.getId());
 
-                // 🌟 방에 남은 사람이 0명이면 메모리(rooms)와 스트림 목록(StreamController)에서 완전 삭제
-                if (rooms.get(roomId).isEmpty()) {
+                if (roomSessions.isEmpty()) {
+                    // 방에 사람이 아예 없어진 경우 메모리에서만 방 제거 (DB 삭제는 프론트의 명시적 DELETE API에 위임)
                     rooms.remove(roomId);
-                    com.easys.controller.StreamController.removeStream(roomId);
+                    roomCreationTime.remove(roomId);
+                    hasUserEntered.remove(roomId);
                 } else {
+                    // 🌟 [중요] 누군가 나갔다고 해서 무조건 스트리밍을 종료시키지 않고,
+                    // 현재 남아있는 사용자 목록만 갱신해 줍니다.
+                    // (오직 호스트가 '스트리밍 종료'나 '뒤로가기'를 눌러서 명시적으로 신호를 보낼 때만
+                    //  handleTextMessage의 "stream-ended"가 작동하여 게스트들이 튕겨 나갑니다.)
                     broadcastUserList(roomId);
                 }
             }
-            System.out.println("🔴 [WS 종료] ID: " + session.getId());
         }
 
         private void broadcastUserList(String roomId) {
@@ -217,7 +252,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
             } catch (Exception e) {}
         }
 
-        // 🌟 모든 클라이언트에게 실시간 방송 목록 전송 (클래스 내부로 정상 이동됨)
         public static void broadcastStreamList(List<Map<String, Object>> streams) {
             try {
                 String payload = new ObjectMapper().writeValueAsString(Map.of(
@@ -235,9 +269,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                         }
                     }
                 }
-            } catch (Exception e) {
-                System.err.println("StreamList 브로드캐스트 에러: " + e.getMessage());
-            }
+            } catch (Exception e) {}
         }
     }
 }
