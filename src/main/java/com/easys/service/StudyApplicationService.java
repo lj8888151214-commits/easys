@@ -21,6 +21,7 @@ public class StudyApplicationService {
     private final StudyApplicationRepository applicationRepository;
     private final StudyRepository studyRepository;
     private final MemberRepository memberRepository;
+    private final NotificationService notificationService;
 
 
     // =====================================================
@@ -221,6 +222,18 @@ public class StudyApplicationService {
 
         // 스터디 인원 증가
         study.increaseCurrentMembers();
+
+
+        // 승인 알림 - studyId를 함께 저장해 마이페이지/알림에서
+        // 바로 해당 스터디(채팅)로 이동할 수 있게 한다.
+        notificationService.notify(
+                application.getMember(),
+                "스터디 참여 신청이 승인되었습니다",
+                "'" + study.getTitle() + "' 스터디 참여가 승인되었습니다.",
+                "STUDY_APPLICATION_APPROVED",
+                study.getId(),
+                study.getId()
+        );
 
 
         return new StudyApplicationResponseDto(

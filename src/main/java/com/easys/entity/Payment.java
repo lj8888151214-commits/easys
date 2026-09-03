@@ -75,10 +75,11 @@ public class Payment {
     }
 
     // 서비스 종류 + 대상 id + 랜덤값을 조합해 사람이 봐도 어떤 결제인지
-    // 짐작 가능하면서도 중복될 일이 없는 주문번호를 만든다.
+    // 짐작 가능하면서도 토스 API 규격에 충돌하지 않도록 하이픈만 사용하여 안전한 주문번호 생성
     private String generateOrderId(PaymentProductType productType, Long targetId) {
-        String random = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-        return productType.name() + "-" + targetId + "-" + random;
+        String cleanType = productType.name().replace("_", "");
+        String random = UUID.randomUUID().toString().replace("-", "").substring(0, 10);
+        return cleanType + "-" + targetId + "-" + random;
     }
 
     // 실제 토스 결제 승인(status=DONE) 성공 후에만 호출되어야 한다.

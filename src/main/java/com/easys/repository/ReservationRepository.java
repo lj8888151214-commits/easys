@@ -47,6 +47,9 @@ public interface ReservationRepository
     // 스터디 삭제 시, 그 스터디를 참조하고 있는 예약을 전부 조회 (참조 해제용)
     List<Reservation> findByStudy(Study study);
 
+    // 스터디 멤버 전체가 볼 수 있는 그 스터디의 예약 목록 (최근 생성 순)
+    List<Reservation> findByStudyOrderByCreatedAtDesc(Study study);
+
 
 //      시간 중복 검사
 //

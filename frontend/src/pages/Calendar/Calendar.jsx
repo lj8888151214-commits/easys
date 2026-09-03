@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Calendar.css";
 import calendarBg from "../../assets/images/calendar-bg.jpg";
@@ -116,6 +116,8 @@ function Calendar() {
 
       console.log("내 개인 일정:", data);
 
+      // 달력 그리드는 지난 날짜의 일정도 그대로 보여줘야 하므로 여기서는
+      // 걸러내지 않는다 ("나의 일정" 목록에서만 종료된 일정을 숨긴다).
       setSchedules(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("캘린더 조회 오류:", error);
@@ -125,6 +127,18 @@ function Calendar() {
 
   useEffect(() => {
     loadSchedules();
+  }, []);
+
+  // "나의 일정" 목록에서만 종료된 일정을 자동으로 숨기기 위한 시계 틱.
+  // schedules 자체는 건드리지 않아 달력 그리드에는 영향이 없다.
+  const [scheduleListTick, setScheduleListTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setScheduleListTick(Date.now());
+    }, 60 * 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
   /* ================================
@@ -313,7 +327,9 @@ function Calendar() {
 
       setUpcomingGroupSchedules(
         Array.isArray(data)
-          ? data.map((item) => ({ ...item, type: (item.type || "study").toLowerCase() }))
+          ? data
+              .map((item) => ({ ...item, type: (item.type || "study").toLowerCase() }))
+              .filter((schedule) => !isScheduleEnded(schedule))
           : []
       );
     } catch (error) {
@@ -325,6 +341,35 @@ function Calendar() {
   useEffect(() => {
     loadUpcomingGroupSchedules();
   }, []);
+
+  // 이용(모임) 종료 시각이 지났는지 확인 (스터디 모집 글의 예약 카드와
+  // 동일하게, 지난 일정은 "다가오는 모임 일정"에서 자동으로 숨긴다)
+  const isScheduleEnded = (schedule) => {
+    const endAt = schedule.endAt || schedule.startAt;
+    if (!endAt) return false;
+    return new Date(endAt).getTime() <= Date.now();
+  };
+
+  // 새로고침 없이도 페이지를 보고 있는 동안 종료 시각이 지나면 사라지도록
+  // 1분마다 다시 걸러낸다.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setUpcomingGroupSchedules((prev) =>
+        prev.filter((schedule) => !isScheduleEnded(schedule))
+      );
+    }, 60 * 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // "나의 일정" 목록 전용: 달력 그리드(schedules)는 그대로 두고, 목록에
+  // 보여줄 때만 종료된 일정을 제외한다. scheduleListTick이 1분마다 바뀌면서
+  // 새로고침 없이도 다시 계산되게 한다.
+  const visibleSchedules = useMemo(
+    () => schedules.filter((schedule) => !isScheduleEnded(schedule)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [schedules, scheduleListTick]
+  );
 
   /* ================================
      입력값
@@ -806,12 +851,12 @@ function Calendar() {
               </div>
 
               <div className="schedule-list">
-                {schedules.length === 0 ? (
+                {visibleSchedules.length === 0 ? (
                   <div className="empty-schedule">
                     등록된 개인 일정이 없습니다.
                   </div>
                 ) : (
-                  schedules.map((schedule) => {
+                  visibleSchedules.map((schedule) => {
                     const type =
                       getPersonalType(
                         schedule

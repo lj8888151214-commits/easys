@@ -21,10 +21,10 @@ const REGIONS = [
 const RESERVATION_START_HOUR = 9;
 const RESERVATION_END_HOUR = 23;
 
-// 이용 시작 1시간 전까지만 신규 예약 가능 (백엔드 ReservationService의
-// RESERVATION_TIME_LIMIT_HOURS와 동일한 기준. 실제 최종 검증은 반드시
+// 이용 시작 후 10분까지만 신규 예약 가능 (백엔드 ReservationService의
+// RESERVATION_GRACE_PERIOD_MINUTES와 동일한 기준. 실제 최종 검증은 반드시
 // 서버에서 이루어지며, 여기서는 UX 보조용으로 미리 비활성화만 한다).
-const RESERVATION_TIME_LIMIT_HOURS = 1;
+const RESERVATION_GRACE_PERIOD_MINUTES = 10;
 
 const TIME_SLOTS = Array.from(
   { length: RESERVATION_END_HOUR - RESERVATION_START_HOUR },
@@ -47,7 +47,7 @@ function buildDateOptions() {
   const days = [];
   const today = new Date();
 
-  for (let i = 0; i < 7; i += 1) {
+  for (let i = 0; i < 14; i += 1) {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
 
@@ -433,7 +433,7 @@ function StudyReservation() {
     return selectedPlace.maxCapacity - reservedPeople;
   };
 
-  // 이용 시작 1시간 전이 지난 시간대는 신규 예약 대상에서 제외한다.
+  // 이용 시작 후 여유 시간(10분)이 지난 시간대는 신규 예약 대상에서 제외한다.
   // (서버도 동일하게 최종 검증하지만, 눌러보고 나서야 에러를 보게 하는
   // 대신 미리 비활성화한다.)
   const isSlotPastDeadline = (slot) => {
@@ -442,7 +442,7 @@ function StudyReservation() {
     if (Number.isNaN(slotStart.getTime())) return true;
 
     const deadline = new Date(
-      slotStart.getTime() - RESERVATION_TIME_LIMIT_HOURS * 60 * 60 * 1000
+      slotStart.getTime() + RESERVATION_GRACE_PERIOD_MINUTES * 60 * 1000
     );
 
     return new Date() >= deadline;
@@ -634,7 +634,7 @@ function StudyReservation() {
             EASYS STUDY SPACE
           </span>
 
-          <h1>스터디 예약</h1>
+          <h1>카페 예약</h1>
 
           <p>
             이지스에서 운영하는 함께 할 공부할 공간을 찾고
@@ -1114,7 +1114,7 @@ function StudyReservation() {
 
             <p>
               예약 버튼을 누르면 예약이 접수되고, 결제 완료 시 확정됩니다. 예약은
-              이용 시작 {RESERVATION_TIME_LIMIT_HOURS}시간 전까지만 가능합니다.
+              이용 시작 후 {RESERVATION_GRACE_PERIOD_MINUTES}분까지만 가능합니다.
             </p>
 
           </div>

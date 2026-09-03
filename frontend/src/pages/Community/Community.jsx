@@ -448,24 +448,6 @@ function Community() {
   return (
     <main className="community-page">
 
-      {/* BACKGROUND */}
-
-      <div
-        className="community-drops"
-        aria-hidden="true"
-      >
-        <span className="community-drop drop-1" />
-        <span className="community-drop drop-2" />
-        <span className="community-drop drop-3" />
-        <span className="community-drop drop-4" />
-        <span className="community-drop drop-5" />
-        <span className="community-drop drop-6" />
-        <span className="community-drop drop-7" />
-        <span className="community-drop drop-8" />
-        <span className="community-drop drop-9" />
-        <span className="community-drop drop-10" />
-      </div>
-
       {/* HERO */}
 
       <section className="community-hero">

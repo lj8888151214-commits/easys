@@ -73,6 +73,13 @@ public class StudyApplication {
 
 
     // =====================================================
+    // 승인된 시각 (= 실제로 스터디에 들어간 시각)
+    // =====================================================
+
+    private LocalDateTime approvedAt;
+
+
+    // =====================================================
     // 신청 생성
     // =====================================================
 
@@ -101,6 +108,9 @@ public class StudyApplication {
 
         this.status =
                 StudyApplicationStatus.APPROVED;
+
+        this.approvedAt =
+                LocalDateTime.now();
     }
 
 

@@ -15,6 +15,9 @@ public class StudyApplicationResponseDto {
     // 스터디 번호
     private Long studyId;
 
+    // 스터디 제목
+    private String studyTitle;
+
     // 신청한 회원 번호
     private Long memberId;
 
@@ -33,6 +36,9 @@ public class StudyApplicationResponseDto {
     // 신청 날짜
     private LocalDateTime createdAt;
 
+    // 실제로 스터디에 들어간 시각 (승인된 시각, 승인 전이거나 과거 데이터라면 신청일로 대체)
+    private LocalDateTime joinedAt;
+
 
     // =====================================================
     // 생성자
@@ -48,6 +54,11 @@ public class StudyApplicationResponseDto {
                 application
                         .getStudy()
                         .getId();
+
+        this.studyTitle =
+                application
+                        .getStudy()
+                        .getTitle();
 
         this.memberId =
                 application
@@ -74,5 +85,10 @@ public class StudyApplicationResponseDto {
 
         this.createdAt =
                 application.getCreatedAt();
+
+        this.joinedAt =
+                application.getApprovedAt() != null
+                        ? application.getApprovedAt()
+                        : application.getCreatedAt();
     }
 }
