@@ -6,12 +6,6 @@ import {
 
 import "./StudyEdit.css";
 
-// 스터디 시간은 1시간 단위로만 선택 가능 (00:00 ~ 23:00)
-const HOUR_OPTIONS = Array.from(
-  { length: 24 },
-  (_, hour) => `${String(hour).padStart(2, "0")}:00`
-);
-
 
 function StudyEdit() {
 
@@ -27,10 +21,6 @@ function StudyEdit() {
   const [form, setForm] = useState({
     title: "",
     category: "",
-    topic: "",
-    studyDate: "",
-    startTime: "",
-    endTime: "",
     content: "",
     maxMembers: 2
   });
@@ -185,22 +175,6 @@ function StudyEdit() {
         category:
           data.category || "",
 
-        topic:
-          data.topic || "",
-
-        studyDate:
-          data.studyDate || "",
-
-        startTime:
-          data.startTime
-            ? data.startTime.slice(0, 5)
-            : "",
-
-        endTime:
-          data.endTime
-            ? data.endTime.slice(0, 5)
-            : "",
-
         content:
           data.content || "",
 
@@ -288,18 +262,6 @@ function StudyEdit() {
     const category =
       form.category.trim();
 
-    const topic =
-      form.topic.trim();
-
-    const studyDate =
-      form.studyDate;
-
-    const startTime =
-      form.startTime;
-
-    const endTime =
-      form.endTime;
-
     const content =
       form.content.trim();
 
@@ -352,70 +314,6 @@ function StudyEdit() {
 
       setError(
         "스터디 분야는 30자 이하로 입력해주세요."
-      );
-
-      return;
-
-    }
-
-
-    // ===================================================
-    // 주제 검사
-    // ===================================================
-
-    if (!topic) {
-
-      setError(
-        "스터디 주제를 입력해주세요."
-      );
-
-      return;
-
-    }
-
-    if (topic.length > 150) {
-
-      setError(
-        "스터디 주제는 150자 이하로 입력해주세요."
-      );
-
-      return;
-
-    }
-
-
-    // ===================================================
-    // 일정 검사
-    // ===================================================
-
-    if (!studyDate || !startTime || !endTime) {
-
-      setError(
-        "스터디 날짜와 시작/종료 시간을 입력해주세요."
-      );
-
-      return;
-
-    }
-
-    if (startTime >= endTime) {
-
-      setError(
-        "시작 시간은 종료 시간보다 빨라야 합니다."
-      );
-
-      return;
-
-    }
-
-    const scheduleMinutes =
-      (Number(endTime.slice(0, 2)) * 60 + Number(endTime.slice(3, 5))) -
-      (Number(startTime.slice(0, 2)) * 60 + Number(startTime.slice(3, 5)));
-
-    if (scheduleMinutes % 60 !== 0) {
-
-      setError(
-        "스터디 시간은 1시간 단위로 설정해주세요. (예: 14:00 ~ 16:00)"
       );
 
       return;
@@ -481,10 +379,6 @@ function StudyEdit() {
         {
           title,
           category,
-          topic,
-          studyDate,
-          startTime,
-          endTime,
           content,
           maxMembers
         }
@@ -509,14 +403,6 @@ function StudyEdit() {
               title,
 
               category,
-
-              topic,
-
-              studyDate,
-
-              startTime: `${startTime}:00`,
-
-              endTime: `${endTime}:00`,
 
               content,
 
@@ -842,104 +728,6 @@ function StudyEdit() {
 
             <small>
               분야는 원하는 내용을 자유롭게 입력할 수 있습니다.
-            </small>
-
-          </div>
-
-
-          {/* =================================================
-              주제
-          ================================================= */}
-
-          <div className="study-edit-field">
-
-            <label htmlFor="topic">
-              스터디 주제
-            </label>
-
-            <input
-              id="topic"
-              name="topic"
-              type="text"
-              value={form.topic}
-              onChange={handleChange}
-              maxLength={150}
-              placeholder="예: Spring Boot와 JPA 기초"
-              disabled={saving}
-            />
-
-          </div>
-
-
-          {/* =================================================
-              일정
-          ================================================= */}
-
-          <div className="study-edit-field">
-
-            <label htmlFor="studyDate">
-              스터디 날짜
-            </label>
-
-            <input
-              id="studyDate"
-              name="studyDate"
-              type="date"
-              value={form.studyDate}
-              onChange={handleChange}
-              disabled={saving}
-            />
-
-          </div>
-
-          <div className="study-edit-field study-edit-time-field">
-
-            <label htmlFor="startTime">
-              시작 시간
-            </label>
-
-            <select
-              id="startTime"
-              name="startTime"
-              value={form.startTime}
-              onChange={handleChange}
-              disabled={saving}
-            >
-              <option value="" disabled>
-                선택
-              </option>
-
-              {HOUR_OPTIONS.map((time) => (
-                <option key={time} value={time}>
-                  {time}
-                </option>
-              ))}
-            </select>
-
-            <label htmlFor="endTime">
-              종료 시간
-            </label>
-
-            <select
-              id="endTime"
-              name="endTime"
-              value={form.endTime}
-              onChange={handleChange}
-              disabled={saving}
-            >
-              <option value="" disabled>
-                선택
-              </option>
-
-              {HOUR_OPTIONS.map((time) => (
-                <option key={time} value={time}>
-                  {time}
-                </option>
-              ))}
-            </select>
-
-            <small>
-              이 일정 그대로 스터디룸 예약 시간으로 사용되며, 1시간 단위로만 설정할 수 있습니다.
             </small>
 
           </div>

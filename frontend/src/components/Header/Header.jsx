@@ -15,6 +15,47 @@ const NAV_ITEMS = [
   { to: "/community", label: "커뮤니티" },
 ];
 
+// Home처럼 Hero 이미지/영상 위에 헤더가 얹히는 페이지는 최상단에서 투명
+// 헤더가 자연스럽지만, 아래 페이지들은 Hero가 없는 일반 내부 페이지라
+// 처음부터 컬러(흰 배경 + #9dc5a8) 헤더를 써야 한다.
+// 목록에 없는 다른 페이지는 기존 그대로(최상단 투명 → 스크롤 시 컬러) 동작한다.
+//
+// Hero가 있어 기존 방식(투명 → 스크롤 시 컬러)이 그대로 맞는 페이지:
+// "/", "/streaming", "/mentor", "/calendar", "/study", "/study-reservation",
+// "/community"(글쓰기/상세 포함) — 전부 최상단에 hero 섹션이 있어 투명 헤더가 자연스럽다.
+const COLORED_HEADER_PATHS = [
+  "/login",
+  "/member",
+  "/admin",
+  "/study/create",
+  "/profile",
+  "/profile/password",
+  "/payment",
+  "/payment/success",
+  "/payment/fail",
+];
+
+function isColoredHeaderPath(pathname) {
+  if (COLORED_HEADER_PATHS.includes(pathname)) {
+    return true;
+  }
+
+  // "/streaming/cam"은 ?roomId=... 쿼리스트링이 붙어서 들어오므로 접두사로 확인한다.
+  if (pathname.startsWith("/streaming/cam")) {
+    return true;
+  }
+
+  // 스터디 상세("/study/:id")와 수정("/study/:id/edit")도 hero가 없다.
+  // 목록("/study")과 생성("/study/create", 위에서 이미 처리)은 제외해야 하므로
+  // "/study/" 바로 다음에 오는 한 구간을 id로 보고, 그 값이 "create"가 아닐 때만 적용한다.
+  const studyDetailMatch = /^\/study\/([^/]+)(?:\/edit)?$/.exec(pathname);
+  if (studyDetailMatch && studyDetailMatch[1] !== "create") {
+    return true;
+  }
+
+  return false;
+}
+
 function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -22,6 +63,11 @@ function Header() {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Hero가 없는 일반 내부 페이지는 스크롤 여부와 무관하게 처음부터
+  // 컬러 헤더를 강제한다. 기존 스크롤 감지 로직(아래)은 그대로 두고,
+  // 렌더링 시 scrolled와 OR로 합쳐서 클래스를 결정한다.
+  const forceColoredHeader = isColoredHeaderPath(location.pathname);
 
   // =========================================================
   // 로그인 사용자 확인
@@ -122,8 +168,10 @@ function Header() {
       ? `/api${user.profileImageUrl}`
       : "/default-profile.svg";
 
+  const isScrolledStyle = scrolled || forceColoredHeader;
+
   return (
-    <header className={`main-header ${scrolled ? "scrolled" : ""}`}>
+    <header className={`main-header ${isScrolledStyle ? "scrolled" : ""}`}>
       <div className="header-container">
 
         {/* =====================================================
