@@ -51,10 +51,6 @@ public class StudyRoom {
     @Column(length = 1000)
     private String imageUrl;
 
-    // 카페(스터디룸) 사장님 이메일. 결제 완료 알림을 보낼 때 사용한다.
-    @Column(length = 100)
-    private String ownerEmail;
-
     // 운영 상태
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -70,11 +66,6 @@ public class StudyRoom {
 
     public StudyRoom(String name, String location, String description, int minCapacity,
             int maxCapacity, BigDecimal pricePerHour, BigDecimal rating, String imageUrl) {
-        this(name, location, description, minCapacity, maxCapacity, pricePerHour, rating, imageUrl, null);
-    }
-
-    public StudyRoom(String name, String location, String description, int minCapacity,
-            int maxCapacity, BigDecimal pricePerHour, BigDecimal rating, String imageUrl, String ownerEmail) {
         this.name = name;
         this.location = location;
         this.description = description;
@@ -83,7 +74,6 @@ public class StudyRoom {
         this.pricePerHour = pricePerHour;
         this.rating = rating;
         this.imageUrl = imageUrl;
-        this.ownerEmail = ownerEmail;
         // 새로 등록된 스터디룸은 기본적으로 예약 가능으로 설정
         this.status = StudyRoomStatus.ACTIVE;
         this.createdAt = LocalDateTime.now();
@@ -91,8 +81,7 @@ public class StudyRoom {
     }
 
     public void update(String name, String location, String description, int minCapacity,
-                       int maxCapacity, BigDecimal pricePerHour, BigDecimal rating, String imageUrl,
-                       String ownerEmail){
+                       int maxCapacity, BigDecimal pricePerHour, BigDecimal rating, String imageUrl){
         this.name = name;
         this.location = location;
         this.description = description;
@@ -101,7 +90,6 @@ public class StudyRoom {
         this.pricePerHour = pricePerHour;
         this.rating = rating;
         this.imageUrl = imageUrl;
-        this.ownerEmail = ownerEmail;
         this.updatedAt = LocalDateTime.now();
     }
     // 리뷰 평점 반영 (리뷰 등록/수정/삭제 시 평균 평점 재계산 결과를 반영)

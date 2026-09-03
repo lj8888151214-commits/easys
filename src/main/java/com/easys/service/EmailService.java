@@ -1,11 +1,12 @@
 package com.easys.service;
 
 import com.easys.config.WebSocketConfig;
+
 import com.easys.entity.Member;
 import com.easys.entity.Reservation;
+
 import com.easys.repository.EmailVerificationRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -15,14 +16,10 @@ import com.easys.entity.EmailVerification;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class EmailService {
 
     private final JavaMailSender mailSender;
@@ -115,6 +112,7 @@ public class EmailService {
 
         mailSender.send(message);
     }
+
 
     // =====================================================
     // 스터디룸 예약 결제 완료 알림
@@ -259,4 +257,5 @@ public class EmailService {
     private String verbLabel(boolean wasConfirmed) {
         return wasConfirmed ? "취소" : "거절";
     }
+
 }

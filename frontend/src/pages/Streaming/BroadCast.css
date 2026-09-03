@@ -1,333 +1,32 @@
-.streaming-page {
-  width: 100%;
-  min-height: 100vh;
-  background: #f7f9f7;
-  color: #243329;
-  overflow-x: hidden; /* 가로 스크롤 시 전체 페이지 흔들림 방지 */
-}
+/* =================================
+   개별 비디오 카드 및 버튼 그룹 정돈
+================================= */
 
-
-
-.streaming-hero {
-  /*position: relative;
-  width: 100%;
-  height: 430px;
-  overflow: hidden;
-  background: #243329;*/
+.cam-card {
   position: relative;
-    width: 100%;
-    height: 280px; /* 기존 430px에서 축소 */
-    overflow: hidden;
-    background: #243329;
-}
-
-.streaming-hero-bg {
-  position: absolute;
-  top: -50px;
-  left: 0;
-  width: 100%;
-  height: calc(100% + 100px);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  will-change: transform;
-}
-
-.streaming-hero-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background:
-    linear-gradient(
-      90deg,
-      rgba(36, 51, 41, 0.72),
-      rgba(36, 51, 41, 0.38),
-      rgba(36, 51, 41, 0.18)
-    );
-}
-
-.streaming-hero-content {
- /* position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: 1200px;
-  height: 100%;
-  margin: 0 auto;
-  padding: 0 30px;
-  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #dfe7e1;
+  border-radius: 20px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  color: #fff;*/
-  position: relative;
-    z-index: 2;
-    width: 100%;
-    max-width: 1200px;
-    height: 100%;
-    margin: 0 auto;
-    padding: 0 30px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    color: #fff;
-}
-
-.streaming-eyebrow {
-  display: block;
-  margin-bottom: 16px;
-  color: #d4e4d7;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 4px;
-}
-
-.streaming-hero-content h1 {
-  margin: 0;
-  color: #fff;
-  font-size: clamp(48px, 7vw, 78px);
-  font-weight: 800;
-  letter-spacing: -4px;
-}
-
-.streaming-hero-content p {
-  margin: 22px 0 0;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 16px;
-  line-height: 1.8;
-}
-
-/* =================================
-   CONTENT (기본 레이아웃 통제)
-================================= */
-
-.streaming-content {
- /* width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 90px 30px 120px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;*/
-  width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 45px 30px 90px; /* 상단 패딩을 90px에서 45px로 축소 */
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-}
-
-/* =================================
-   공통
-================================= */
-
-.section-label {
-  display: block;
-  margin-bottom: 11px;
-  color: #718b78;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 3px;
-}
-
-.stream-section-heading {
-  display: flex;
-  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 30px;
-}
-
-.stream-section-heading h2 {
-  margin: 0;
-  color: #243329;
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: -1.5px;
-}
-
-.stream-more-link {
-  color: #607467;
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 700;
-  transition: color 0.2s ease;
-}
-
-.stream-more-link:hover {
-  color: #243329;
-}
-
-/* =================================
-   방송 시작
-================================= */
-
-.stream-start-section {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr 0.8fr;
-  gap: 60px;
-  align-items: center;
-  padding: 65px;
-  border: 1px solid rgba(212, 228, 215, 0.8);
-  border-radius: 28px;
-  background:
-    radial-gradient(
-      circle at 85% 15%,
-      rgba(212, 228, 215, 0.55),
-      transparent 35%
-    ),
-    #edf3ee;
+  box-sizing: border-box;
+  box-shadow: 0 8px 25px rgba(36, 51, 41, 0.035);
   overflow: hidden;
 }
 
-.stream-start-section::before {
-  content: "";
-  position: absolute;
-  width: 240px;
-  height: 240px;
-  top: -120px;
-  right: -70px;
-  border-radius: 50%;
-  background: rgba(202, 223, 208, 0.45);
-  pointer-events: none;
+.cam-card-title {
+  margin-bottom: 12px;
 }
 
-.stream-start-content {
-  position: relative;
-  z-index: 1;
-}
-
-.stream-start-content h2 {
+.cam-card-title h4 {
   margin: 0;
   color: #243329;
-  font-size: clamp(38px, 5vw, 58px);
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -3px;
-}
-
-.stream-start-content p {
-  margin: 24px 0 0;
-  color: #718078;
-  font-size: 14px;
-  line-height: 1.8;
-}
-
-.stream-start-button {
-  margin-top: 30px;
-  padding: 14px 24px;
-  border: 1px solid #243329;
-  border-radius: 10px;
-  background: #243329;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease;
-}
-
-.stream-start-button:hover {
-  background: #344b3c;
-  transform: translateY(-2px);
-}
-
-/* =================================
-   방송 시작 VISUAL
-================================= */
-
-.stream-start-visual {
-  position: relative;
-  min-height: 280px;
-  border-radius: 24px;
-  background: #243329;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  overflow: hidden;
-  box-shadow: 0 18px 45px rgba(36, 51, 41, 0.15);
-}
-
-.stream-start-visual::before {
-  content: "";
-  position: absolute;
-  width: 220px;
-  height: 220px;
-  top: -100px;
-  right: -80px;
-  border-radius: 50%;
-  background: rgba(212, 228, 215, 0.1);
-}
-
-.stream-start-visual::after {
-  content: "";
-  position: absolute;
-  width: 160px;
-  height: 160px;
-  bottom: -90px;
-  left: -50px;
-  border-radius: 50%;
-  background: rgba(202, 223, 208, 0.08);
-}
-
-.live-badge {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 20px;
-  color: #d4e4d7;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 2px;
-}
-
-.live-badge span {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #a9cdb0;
-  box-shadow: 0 0 0 5px rgba(169, 205, 176, 0.1);
-}
-
-.stream-visual-circle {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 82px;
-  height: 82px;
-  margin-bottom: 20px;
-
-  border-radius: 50%;
-
-  font-size: 23px;
-}
-
-.stream-start-visual strong {
-  position: relative;
-  z-index: 1;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
 }
 
-<<<<<<< Updated upstream
-.stream-start-visual > span:last-child {
-  position: relative;
-  z-index: 1;
-  margin-top: 8px;
-=======
 
 .stream-bottom-banner button:hover {
   background: #edf3ee;
@@ -363,262 +62,86 @@
 }
 
 .cam-placeholder {
->>>>>>> Stashed changes
   color: rgba(255, 255, 255, 0.5);
-  font-size: 10px;
-  letter-spacing: 0.5px;
+  font-size: 13px;
+}
+
+/* 하단 제어 버튼 그룹 (찌그러짐 방지) */
+.cam-btn-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: auto;
+}
+
+.cam-btn-group button {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #243329;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+}
+
+.cam-btn-group button:hover {
+  background: #344b3c;
 }
 
 /* =================================
-   기능
+   전체 화면 (True Fullscreen) 대응
 ================================= */
 
-.stream-feature-section {
-  margin-top: 120px;
+.cam-card:fullscreen,
+.cam-card:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 2147483647 !important;
+  background-color: #000000 !important;
+  padding: 30px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: center !important;
 }
 
-.stream-feature-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+.cam-card:fullscreen .cam-stream-box,
+.cam-card:-webkit-full-screen .cam-stream-box {
+  flex: 1 !important;
+  width: 100% !important;
+  height: auto !important;
+  margin: 0 !important;
 }
 
-.stream-feature-card {
-  position: relative;
-  padding: 32px;
-  border: 1px solid #dfe7e1;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 8px 25px rgba(36, 51, 41, 0.035);
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    border-color 0.25s ease;
+.cam-card:fullscreen .cam-stream-img,
+.cam-card:-webkit-full-screen .cam-stream-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
 }
 
-.stream-feature-card:hover {
-  transform: translateY(-5px);
-  border-color: #cbdacf;
-  box-shadow: 0 18px 40px rgba(36, 51, 41, 0.08);
+.cam-card:fullscreen .cam-card-title h4,
+.cam-card:-webkit-full-screen .cam-card-title h4 {
+  color: #ffffff !important;
+  font-size: 18px !important;
 }
 
-.stream-feature-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 22px;
-  border: 1px solid #d9e5dc;
-  border-radius: 15px;
-  background: #edf3ee;
-  font-size: 22px;
-}
-
-.stream-feature-card h3 {
-  margin: 0 0 12px;
-  color: #243329;
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.stream-feature-card p {
-  margin: 0;
-  color: #78827b;
-  font-size: 13px;
-  line-height: 1.75;
-}
-
-.feature-tag {
-  display: inline-block;
-  margin-top: 18px;
-  padding: 5px 9px;
-  border-radius: 20px;
-  background: #edf3ee;
-  color: #607467;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-
-
-
-.stream-upcoming-section {
-  margin-top: 120px;
-}
-
-.upcoming-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.upcoming-item {
-  display: flex;
-  align-items: center;
-  gap: 25px;
-  padding: 20px 24px;
-  border: 1px solid #dfe7e1;
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 7px 22px rgba(36, 51, 41, 0.035);
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.upcoming-item:hover {
-  transform: translateY(-2px);
-  border-color: #cbdacf;
-  box-shadow: 0 12px 30px rgba(36, 51, 41, 0.07);
-}
-
-.upcoming-date {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 70px;
-  flex-shrink: 0;
-  border: 1px solid #dce7df;
-  border-radius: 14px;
-  background: #edf3ee;
-  color: #718174;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-
-.upcoming-date strong {
-  margin-top: 3px;
-  color: #243329;
-  font-size: 25px;
-}
-
-.upcoming-info {
-  flex: 1;
-}
-
-.upcoming-info > span {
-  color: #78907d;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-}
-
-.upcoming-info h3 {
-  margin: 7px 0;
-  color: #243329;
-  font-size: 16px;
-  font-weight: 800;
-}
-
-.upcoming-info p {
-  margin: 0;
-  color: #858d87;
-  font-size: 11px;
-}
-
-.upcoming-item button {
-  padding: 9px 15px;
-  border: 1px solid #d5e0d7;
-  border-radius: 20px;
-  background: #fff;
-  color: #526158;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.upcoming-item button:hover {
-  border-color: #aebdb2;
-  background: #f5f8f5;
-}
-
-
-
-.stream-bottom-banner {
-  position: relative;
-  margin-top: 120px;
-  padding: 75px 30px;
-  border-radius: 28px;
-  background:
-    radial-gradient(
-      circle at 15% 20%,
-      rgba(212, 228, 215, 0.16),
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 85% 80%,
-      rgba(202, 223, 208, 0.12),
-      transparent 30%
-    ),
-    #243329;
-  color: white;
-  text-align: center;
-  overflow: hidden;
-}
-
-.stream-bottom-banner .section-label {
-  color: #cce0d1;
-}
-
-.stream-bottom-banner h2 {
-  margin: 15px 0 20px;
-  color: #fff;
-  font-size: clamp(34px, 5vw, 56px);
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -3px;
-}
-
-.stream-bottom-banner p {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-  line-height: 1.8;
-}
-
-.stream-bottom-banner button {
-  margin-top: 30px;
-  padding: 13px 23px;
-  border: 0;
-  border-radius: 10px;
-  background: #fff;
-  color: #243329;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease;
-}
-
-.stream-bottom-banner button:hover {
-  background: #edf3ee;
-  transform: translateY(-2px);
-}
-.cam-stream-box {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #000000;
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 15px;
-  position: relative; /* 비디오 태그 포지셔닝을 위해 추가 */
-}
-
-.cam-stream-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* contain에서 cover로 변경하여 화면 채우기 */
-  display: block;
+.cam-card:fullscreen .cam-btn-group,
+.cam-card:-webkit-full-screen .cam-btn-group {
+  background: rgba(0, 0, 0, 0.75) !important;
+  padding: 12px 20px !important;
+  border-radius: 12px !important;
+  margin-top: 20px !important;
+>>>>>>> Stashed changes
 }

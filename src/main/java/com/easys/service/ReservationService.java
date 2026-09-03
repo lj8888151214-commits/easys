@@ -1,11 +1,9 @@
 package com.easys.service;
 
-import com.easys.dto.AdminReservationResponseDto;
 import com.easys.dto.ReservationCreateDto;
 import com.easys.dto.ReservationResponseDto;
 import com.easys.entity.*;
 import com.easys.repository.MemberRepository;
-import com.easys.repository.PaymentRepository;
 import com.easys.repository.ReservationRepository;
 import com.easys.repository.StudyApplicationRepository;
 import com.easys.repository.StudyRepository;
@@ -44,6 +42,10 @@ public class ReservationService {
     private final StudyRoomRepository studyRoomRepository;
     private final StudyRepository studyRepository;
     private final MemberRepository memberRepository;
+
+
+    private final PersonalScheduleService personalScheduleService;
+
     private final PaymentRepository paymentRepository;
     private final StudyApplicationRepository studyApplicationRepository;
 
@@ -52,15 +54,15 @@ public class ReservationService {
     private final EmailService emailService;
     private final NotificationService notificationService;
 
+
     /*
      * 예약 생성
      *
      * 주의:
-     * 아직 결제하지 않았기 때문에 PENDING 상태로 저장하고,
-     * 결제 대기(READY) 상태의 Payment를 함께 생성한다.
+     * 아직 결제하지 않았기 때문에 PENDING 상태로 저장한다.
      *
-     * 토스 결제가 실제로 승인되면 PaymentController가
-     * onStudyPaymentConfirmed()를 호출하여
+     * 결제 담당자가 결제 성공을 확인하면
+     * confirmReservation()을 호출하여
      * CONFIRMED + 캘린더 등록을 처리한다.
      */
     public ReservationResponseDto createReservation(
@@ -169,32 +171,22 @@ public class ReservationService {
             );
         }
 
-        // 6. 정원 초과 확인
-        //
-        // 스터디룸은 통째로 빌리는 게 아니라, 같은 시간대를 여러 사람이
-        // 정원(maxCapacity)까지 나눠 쓸 수 있다. 그래서 "이미 예약이 있는지"가
-        // 아니라 "겹치는 시간대의 누적 인원 + 이번 신청 인원"이 정원을
-        // 넘는지로 판단한다.
-        int alreadyReservedPeople =
-                reservationRepository.sumOverlappingPeopleCount(
+        // 6. 기존 예약과 시간 중복 확인
+        long overlappingCount =
+                reservationRepository.countOverlappingReservations(
                         studyRoom,
                         reservationDate,
                         startTime,
                         endTime,
                         List.of(
                                 ReservationStatus.PENDING,
-                                ReservationStatus.PAID,
                                 ReservationStatus.CONFIRMED
                         )
                 );
 
-        int remainingCapacity = studyRoom.getMaxCapacity() - alreadyReservedPeople;
-
-        if (request.peopleCount() > remainingCapacity) {
+        if (overlappingCount > 0) {
             throw new IllegalArgumentException(
-                    "선택한 시간대는 정원이 가득 찼습니다. (남은 자리: "
-                            + Math.max(remainingCapacity, 0)
-                            + "명)"
+                    "선택한 시간에는 이미 예약이 존재합니다."
             );
         }
 
@@ -236,6 +228,9 @@ public class ReservationService {
         Reservation savedReservation =
                 reservationRepository.save(reservation);
 
+
+        return ReservationResponseDto.from(savedReservation);
+
         // 11. 결제 대기(READY) 상태의 Payment 생성
         // 결제창에는 서버가 계산한 금액(totalPrice)만 사용하며,
         // 실제 결제 승인은 PaymentService.confirmPayment()에서 이 금액을 기준으로 검증한다.
@@ -258,6 +253,7 @@ public class ReservationService {
         );
 
         return ReservationResponseDto.from(savedReservation, payment);
+
     }
 
     // 내 예약 목록
@@ -274,11 +270,11 @@ public class ReservationService {
                 );
 
         return reservationRepository
-                .findByMemberOrderByCreatedAtDesc(
+                .findByMemberOrderByReservationDateDescStartTimeDesc(
                         member
                 )
                 .stream()
-                .map(reservation -> ReservationResponseDto.from(reservation, findPayment(reservation.getId())))
+                .map(ReservationResponseDto::from)
                 .toList();
     }
 
@@ -341,7 +337,7 @@ public class ReservationService {
 
         validateOwner(reservation, memberId);
 
-        return ReservationResponseDto.from(reservation, findPayment(reservation.getId()));
+        return ReservationResponseDto.from(reservation);
     }
 
     /*
@@ -369,7 +365,6 @@ public class ReservationService {
                         date,
                         List.of(
                                 ReservationStatus.PENDING,
-                                ReservationStatus.PAID,
                                 ReservationStatus.CONFIRMED
                         )
                 )
@@ -377,6 +372,20 @@ public class ReservationService {
                 .map(ReservationResponseDto::from)
                 .toList();
     }
+
+
+    /*
+     * 결제 성공 후 예약 확정
+     *
+     * 결제 담당자가 결제를 완료하면
+     * 이 메서드를 호출한다.
+     *
+     * CONFIRMED가 되면서
+     * PersonalSchedule이 생성된다.
+     */
+    public ReservationResponseDto confirmReservation(
+            Long reservationId
+    ) {
 
     // =====================================================
     // 관리자 기능
@@ -401,6 +410,7 @@ public class ReservationService {
     // 나의 캘린더(PersonalSchedule)에 등록된다.
     public ReservationResponseDto approveReservation(Long reservationId) {
 
+
         Reservation reservation =
                 reservationRepository.findById(reservationId)
                         .orElseThrow(() ->
@@ -409,11 +419,16 @@ public class ReservationService {
                                 )
                         );
 
-        if (reservation.getStatus() != ReservationStatus.PAID) {
+        if (reservation.getStatus()
+                != ReservationStatus.PENDING) {
+
             throw new IllegalArgumentException(
-                    "결제가 완료된 예약만 승인할 수 있습니다."
+                    "결제 대기 상태의 예약만 확정할 수 있습니다."
             );
         }
+
+
+        // 캘린더 시작/종료 시간 생성
 
         confirmReservationAndCreateCalendar(reservation);
 
@@ -427,6 +442,7 @@ public class ReservationService {
     // 일정을 만든다.
     private void confirmReservationAndCreateCalendar(Reservation reservation) {
 
+
         LocalDateTime startAt =
                 LocalDateTime.of(
                         reservation.getReservationDate(),
@@ -438,6 +454,26 @@ public class ReservationService {
                         reservation.getReservationDate(),
                         reservation.getEndTime()
                 );
+
+
+        // 캘린더 일정 생성
+        PersonalSchedule schedule =
+                personalScheduleService.createSchedule(
+                        reservation.getMember(),
+                        "스터디룸 예약 - "
+                                + reservation.getStudyRoom().getName(),
+                        reservation.getStudyRoom().getLocation()
+                                + " / "
+                                + reservation.getPeopleCount()
+                                + "명 예약",
+                        startAt,
+                        endAt
+                );
+
+        // 예약 확정 + 캘린더 연결
+        reservation.confirm(schedule);
+
+        return ReservationResponseDto.from(reservation);
 
         if (reservation.isStudyReservation()) {
 
@@ -626,6 +662,7 @@ public class ReservationService {
         );
 
         return ReservationResponseDto.from(reservation, findPayment(reservation.getId()));
+
     }
 
     /*
@@ -683,6 +720,10 @@ public class ReservationService {
             );
         }
 
+
+        // 연결된 캘린더 일정이 있다면 삭제
+        if (reservation.getPersonalSchedule() != null) {
+
         // 일반 사용자는 이용 시작 1시간 전부터는 취소할 수 없다.
         // (관리자 취소는 cancelReservationByAdmin()을 통해 별도로 처리되며
         // 이 마감 정책의 적용을 받지 않는다.)
@@ -712,10 +753,15 @@ public class ReservationService {
         reservation.cancel();
         cancelPaymentIfExists(reservation.getId());
 
-        if (scheduleIdToDelete != null) {
-            reservationRepository.flush();
-            personalScheduleService.deleteSchedule(scheduleIdToDelete, reservationOwner);
+
+            personalScheduleService.deleteSchedule(
+                    reservation.getPersonalSchedule().getId(),
+                    reservation.getMember()
+            );
         }
+
+
+        reservation.cancel();
 
         if (groupScheduleIdToDelete != null) {
             reservationRepository.flush();
@@ -755,6 +801,7 @@ public class ReservationService {
         return paymentRepository
                 .findByProductTypeAndTargetId(PaymentProductType.STUDY, reservationId)
                 .orElse(null);
+
     }
 
     // 이용 시작 시각(startAt) 기준으로 지금이 신규 예약/결제 마감
