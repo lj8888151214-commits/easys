@@ -1,4 +1,16 @@
+import { Link } from "react-router-dom";
 import "./Footer.css";
+
+import easyFtLogo from "../../assets/images/easy_ft.png";
+
+const FOOTER_LINKS = [
+  { to: "/streaming", label: "스트리밍" },
+  { to: "/mentor", label: "멘토링" },
+  { to: "/calendar", label: "캘린더" },
+  { to: "/study", label: "스터디" },
+  { to: "/study-reservation", label: "스터디 예약/결제" },
+  { to: "/community", label: "커뮤니티" },
+];
 
 function Footer() {
   return (
@@ -12,9 +24,11 @@ function Footer() {
           {/* 로고 */}
           <div className="footer-logo">
 
-            <span className="footer-logo-text">
-              이지스
-            </span>
+            <img
+              src={easyFtLogo}
+              alt="이지스"
+              className="footer-logo-image"
+            />
 
             <span className="footer-tagline">
               너무 쉽죠? · 혼자 공부하지 말고, 함께 시작해보세요.
@@ -26,37 +40,13 @@ function Footer() {
           {/* 링크 */}
           <ul className="footer-links">
 
-            <li>
-              <a href="#">
-                회사소개
-              </a>
-            </li>
-
-            <li>
-              <a href="#">
-                이용약관
-              </a>
-            </li>
-
-            <li>
-              <a href="#">
-                <strong>
-                  개인정보처리방침
-                </strong>
-              </a>
-            </li>
-
-            <li>
-              <a href="#">
-                고객센터
-              </a>
-            </li>
-
-            <li>
-              <a href="#">
-                제휴문의
-              </a>
-            </li>
+            {FOOTER_LINKS.map((item) => (
+              <li key={item.to}>
+                <Link to={item.to}>
+                  {item.label}
+                </Link>
+              </li>
+            ))}
 
           </ul>
 

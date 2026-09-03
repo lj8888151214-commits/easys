@@ -11,7 +11,7 @@
   border-top:
     1px solid #D2DDD2;
 
-  padding: 50px 0;
+  padding: 34px 0;
 
   color: #4A6050;
 
@@ -48,9 +48,9 @@
   border-bottom:
     1px solid #D5E0D5;
 
-  padding-bottom: 25px;
+  padding-bottom: 16px;
 
-  margin-bottom: 25px;
+  margin-bottom: 16px;
 
   flex-wrap: wrap;
 
@@ -68,16 +68,22 @@
 
   flex-direction: column;
 
+  align-items: flex-start;
+
   gap: 5px;
 }
 
-.footer-logo-text {
+.footer-logo-image {
 
-  font-size: 20px;
+  display: block;
 
-  font-weight: bold;
+  width: auto;
 
-  color: #2E4033;
+  /* 원본 PNG는 투명 여백이 위아래 약 9%, 좌우 약 4%뿐이라
+     실제 로고가 약 100~130px로 보이도록 이 값으로 표시한다. */
+  height: 90px;
+
+  object-fit: contain;
 }
 
 .footer-tagline {
@@ -165,7 +171,7 @@
 
   .main-footer {
 
-    padding: 40px 0;
+    padding: 28px 0;
   }
 
   .footer-top {
