@@ -1,9 +1,5 @@
 package com.easys.config;
 
-import com.easys.entity.Study;
-import com.easys.entity.StudyApplicationStatus;
-import com.easys.repository.StudyApplicationRepository;
-import com.easys.repository.StudyRepository;
 import com.easys.security.CustomUserDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
@@ -35,17 +31,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    private final StudyRepository studyRepository;
-    private final StudyApplicationRepository studyApplicationRepository;
-
-    public WebSocketConfig(
-            StudyRepository studyRepository,
-            StudyApplicationRepository studyApplicationRepository
-    ) {
-        this.studyRepository = studyRepository;
-        this.studyApplicationRepository = studyApplicationRepository;
-    }
-
     @Bean
     public ServletServerContainerFactoryBean createWebSocketContainer() {
         ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
@@ -56,7 +41,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public SignalWebSocketHandler signalWebSocketHandler() {
-        return new SignalWebSocketHandler(studyRepository, studyApplicationRepository);
+        return new SignalWebSocketHandler();
     }
 
     @Override
@@ -79,7 +64,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
                         if (auth.getPrincipal() instanceof CustomUserDetails userDetails) {
                             String nick = userDetails.getMember().getNickname();
                             attributes.put("nickname", nick != null ? nick : userDetails.getUsername());
-                            attributes.put("memberId", userDetails.getMember().getId());
                         } else {
                             attributes.put("nickname", auth.getName());
                         }
@@ -94,15 +78,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
     }
 
     public static class SignalWebSocketHandler extends TextWebSocketHandler {
-
-        private static final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
-
         private static final Map<String, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
         private static final Map<String, String> sessionRooms = new ConcurrentHashMap<>();
-
-        private static final Map<String, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
-        private static final Map<String, String> sessionRooms = new ConcurrentHashMap<>();
-
         private static final Map<String, String> userNicknames = new ConcurrentHashMap<>();
 
         // 🌟 방 생성 시각 및 최소 입장 인원 기록 맵
@@ -111,28 +88,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
         private final ObjectMapper objectMapper = new ObjectMapper();
 
-        // 스터디 채팅방("study-{id}") 참여 권한 확인용. 스트리밍 시그널링 방은
-        // roomId가 "study-"로 시작하지 않으므로 이 저장소들은 영향을 받지 않는다.
-        private final StudyRepository studyRepository;
-        private final StudyApplicationRepository studyApplicationRepository;
-
-        private static final String STUDY_ROOM_PREFIX = "study-";
-
-        public SignalWebSocketHandler(
-                StudyRepository studyRepository,
-                StudyApplicationRepository studyApplicationRepository
-        ) {
-            this.studyRepository = studyRepository;
-            this.studyApplicationRepository = studyApplicationRepository;
-        }
-
         @Override
         public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-
-            // 닫힌 세션 정리
-            sessions.entrySet().removeIf(entry -> !entry.getValue().isOpen());
-            userNicknames.entrySet().removeIf(entry -> !sessions.containsKey(entry.getKey()));
-
             String query = session.getUri().getQuery();
             String roomId = "default-room";
             if (query != null) {
@@ -144,14 +101,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 }
             }
 
-            // 스터디 채팅방은 해당 스터디의 방장이거나 승인된 참여자만 입장할 수 있다.
-            if (roomId.startsWith(STUDY_ROOM_PREFIX) && !canJoinStudyChatRoom(roomId, session)) {
-                session.close(CloseStatus.NOT_ACCEPTABLE);
-                return;
-            }
-
             rooms.putIfAbsent(roomId, new ConcurrentHashMap<>());
-
 
             // 🌟 최초 1회만 생성 시간 기록 (절대 putIfAbsent로 덮어씌워지지 않게 고정)
             if (!roomCreationTime.containsKey(roomId)) {
@@ -159,9 +109,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
             }
 
             Map<String, WebSocketSession> roomSessions = rooms.get(roomId);
-
-            Map<String, WebSocketSession> roomSessions = rooms.get(roomId);
-
 
             String initialNick = (String) session.getAttributes().get("nickname");
             if (initialNick == null || initialNick.isBlank()) {
@@ -172,19 +119,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
             sessionRooms.put(session.getId(), roomId);
             userNicknames.put(session.getId(), initialNick);
 
-
-            // 1. 발급된 본인 ID 전달
-
             // 🌟 세션이 안정적으로 1명 이상 유지되면 "유저가 정상 입장함"으로 마킹
             if (roomSessions.size() >= 1) {
                 hasUserEntered.put(roomId, true);
             }
-
-
-            session.sendMessage(new TextMessage("{\"type\":\"init\",\"myId\":\"" + session.getId() + "\"}"));
-
-            System.out.println("🟢 [WS 연결] 방: " + roomId + " | ID: " + session.getId() + " | 닉네임: " + initialNick);
-
 
             session.sendMessage(new TextMessage("{\"type\":\"init\",\"myId\":\"" + session.getId() + "\"}"));
             broadcastUserList(roomId);
@@ -198,15 +136,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 String type = (String) map.get("type");
                 String target = (String) map.get("target");
                 String roomId = sessionRooms.get(session.getId());
-
-
-                if ("join".equals(type)) {
-                    String nickname = (String) map.get("nickname");
-                    if (nickname != null && !nickname.isBlank() && !"게스트".equals(nickname)) {
-                        userNicknames.put(session.getId(), nickname);
-                    }
-
-                    broadcastUserList();
 
                 // 🌟 호스트가 스트리밍을 종료하거나 뒤로 갈 때 브로드캐스트 및 DB 삭제 수행
                 // 🌟 호스트가 스트리밍 종료/뒤로가기로 인해 'stream-ended' 신호를 보낼 때
@@ -234,9 +163,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
                             System.err.println("⚠️ 소켓 기반 DB 방 삭제 실패: " + e.getMessage());
                         }
                     }
-
-                    broadcastUserList(roomId);
-
                     return;
                 }
 
@@ -275,10 +201,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
             String roomId = sessionRooms.remove(session.getId());
             userNicknames.remove(session.getId());
 
-            System.out.println("🔴 [WS 종료] ID: " + session.getId() + " | 총 인원: " + sessions.size());
-            broadcastUserList();
-
-
             if (roomId != null && rooms.containsKey(roomId)) {
                 Map<String, WebSocketSession> roomSessions = rooms.get(roomId);
                 roomSessions.remove(session.getId());
@@ -295,50 +217,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
                     //  handleTextMessage의 "stream-ended"가 작동하여 게스트들이 튕겨 나갑니다.)
                     broadcastUserList(roomId);
                 }
-            }
-
-
-            if (roomId != null && rooms.containsKey(roomId)) {
-                rooms.get(roomId).remove(session.getId());
-
-                if (rooms.get(roomId).isEmpty()) {
-                    rooms.remove(roomId);
-                    com.easys.controller.StreamController.removeStream(roomId);
-                } else {
-                    broadcastUserList(roomId);
-                }
-            }
-            System.out.println("🔴 [WS 종료] ID: " + session.getId());
-
-        }
-
-        // roomId가 "study-{studyId}" 형태일 때, 이 세션의 로그인 회원이 그
-        // 스터디의 방장이거나 승인(APPROVED)된 참여자인지 확인한다.
-        private boolean canJoinStudyChatRoom(String roomId, WebSocketSession session) {
-            try {
-                Long studyId = Long.parseLong(roomId.substring(STUDY_ROOM_PREFIX.length()));
-
-                Object memberIdAttr = session.getAttributes().get("memberId");
-                if (!(memberIdAttr instanceof Long memberId)) {
-                    return false;
-                }
-
-                Study study = studyRepository.findById(studyId).orElse(null);
-                if (study == null) {
-                    return false;
-                }
-
-                if (study.getMember().getId().equals(memberId)) {
-                    return true;
-                }
-
-                return studyApplicationRepository
-                        .findByStudyIdAndMemberId(studyId, memberId)
-                        .map(application -> application.getStatus() == StudyApplicationStatus.APPROVED)
-                        .orElse(false);
-
-            } catch (Exception e) {
-                return false;
             }
         }
 
@@ -371,32 +249,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
                         } catch (IOException ignored) {}
                     }
                 }
-
-            } catch (Exception e) {}
-        }
-
-        public static void broadcastStreamList(List<Map<String, Object>> streams) {
-            try {
-                String payload = new ObjectMapper().writeValueAsString(Map.of(
-                        "type", "streamList",
-                        "streams", streams
-                ));
-                TextMessage msg = new TextMessage(payload);
-
-                for (Map<String, WebSocketSession> roomSessions : rooms.values()) {
-                    for (WebSocketSession s : roomSessions.values()) {
-                        if (s.isOpen()) {
-                            try {
-                                s.sendMessage(msg);
-                            } catch (IOException ignored) {}
-                        }
-                    }
-                }
-
-            } catch (Exception e) {
-                System.err.println("StreamList 브로드캐스트 에러: " + e.getMessage());
-            }
-
             } catch (Exception e) {}
         }
 
@@ -418,7 +270,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
                     }
                 }
             } catch (Exception e) {}
-
         }
     }
 }
