@@ -26,13 +26,21 @@ function StudyDetail() {
   const [applications, setApplications] =
     useState([]);
 
-  const [studyReservation, setStudyReservation] =
-    useState(null);
+  const [studyReservations, setStudyReservations] =
+    useState([]);
+
+  // 채팅창 크게 보기 (스터디 소개를 숨기고 채팅창을 확대)
+  const [chatExpanded, setChatExpanded] =
+    useState(false);
 
   const [loading, setLoading] =
     useState(true);
 
   const [applicationLoading, setApplicationLoading] =
+    useState(false);
+
+  // 스터디 탈퇴 확인 팝업 표시 여부
+  const [showLeaveConfirm, setShowLeaveConfirm] =
     useState(false);
 
   const [error, setError] =
@@ -197,10 +205,13 @@ function StudyDetail() {
         application || null
       );
 
+      return application || null;
 
     } catch {
 
       setMyApplication(null);
+
+      return null;
     }
   }
 
@@ -259,37 +270,75 @@ function StudyDetail() {
   // 스터디룸 예약 여부 (방장만 사용)
   // =====================================================
 
+  // 예약 이용 종료 시각이 이미 지났는지 확인 (지난 예약은 카드에서 자동으로 숨긴다)
+  function isReservationEnded(reservation) {
+
+    if (!reservation.reservationDate || !reservation.endTime) {
+      return false;
+    }
+
+    const endAt = new Date(
+      `${reservation.reservationDate}T${reservation.endTime}`
+    );
+
+    return endAt.getTime() <= Date.now();
+  }
+
+  // 방장이 예약한 스터디룸을 다른 팀원들도 볼 수 있도록, 내 예약만이 아니라
+  // 이 스터디의 예약 전체를 조회한다 (방장/승인된 참여자만 접근 가능, 서버에서 검증).
   async function fetchMyReservationForStudy() {
 
     try {
 
       const response = await fetch(
-        "/api/reservations/me",
+        `/api/reservations/study/${id}`,
         { credentials: "include" }
       );
 
       if (!response.ok) {
-        setStudyReservation(null);
+        setStudyReservations([]);
         return;
       }
 
       const data = await readResponse(response);
 
-      const reservation =
+      const reservations =
         Array.isArray(data)
-          ? data.find(
+          ? data.filter(
               (item) =>
-                Number(item.studyId) === Number(id) &&
-                item.status !== "CANCELLED"
+                item.status !== "CANCELLED" &&
+                !isReservationEnded(item)
             )
-          : null;
+          : [];
 
-      setStudyReservation(reservation || null);
+      setStudyReservations(reservations);
 
     } catch {
-      setStudyReservation(null);
+      setStudyReservations([]);
     }
   }
+
+
+  // =====================================================
+  // 이용 시간이 지난 예약 카드 자동 숨김
+  //
+  // 새로고침 없이도 페이지를 보고 있는 동안 이용 종료 시각이
+  // 지나면 목록에서 사라지도록 1분마다 다시 걸러낸다.
+  // =====================================================
+
+  useEffect(() => {
+
+    const timer = setInterval(() => {
+
+      setStudyReservations((prev) =>
+        prev.filter((reservation) => !isReservationEnded(reservation))
+      );
+
+    }, 60 * 1000);
+
+    return () => clearInterval(timer);
+
+  }, []);
 
 
   // =====================================================
@@ -321,17 +370,23 @@ function StudyDetail() {
 
         if (user) {
 
-          await fetchMyApplication();
+          const myApp = await fetchMyApplication();
 
-
-          if (
+          const isOwnerUser =
             user.id &&
             studyData.memberId &&
             Number(user.id) ===
-              Number(studyData.memberId)
-          ) {
+              Number(studyData.memberId);
+
+
+          if (isOwnerUser) {
 
             await fetchApplications();
+          }
+
+          // 방장이 예약한 스터디룸은 방장뿐 아니라 승인된 참여자도 볼 수 있다.
+          if (isOwnerUser || myApp?.status === "APPROVED") {
+
             await fetchMyReservationForStudy();
           }
         }
@@ -655,8 +710,8 @@ function StudyDetail() {
     }
   }
 
-  async function handleLeaveStudy() {
-    if (!window.confirm("정말 스터디에서 탈퇴하시겠습니까?")) return;
+  async function confirmLeaveStudy() {
+    setShowLeaveConfirm(false);
 
     try {
       setApplicationLoading(true);
@@ -774,7 +829,7 @@ function StudyDetail() {
           className="study-detail-back"
           onClick={() => navigate("/study")}
         >
-          ← 스터디 목록
+          ←
         </button>
 
 
@@ -848,42 +903,82 @@ function StudyDetail() {
 
 
         {/* =================================================
-            스터디룸 예약 (방장 전용)
+            스터디룸 예약 (방장은 예약/결제, 승인된 참여자는 조회만 가능)
         ================================================= */}
-        {isOwner() && (
+        {(isOwner() || myApplication?.status === "APPROVED") && (
           <section className="study-detail-reservation">
-            {studyReservation ? (
-              <>
-                <div>
-                  <span>스터디룸 예약</span>
-                  <strong>
-                    {studyReservation.studyRoomName} · {studyReservation.reservationDate}{" "}
-                    {studyReservation.startTime?.slice(0, 5)} ~ {studyReservation.endTime?.slice(0, 5)}
-                  </strong>
-                  <small>
-                    예약 상태:{" "}
-                    {studyReservation.status === "PENDING" && "결제 대기"}
-                    {studyReservation.status === "PAID" && "결제 완료"}
-                    {studyReservation.status === "CONFIRMED" && "예약 확정"}
-                  </small>
-                </div>
-                {studyReservation.status === "PENDING" && (
-                  <button onClick={() => navigate(`/payment?type=study&id=${studyReservation.id}`)}>
-                    결제 이어하기
-                  </button>
-                )}
-              </>
+
+            <div className="study-detail-reservation-title">
+              <span className="study-detail-reservation-icon">📅</span>
+              <div>
+                <strong>스터디룸 예약</strong>
+                <small>
+                  {isOwner()
+                    ? "정해진 일정에 맞는 스터디룸을 예약하고 결제해보세요."
+                    : "방장이 예약한 스터디룸 일정이에요."}
+                </small>
+              </div>
+            </div>
+
+            {studyReservations.length > 0 ? (
+              <ul className="study-detail-reservation-list">
+                {studyReservations.map((reservation) => {
+
+                  const statusLabel =
+                    reservation.status === "PENDING" ? "결제 대기"
+                    : reservation.status === "PAID" ? "결제 완료"
+                    : reservation.status === "CONFIRMED" ? "예약 확정"
+                    : reservation.status;
+
+                  const statusClass =
+                    reservation.status === "PENDING" ? "pending"
+                    : reservation.status === "PAID" ? "paid"
+                    : reservation.status === "CONFIRMED" ? "confirmed"
+                    : "";
+
+                  return (
+                    <li key={reservation.id}>
+                      <div className="study-detail-reservation-info">
+                        <strong>{reservation.studyRoomName}</strong>
+                        <span className="study-detail-reservation-time">
+                          {reservation.reservationDate} · {reservation.startTime?.slice(0, 5)} ~{" "}
+                          {reservation.endTime?.slice(0, 5)}
+                        </span>
+                      </div>
+
+                      <div className="study-detail-reservation-actions">
+                        <span className={`study-detail-reservation-status ${statusClass}`}>
+                          {statusLabel}
+                        </span>
+                        {isOwner() && reservation.status === "PENDING" && (
+                          <button onClick={() => navigate(`/payment?type=study&id=${reservation.id}`)}>
+                            결제 이어하기
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             ) : (
-              <>
-                <div>
-                  <span>스터디룸 예약</span>
-                  <strong>정해진 일정에 맞는 스터디룸을 예약하고 결제해보세요.</strong>
-                </div>
-                <button onClick={() => navigate(`/study-reservation?studyId=${id}`)}>
-                  스터디룸 예약하기
-                </button>
-              </>
+              <p className="study-detail-reservation-empty">
+                아직 예약된 스터디룸이 없어요.
+              </p>
             )}
+
+            {isOwner() && (
+              <div className="study-detail-reservation-new">
+                <button
+                  type="button"
+                  className="study-detail-reservation-new-button"
+                  onClick={() => navigate(`/study-reservation?studyId=${id}`)}
+                >
+                  <span className="study-detail-reservation-new-plus">+</span>
+                  새로 예약하기
+                </button>
+              </div>
+            )}
+
           </section>
         )}
 
@@ -891,7 +986,11 @@ function StudyDetail() {
         {/* =================================================
             🌟 [6:4 그리드 레이아웃 시작]
         ================================================= */}
-        <div className={`study-detail-grid-layout ${showChat ? "with-chat" : ""}`}>
+        <div
+          className={`study-detail-grid-layout ${showChat ? "with-chat" : ""} ${
+            chatExpanded ? "chat-expanded" : ""
+          }`}
+        >
 
           {/* 왼쪽: 스터디 소개 섹션 (비율 6) */}
           <div className="study-detail-main-section">
@@ -916,9 +1015,18 @@ function StudyDetail() {
             <div className="cam-chat-panel" style={{ width: "100%", height: "100%", minHeight: "420px", display: "flex", flexDirection: "column", background: "#fff", border: "1px solid #e1e7e2", borderRadius: "20px", overflow: "hidden", boxShadow: "0 8px 30px rgba(30, 50, 38, 0.04)" }}>
               <div className="chat-header" style={{ padding: "16px 20px", background: "#243329", color: "#fff", fontSize: "14px", fontWeight: "700", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span>💬 스터디 실시간 채팅</span>
-                <span style={{ fontSize: "11px", background: "rgba(46, 213, 115, 0.2)", color: "#a3f7bf", padding: "3px 10px", borderRadius: "20px", border: "1px solid #3f7653", fontWeight: "600" }}>
-                  ● {currentMembersCount}명 참여중
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "11px", background: "rgba(46, 213, 115, 0.2)", color: "#a3f7bf", padding: "3px 10px", borderRadius: "20px", border: "1px solid #3f7653", fontWeight: "600" }}>
+                    ● {currentMembersCount}명 참여중
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setChatExpanded((prev) => !prev)}
+                    style={{ fontSize: "11px", background: "rgba(255, 255, 255, 0.12)", color: "#fff", padding: "5px 10px", borderRadius: "20px", border: "1px solid rgba(255, 255, 255, 0.3)", fontWeight: "600", cursor: "pointer" }}
+                  >
+                    {chatExpanded ? "⤡ 축소" : "⤢ 크게 보기"}
+                  </button>
+                </div>
               </div>
 
               <div className="chat-messages-container" ref={chatContainerRef} style={{ flex: 1, padding: "16px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "10px", background: "#f8faf8" }}>
@@ -959,16 +1067,15 @@ function StudyDetail() {
                 ))}
               </div>
 
-              <form className="chat-input-form" onSubmit={handleSendMessage} style={{ display: "flex", gap: "8px", background: "#fff", borderTop: "1px solid #eee", padding: "12px 16px", alignItems: "center" }}>
+              <form className="study-detail-chat-input-form" onSubmit={handleSendMessage}>
                 <input
                   type="text"
-                  className="chat-text-input"
+                  className="study-detail-chat-text-input"
                   placeholder="메시지를 입력하세요..."
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  style={{ flex: "1", border: "1px solid #ddd", borderRadius: "10px", outline: "none", fontSize: "13px", padding: "9px 14px", background: "#f9fafb" }}
                 />
-                <button type="submit" className="chat-send-btn" style={{ padding: "9px 18px", borderRadius: "10px", border: "none", background: "#243329", color: "white", fontWeight: "700", fontSize: "13px", cursor: "pointer" }}>전송</button>
+                <button type="submit" className="study-detail-chat-send-btn">전송</button>
               </form>
             </div>
           </div>
@@ -1029,7 +1136,7 @@ function StudyDetail() {
               {myApplication?.status === "APPROVED" && (
                 <button
                   className="outline danger-text"
-                  onClick={handleLeaveStudy}
+                  onClick={() => setShowLeaveConfirm(true)}
                   disabled={applicationLoading}
                 >
                   스터디 탈퇴
@@ -1116,6 +1223,50 @@ function StudyDetail() {
               </div>
             )}
           </section>
+        )}
+
+
+        {/* =================================================
+            스터디 탈퇴 확인 팝업
+        ================================================= */}
+        {showLeaveConfirm && (
+          <div
+            className="study-leave-confirm-overlay"
+            onClick={() => setShowLeaveConfirm(false)}
+          >
+            <div
+              className="study-leave-confirm-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="study-leave-confirm-icon">⚠️</span>
+
+              <h3>정말 탈퇴하시겠습니까?</h3>
+
+              <p>
+                탈퇴하면 이 스터디의 채팅과 참여 정보에서 제외되며,
+                다시 참여하려면 신청을 새로 해야 해요.
+              </p>
+
+              <div className="study-leave-confirm-buttons">
+                <button
+                  type="button"
+                  className="study-leave-confirm-cancel"
+                  onClick={() => setShowLeaveConfirm(false)}
+                >
+                  취소
+                </button>
+
+                <button
+                  type="button"
+                  className="study-leave-confirm-submit"
+                  onClick={confirmLeaveStudy}
+                  disabled={applicationLoading}
+                >
+                  {applicationLoading ? "탈퇴 처리 중..." : "탈퇴할게요"}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
       </div>

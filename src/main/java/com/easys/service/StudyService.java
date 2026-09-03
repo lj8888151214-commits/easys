@@ -104,6 +104,30 @@ public class StudyService {
 
 
     // =====================================================
+    // 내가 만든(방장인) 스터디 조회
+    // =====================================================
+
+    @Transactional(readOnly = true)
+    public List<StudyResponseDto> getMyOwnedStudies(String email) {
+
+        Member member =
+                memberRepository
+                        .findByEmail(email)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "회원을 찾을 수 없습니다."
+                                )
+                        );
+
+        return studyRepository
+                .findByMemberIdOrderByCreatedAtDesc(member.getId())
+                .stream()
+                .map(StudyResponseDto::new)
+                .toList();
+    }
+
+
+    // =====================================================
     // 스터디 상세 조회
     // =====================================================
 

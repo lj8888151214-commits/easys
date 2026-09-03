@@ -15,6 +15,8 @@ public interface StudyApplicationRepository extends JpaRepository<StudyApplicati
 
     List<StudyApplication>findByStudyIdAndStatus(Long studyId,StudyApplicationStatus status);
 
+    boolean existsByStudyIdAndMemberIdAndStatus(Long studyId, Long memberId, StudyApplicationStatus status);
+
     List<StudyApplication>findByMemberId(Long memberId);
 
     // 스터디 삭제 전에 해당 스터디의 신청 정보를 모두 삭제한다

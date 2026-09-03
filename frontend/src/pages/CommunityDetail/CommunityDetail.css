@@ -53,44 +53,48 @@
 ===================================================== */
 
 .community-detail-back {
-  display: inline-flex;
-
+  display: flex;
   align-items: center;
+  justify-content: center;
 
-  gap: 6px;
+  width: 40px;
+  height: 40px;
 
+  margin-top: 36px;
   margin-bottom: 24px;
 
   padding: 0;
 
-  border: 0;
+  border: 1px solid #e1e7e2;
+  border-radius: 50%;
 
-  background: transparent;
+  background: #fff;
 
   color: #607068;
 
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
 
   cursor: pointer;
 
+  box-shadow: 0 2px 8px rgba(36, 51, 41, 0.06);
+
   transition:
     color 0.2s ease,
-    transform 0.2s ease;
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .community-detail-back:hover {
   color: #0ca678;
-
-  transform: translateX(-2px);
+  background: #eafaf3;
+  border-color: #b9e7d3;
 }
 
 .community-detail-back:disabled {
   opacity: 0.5;
 
   cursor: not-allowed;
-
-  transform: none;
 }
 
 .community-detail-category {

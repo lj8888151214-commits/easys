@@ -74,6 +74,35 @@ public class ReservationController {
     }
 
     /*
+     * 특정 스터디의 예약 목록
+     *
+     * 방장이 예약한 스터디룸을 다른 팀원들도 볼 수 있도록,
+     * 방장 또는 승인된 참여자면 누구나 조회할 수 있다.
+     */
+    @GetMapping("/study/{studyId}")
+    public ResponseEntity<?> getStudyReservations(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long studyId
+    ) {
+
+        if (userDetails == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("로그인이 필요합니다.");
+        }
+
+        Long memberId =
+                userDetails.getMember().getId();
+
+        return ResponseEntity.ok(
+                reservationService.getStudyReservations(
+                        memberId,
+                        studyId
+                )
+        );
+    }
+
+    /*
      * 예약 상세
      */
     @GetMapping("/{reservationId}")

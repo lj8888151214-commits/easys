@@ -108,6 +108,27 @@ public class StudyController {
 
 
     // =====================================================
+    // 4-1. 내가 만든(방장인) 스터디
+    // GET /study/my-owned
+    // =====================================================
+
+    @GetMapping("/my-owned")
+    public ResponseEntity<List<StudyResponseDto>> getMyOwnedStudies(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        String email =
+                userDetails
+                        .getMember()
+                        .getEmail();
+
+        return ResponseEntity.ok(
+                studyService.getMyOwnedStudies(email)
+        );
+    }
+
+
+    // =====================================================
     // 5. 스터디 상세
     // GET /study/{id}
     // =====================================================

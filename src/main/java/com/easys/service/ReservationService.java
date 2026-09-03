@@ -29,12 +29,15 @@ import java.util.Map;
 @Transactional
 public class ReservationService {
 
-    // 이용 시작 1시간 전까지 신규 예약/결제 가능하고, 일반 사용자는 이용 시작
-    // 1시간 전부터 취소할 수 없다 (한국 시간 기준 서버 시각 LocalDateTime.now()로 판단).
-    // 신규 예약 마감과 사용자 취소 마감은 같은 기준(이용 시작 1시간 전)을 쓰므로
-    // 하나의 상수 + isBeforeStartDeadline()으로 통일해서 관리한다.
+    // 이용 시작 시각으로부터 GRACE_PERIOD_MINUTES(10분)까지는 신규 예약/결제가
+    // 가능하다 (시계 오차/클릭 지연으로 1초 차이에 마감되는 것을 막기 위한
+    // 여유 시간. 한국 시간 기준 서버 시각 LocalDateTime.now()로 판단).
+    private static final int RESERVATION_GRACE_PERIOD_MINUTES = 10;
+
+    // 일반 사용자의 예약 취소는 이용 시작 이 시간(1시간) 전까지만 가능하다.
+    // (예약 생성/결제 마감과는 별개 기준이다.)
     // 관리자 취소(cancelReservationByAdmin)는 이 마감 정책의 적용을 받지 않는다.
-    private static final int RESERVATION_TIME_LIMIT_HOURS = 1;
+    private static final int CANCELLATION_TIME_LIMIT_HOURS = 1;
     private static final int ORDER_NAME_MAX_LENGTH = 200;
 
     private final ReservationRepository reservationRepository;
@@ -107,15 +110,6 @@ public class ReservationService {
                         "스터디 대표자만 스터디룸을 예약할 수 있습니다."
                 );
             }
-
-            if (reservationRepository.existsByStudyAndStatusIn(
-                    study,
-                    List.of(ReservationStatus.PENDING, ReservationStatus.PAID, ReservationStatus.CONFIRMED)
-            )) {
-                throw new IllegalArgumentException(
-                        "이미 이 스터디에 연결된 예약이 있습니다."
-                );
-            }
         }
 
         // 1. 스터디룸이 예약 가능한 상태인지 확인
@@ -165,13 +159,13 @@ public class ReservationService {
             );
         }
 
-        // 5. 신규 예약 마감(이용 시작 1시간 전) 확인
+        // 5. 신규 예약 마감(이용 시작 + 10분 여유) 확인
         //
-        // 과거 시간은 물론, 이용 시작이 1시간 이내로 임박한 경우도 신규
-        // 예약을 막는다. 개인 예약/스터디 예약 모두 동일하게 적용된다.
+        // 과거 시간은 물론, 이용 시작 후 여유 시간(10분)까지 지난 경우도
+        // 신규 예약을 막는다. 개인 예약/스터디 예약 모두 동일하게 적용된다.
         if (!isBeforeStartDeadline(reservationDate.atTime(startTime))) {
             throw new IllegalArgumentException(
-                    "예약은 이용 시작 " + RESERVATION_TIME_LIMIT_HOURS + "시간 전까지만 가능합니다."
+                    "예약은 이용 시작 " + RESERVATION_GRACE_PERIOD_MINUTES + "분 후까지만 가능합니다."
             );
         }
 
@@ -283,6 +277,48 @@ public class ReservationService {
                 .findByMemberOrderByCreatedAtDesc(
                         member
                 )
+                .stream()
+                .map(reservation -> ReservationResponseDto.from(reservation, findPayment(reservation.getId())))
+                .toList();
+    }
+
+    // 스터디 예약 목록 (방장 + 승인된 참여자 모두 조회 가능)
+    //
+    // 방장이 어떤 스터디룸을 예약했는지 다른 팀원들도 볼 수 있어야 하므로,
+    // 예약을 만든 사람이 아니라 그 스터디에 접근 권한이 있는 사람(방장 또는
+    // 승인된 신청자)이면 누구나 조회할 수 있게 한다.
+    @Transactional(readOnly = true)
+    public List<ReservationResponseDto> getStudyReservations(
+            Long memberId,
+            Long studyId
+    ) {
+
+        Study study =
+                studyRepository.findById(studyId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "존재하지 않는 스터디입니다."
+                                )
+                        );
+
+        boolean isOwner =
+                study.getMember().getId().equals(memberId);
+
+        boolean isApprovedMember =
+                studyApplicationRepository.existsByStudyIdAndMemberIdAndStatus(
+                        studyId,
+                        memberId,
+                        StudyApplicationStatus.APPROVED
+                );
+
+        if (!isOwner && !isApprovedMember) {
+            throw new IllegalArgumentException(
+                    "스터디 참여자만 예약 현황을 조회할 수 있습니다."
+            );
+        }
+
+        return reservationRepository
+                .findByStudyOrderByCreatedAtDesc(study)
                 .stream()
                 .map(reservation -> ReservationResponseDto.from(reservation, findPayment(reservation.getId())))
                 .toList();
@@ -616,7 +652,7 @@ public class ReservationService {
 
         if (!isBeforeStartDeadline(startAt)) {
             throw new IllegalArgumentException(
-                    "결제 마감(이용 시작 " + RESERVATION_TIME_LIMIT_HOURS + "시간 전)이 지나 결제할 수 없습니다."
+                    "결제 마감(이용 시작 " + RESERVATION_GRACE_PERIOD_MINUTES + "분 후)이 지나 결제할 수 없습니다."
             );
         }
     }
@@ -653,9 +689,9 @@ public class ReservationService {
         LocalDateTime startAt =
                 reservation.getReservationDate().atTime(reservation.getStartTime());
 
-        if (!isBeforeStartDeadline(startAt)) {
+        if (!isBeforeCancellationDeadline(startAt)) {
             throw new IllegalArgumentException(
-                    "이용 시작 " + RESERVATION_TIME_LIMIT_HOURS + "시간 전부터는 예약을 취소할 수 없습니다."
+                    "이용 시작 " + CANCELLATION_TIME_LIMIT_HOURS + "시간 전부터는 예약을 취소할 수 없습니다."
             );
         }
 
@@ -721,16 +757,20 @@ public class ReservationService {
                 .orElse(null);
     }
 
-    // 이용 시작 시각(startAt) 기준으로 지금이 마감(이용 시작
-    // RESERVATION_TIME_LIMIT_HOURS시간 전) 이전인지 확인한다.
-    //
-    // 신규 예약 생성/결제 승인과 일반 사용자 취소가 모두 같은 기준
-    // (이용 시작 1시간 전)을 쓰므로 이 메서드 하나로 통일해서 판단한다.
-    // 경계값: 이용 시작이 15:00이면 마감은 14:00이고, 13:59는 마감 전(true),
-    // 14:00 이후는 마감 지남(false)이다.
+    // 이용 시작 시각(startAt) 기준으로 지금이 신규 예약/결제 마감
+    // (이용 시작 + 10분 여유) 이전인지 확인한다.
+    // 경계값: 이용 시작이 15:00이면, 15:09는 마감 전(true), 15:10 이후는 마감 지남(false)이다.
     private boolean isBeforeStartDeadline(LocalDateTime startAt) {
         return LocalDateTime.now().isBefore(
-                startAt.minusHours(RESERVATION_TIME_LIMIT_HOURS)
+                startAt.plusMinutes(RESERVATION_GRACE_PERIOD_MINUTES)
+        );
+    }
+
+    // 이용 시작 시각(startAt) 기준으로 지금이 취소 마감(이용 시작 1시간 전) 이전인지 확인한다.
+    // 경계값: 이용 시작이 15:00이면, 13:59는 마감 전(true), 14:00 이후는 마감 지남(false)이다.
+    private boolean isBeforeCancellationDeadline(LocalDateTime startAt) {
+        return LocalDateTime.now().isBefore(
+                startAt.minusHours(CANCELLATION_TIME_LIMIT_HOURS)
         );
     }
 

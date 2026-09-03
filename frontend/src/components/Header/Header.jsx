@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { to: "/mentor", label: "멘토링" },
   { to: "/calendar", label: "캘린더" },
   { to: "/study", label: "스터디" },
-  { to: "/study-reservation", label: "스터디 예약/결제" },
+  { to: "/study-reservation", label: "카페 예약/결제" },
   { to: "/community", label: "커뮤니티" },
 ];
 

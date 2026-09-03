@@ -408,20 +408,6 @@ function Study() {
 
     <main className="study-page">
 
-      {/* =================================================
-          BACKGROUND DROPS
-          Community보다 적게 사용
-      ================================================= */}
-
-      <div className="study-drops">
-
-        <span className="study-drop study-drop-1" />
-        <span className="study-drop study-drop-2" />
-        <span className="study-drop study-drop-3" />
-        <span className="study-drop study-drop-4" />
-
-      </div>
-
 
       {/* =================================================
           HERO
@@ -776,6 +762,17 @@ function Study() {
                   <article
                     className="study-card"
                     key={study.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      handleStudyDetail(study.id)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleStudyDetail(study.id);
+                      }
+                    }}
                   >
 
                     <div className="study-card-top">
@@ -855,11 +852,10 @@ function Study() {
 
                       <button
                         type="button"
-                        onClick={() =>
-                          handleStudyDetail(
-                            study.id
-                          )
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStudyDetail(study.id);
+                        }}
                       >
                         자세히 보기 →
                       </button>

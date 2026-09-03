@@ -11,16 +11,27 @@
 }
 
 .study-detail-back {
-  border: none;
-  background: transparent;
-  color: #777;
-  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #e1e7e2;
+  border-radius: 50%;
+  background: #fff;
+  color: #405447;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
-  padding: 0;
+  margin-top: 36px;
   margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(36, 51, 41, 0.06);
+  transition: 0.2s ease;
 }
 
 .study-detail-back:hover {
+  background: #eef3ef;
+  border-color: #c7d3c9;
   color: #111;
 }
 
@@ -174,15 +185,19 @@
   background: #f8faf8;
 }
 
-/* 🌟 입력 폼 고정 */
-.study-detail-grid-layout .chat-input-form {
-  flex-shrink: 0 !important;
-  display: flex;
-  gap: 8px;
-  background: #fff;
-  border-top: 1px solid #eee;
-  padding: 12px 16px;
-  align-items: center;
+/* 🌟 채팅창 크게 보기: 스터디 소개를 숨기고 채팅창을 확장 */
+.study-detail-grid-layout.chat-expanded .study-detail-main-section {
+  display: none;
+}
+
+.study-detail-grid-layout.chat-expanded .study-detail-chat-wrapper {
+  width: 100%;
+}
+
+.study-detail-grid-layout.chat-expanded .cam-chat-panel {
+  height: 640px !important;
+  max-height: 640px !important;
+  min-height: 640px !important;
 }
 
 
@@ -271,47 +286,241 @@
 .study-detail-reservation {
   margin-top: 18px;
   padding: 28px 32px;
-  background: #eef3ef;
-  border-radius: 20px;
+  background: linear-gradient(180deg, #f2f6f3 0%, #eaf0eb 100%);
+  border: 1px solid #dfe8e1;
+  border-radius: 22px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   gap: 20px;
+  box-shadow: 0 10px 30px rgba(36, 51, 41, 0.06);
 }
 
-.study-detail-reservation span {
-  display: block;
-  color: #5f7064;
-  font-size: 13px;
-  margin-bottom: 6px;
+.study-detail-reservation-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
-.study-detail-reservation strong {
+.study-detail-reservation-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(36, 51, 41, 0.08);
+}
+
+.study-detail-reservation-title strong {
   display: block;
   font-size: 16px;
   color: #243329;
 }
 
-.study-detail-reservation small {
+.study-detail-reservation-title small {
   display: block;
-  margin-top: 6px;
+  margin-top: 3px;
+  color: #5f7064;
+  font-size: 13px;
+}
+
+.study-detail-reservation-empty {
+  margin: 0;
+  padding: 18px;
+  text-align: center;
+  color: #7b8a80;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px dashed #c7d3c9;
+  border-radius: 14px;
+}
+
+.study-detail-reservation-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.study-detail-reservation-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 30px 24px;
+  background: #fff;
+  border: 1px solid #e3e9e4;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(36, 51, 41, 0.04);
+  transition: 0.2s ease;
+}
+
+.study-detail-reservation-list li:hover {
+  border-color: #c7d3c9;
+  box-shadow: 0 6px 16px rgba(36, 51, 41, 0.08);
+}
+
+.study-detail-reservation-info strong {
+  display: block;
+  font-size: 15px;
+  color: #243329;
+}
+
+.study-detail-reservation-time {
+  display: block;
+  margin-top: 4px;
   color: #5f7064;
   font-size: 12px;
 }
 
-.study-detail-reservation button {
+.study-detail-reservation-actions {
   flex-shrink: 0;
-  padding: 12px 20px;
-  border: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.study-detail-reservation-status {
+  padding: 5px 11px;
   border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #edf0ed;
+  color: #7b857e;
+}
+
+.study-detail-reservation-status.pending {
+  background: #edf0ed;
+  color: #7b857e;
+}
+
+.study-detail-reservation-status.paid {
+  background: #f3e9d2;
+  color: #93701f;
+}
+
+.study-detail-reservation-status.confirmed {
+  background: #dbe9de;
+  color: #243329;
+}
+
+.study-detail-reservation-actions button {
+  flex-shrink: 0;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 10px;
   background: #243329;
   color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.study-detail-reservation-actions button:hover {
+  background: #34483a;
+}
+
+.study-detail-reservation-new {
+  padding-top: 18px;
+  border-top: 1px solid #c7d3c9;
+}
+
+.study-detail-reservation-new-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 20px;
+  border: 1.5px solid #8fa295;
+  border-radius: 14px;
+  background: #fff;
+  color: #405447;
   font-weight: 700;
   cursor: pointer;
   transition: 0.2s ease;
 }
 
-.study-detail-reservation button:hover {
+.study-detail-reservation-new-button:hover {
+  background: #f7faf8;
+  border-color: #405447;
+}
+
+.study-detail-reservation-new-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #405447;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+}
+
+
+/* =====================================================
+   CHAT INPUT BAR
+   (CamPage.css/Study.css의 .chat-input-form 등과 클래스명이
+   겹쳐서 스타일이 새고(margin-top/pill 모양) 채팅창과 분리돼
+   보이는 문제가 있어, 이 페이지 전용 클래스로 분리했다.)
+===================================================== */
+
+.study-detail-chat-input-form {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fff;
+  border-top: 1px solid #e1e7e2;
+}
+
+.study-detail-chat-text-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 16px;
+  border: 1px solid #dce5de;
+  border-radius: 999px;
+  outline: none;
+  font-size: 13px;
+  background: #f8faf8;
+  color: #243329;
+  transition: 0.2s ease;
+}
+
+.study-detail-chat-text-input::placeholder {
+  color: #a3ada6;
+}
+
+.study-detail-chat-text-input:focus {
+  background: #fff;
+  border-color: #405447;
+  box-shadow: 0 0 0 3px rgba(64, 84, 71, 0.1);
+}
+
+.study-detail-chat-send-btn {
+  flex-shrink: 0;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #243329;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.study-detail-chat-send-btn:hover {
   background: #34483a;
 }
 
@@ -365,7 +574,7 @@
 ===================================================== */
 
 .study-detail-join {
-  margin-top: 18px;
+  margin-top: 56px;
   padding: 30px 35px;
   background: #243329;
   color: #fff;
@@ -420,6 +629,97 @@
 
 .danger-text {
   color: #ff7777 !important;
+}
+
+
+/* =====================================================
+   LEAVE CONFIRM MODAL
+===================================================== */
+
+.study-leave-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 30, 24, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.study-leave-confirm-modal {
+  width: min(380px, 100%);
+  padding: 32px 28px 28px;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 20px 50px rgba(20, 30, 24, 0.25);
+  text-align: center;
+}
+
+.study-leave-confirm-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: #fdeeee;
+  font-size: 22px;
+}
+
+.study-leave-confirm-modal h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #243329;
+}
+
+.study-leave-confirm-modal p {
+  margin: 0 0 24px;
+  color: #6b756f;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.study-leave-confirm-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.study-leave-confirm-buttons button {
+  flex: 1;
+  padding: 13px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.study-leave-confirm-cancel {
+  border: 1px solid #dce5de;
+  background: #fff;
+  color: #405447;
+}
+
+.study-leave-confirm-cancel:hover {
+  background: #f4f7f5;
+}
+
+.study-leave-confirm-submit {
+  border: 0;
+  background: #e5484d;
+  color: #fff;
+}
+
+.study-leave-confirm-submit:hover {
+  background: #cf3d42;
+}
+
+.study-leave-confirm-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 
