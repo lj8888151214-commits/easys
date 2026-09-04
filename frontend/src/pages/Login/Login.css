@@ -4,7 +4,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 80px 20px;
+  padding: calc(var(--header-height) + 24px) 20px 80px;
   box-sizing: border-box;
   background: #f7f9f7;
   color: #243329;
@@ -17,8 +17,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 30%, rgba(212, 228, 215, .35), transparent 28%),
-    radial-gradient(circle at 85% 70%, rgba(202, 223, 208, .3), transparent 30%);
+    radial-gradient(circle at 20% 30%, rgba(157, 197, 168, .35), transparent 28%),
+    radial-gradient(circle at 85% 70%, rgba(157, 197, 168, .3), transparent 30%);
   z-index: -3;
   pointer-events: none;
 }
@@ -26,7 +26,7 @@
 .auth-drop {
   position: absolute;
   border-radius: 50%;
-  background: rgba(212, 228, 215, .42);
+  background: rgba(157, 197, 168, .42);
   filter: blur(.2px);
   z-index: -2;
   pointer-events: none;
@@ -89,7 +89,7 @@
 .auth-eyebrow {
   display: block;
   margin-bottom: 10px;
-  color: #607c68;
+  color: #4f8a63;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 3px;
@@ -124,7 +124,7 @@
   box-sizing: border-box;
   margin-top: 8px;
   padding: 13px 14px;
-  border: 1px solid #dce5de;
+  border: 1px solid #bfdcc8;
   border-radius: 10px;
   background: #fff;
   color: #243329;
@@ -134,8 +134,8 @@
 }
 
 .auth-card input:focus {
-  border-color: #8da493;
-  box-shadow: 0 0 0 3px rgba(141, 164, 147, .12);
+  border-color: #82b791;
+  box-shadow: 0 0 0 3px rgba(157, 197, 168, .18);
 }
 
 .auth-card button {
@@ -144,7 +144,7 @@
   margin-top: 12px;
   border: 0;
   border-radius: 10px;
-  background: #243329;
+  background: #4f8a63;
   color: #fff;
   font-size: 14px;
   font-weight: 700;
@@ -153,7 +153,7 @@
 }
 
 .auth-card button:hover {
-  background: #344b3c;
+  background: #3c6c4d;
   transform: translateY(-1px);
 }
 
@@ -183,7 +183,7 @@
 }
 
 .auth-links a {
-  color: #526b58;
+  color: #4f8a63;
   font-weight: 700;
   text-decoration: none;
 }
@@ -195,7 +195,7 @@
 @media screen and (max-width: 600px) {
   .auth-page {
     min-height: calc(100vh - 70px);
-    padding: 50px 15px;
+    padding: calc(var(--header-height) + 15px) 15px 50px;
   }
 
   .auth-card {

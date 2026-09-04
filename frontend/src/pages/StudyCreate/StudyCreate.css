@@ -5,7 +5,7 @@
 .study-create-page {
   position: relative;
   min-height: 100vh;
-  padding: 90px 30px 120px;
+  padding: calc(var(--header-height) + 40px) 30px 120px;
   box-sizing: border-box;
   background: #f7f9f7;
   color: #243329;
@@ -36,7 +36,7 @@
 .study-create-header > span {
   display: inline-block;
   margin-bottom: 14px;
-  color: #607c68;
+  color: #4f8a63;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 3px;
@@ -158,9 +158,9 @@
 .form-field input:focus,
 .form-field select:focus,
 .form-field textarea:focus {
-  border-color: #607c68;
+  border-color: #82b791;
   box-shadow:
-    0 0 0 3px rgba(96, 124, 104, 0.1);
+    0 0 0 3px rgba(157, 197, 168, 0.18);
 }
 
 
@@ -259,7 +259,7 @@
 ===================================================== */
 
 .study-cancel-button {
-  border: 1px solid #dce4de;
+  border: 1px solid #bfdcc8;
   background: #fff;
   color: #526158;
 }
@@ -275,7 +275,7 @@
 
 .study-submit-button {
   border: 0;
-  background: #243329;
+  background: #4f8a63;
   color: #fff;
 }
 
@@ -304,7 +304,7 @@
 @media screen and (max-width: 600px) {
 
   .study-create-page {
-    padding: 60px 15px 80px;
+    padding: calc(var(--header-height) + 25px) 15px 80px;
   }
 
   .study-create-header {
