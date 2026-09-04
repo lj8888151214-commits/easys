@@ -411,17 +411,13 @@ function StudyReservation() {
     }
   };
 
-  const isSlotTaken = (slot) => {
+  const getRemainingCapacity = (slot) => {
     const slotStart = toMinutes(slot.startTime);
     const slotEnd = toMinutes(slot.endTime);
 
-    return reservedTimes.some((reservation) => {
+    const reservedPeople = reservedTimes.reduce((sum, reservation) => {
       const reservedStart = toMinutes(reservation.startTime.slice(0, 5));
       const reservedEnd = toMinutes(reservation.endTime.slice(0, 5));
-
-
-      return slotStart < reservedEnd && slotEnd > reservedStart;
-    });
 
       const overlaps = slotStart < reservedEnd && slotEnd > reservedStart;
 
@@ -607,7 +603,7 @@ function StudyReservation() {
       if (data) {
         setReservedTimes((prev) => [...prev, data]);
       }
-      setSelectedSlot(null);
+      setSelectedHours([]);
     } catch (error) {
       console.error("예약 생성 오류:", error);
       setReservationError(error.message || "예약에 실패했습니다.");
@@ -956,30 +952,17 @@ function StudyReservation() {
 
                 {TIME_SLOTS.map((slot) => {
 
-                  const taken = isSlotTaken(slot);
-                  const isActive =
-                    selectedSlot?.startTime === slot.startTime &&
-                    selectedSlot?.endTime === slot.endTime;
-
                   const pastDeadline = isSlotPastDeadline(slot);
                   const remaining = getRemainingCapacity(slot);
                   const full = remaining < peopleCount;
                   const disabled = pastDeadline || full;
                   const isActive = selectedHours.includes(slot.startTime);
 
-
                   return (
                     <button
                       type="button"
                       key={slot.startTime}
                       className={isActive ? "active" : ""}
-
-                      disabled={taken}
-                      onClick={() => setSelectedSlot(slot)}
-                    >
-                      <span>{slot.startTime} - {slot.endTime}</span>
-                      {taken && <small>예약마감</small>}
-
                       disabled={disabled}
                       onClick={() => toggleHour(slot)}
                     >

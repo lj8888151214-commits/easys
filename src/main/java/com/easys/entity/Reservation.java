@@ -142,10 +142,6 @@ public class Reservation {
     }
 
     // 예약 취소
-
-    public void cancel() {
-        this.status = ReservationStatus.CANCELLED;
-
     //
     // personalSchedule/groupSchedule 참조도 함께 끊어야 한다 - FK로 걸려있는
     // 캘린더 일정을 삭제하려면 이 예약이 먼저 그 일정을 참조하지 않아야 한다.
@@ -153,12 +149,8 @@ public class Reservation {
         this.status = ReservationStatus.CANCELLED;
         this.personalSchedule = null;
         this.groupSchedule = null;
-
         this.updatedAt = LocalDateTime.now();
     }
-
-
-
 
 
 

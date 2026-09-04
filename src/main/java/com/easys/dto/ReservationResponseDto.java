@@ -1,5 +1,6 @@
 package com.easys.dto;
 
+import com.easys.entity.Payment;
 import com.easys.entity.Reservation;
 import com.easys.entity.ReservationStatus;
 
@@ -32,9 +33,6 @@ public record ReservationResponseDto(
 
         Long personalScheduleId,
 
-
-        LocalDateTime createdAt
-
         // 스터디 예약이면 연결된 스터디 정보 (개인 예약이면 모두 null)
         Long studyId,
 
@@ -54,6 +52,10 @@ public record ReservationResponseDto(
 ) {
 
     public static ReservationResponseDto from(Reservation reservation) {
+        return from(reservation, null);
+    }
+
+    public static ReservationResponseDto from(Reservation reservation, Payment payment) {
 
         return new ReservationResponseDto(
                 reservation.getId(),
@@ -69,9 +71,6 @@ public record ReservationResponseDto(
                 reservation.getPersonalSchedule() != null
                         ? reservation.getPersonalSchedule().getId()
                         : null,
-
-                reservation.getCreatedAt()
-
                 reservation.getStudy() != null ? reservation.getStudy().getId() : null,
                 reservation.getStudy() != null ? reservation.getStudy().getTitle() : null,
                 reservation.getGroupSchedule() != null ? reservation.getGroupSchedule().getId() : null,
@@ -79,7 +78,6 @@ public record ReservationResponseDto(
                 payment == null ? null : payment.getOrderId(),
                 payment == null ? null : payment.getStatus().name(),
                 payment == null ? null : payment.getAmount()
-
         );
     }
 }

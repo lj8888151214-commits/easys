@@ -1,13 +1,9 @@
 package com.easys.config;
 
 import com.easys.entity.StudyRoom;
-
 import com.easys.entity.StudyRoomLocation;
 import com.easys.repository.ReservationRepository;
 import com.easys.repository.StudyRoomLocationRepository;
-
-import com.easys.repository.ReservationRepository;
-
 import com.easys.repository.StudyRoomRepository;
 import com.easys.repository.StudyRoomReviewRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +29,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
     private final StudyRoomLocationRepository studyRoomLocationRepository;
 
-
     private final ReservationRepository reservationRepository;
     private final StudyRoomReviewRepository studyRoomReviewRepository;
 
@@ -45,15 +40,10 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
             return;
         }
 
-
         studyRoomLocationRepository.deleteAll();
-
-        StudyRoom room1 = studyRoomRepository.save(new StudyRoom(
-
         studyRoomRepository.deleteAll();
 
-        studyRoomRepository.save(new StudyRoom(
-
+        StudyRoom room1 = studyRoomRepository.save(new StudyRoom(
                 "스터디룸 그린",
                 "서울 강남구",
                 "조용하고 쾌적한 스터디 공간",
@@ -72,10 +62,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         // 2. 워크 라운지
         StudyRoom room2 = studyRoomRepository.save(new StudyRoom(
-
-
-        studyRoomRepository.save(new StudyRoom(
-
                 "워크 라운지",
                 "서울 역삼동",
                 "프로젝트 스터디에 적합한 공간",
@@ -94,10 +80,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         // 3. 코드 스페이스
         StudyRoom room3 = studyRoomRepository.save(new StudyRoom(
-
-
-        studyRoomRepository.save(new StudyRoom(
-
                 "코드 스페이스",
                 "서울 신논현",
                 "개발자 스터디를 위한 집중 공간",
@@ -116,10 +98,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         // 4. 홍대 포커스룸
         StudyRoom room4 = studyRoomRepository.save(new StudyRoom(
-
-
-        studyRoomRepository.save(new StudyRoom(
-
                 "홍대 포커스룸",
                 "서울 마포구",
                 "1인 몰입 학습에 적합한 소형 공간",
@@ -138,10 +116,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         // 5. 인천 스터디허브
         StudyRoom room5 = studyRoomRepository.save(new StudyRoom(
-
-
-        studyRoomRepository.save(new StudyRoom(
-
                 "인천 스터디허브",
                 "인천 부평구",
                 "역 근처에 위치한 접근성 좋은 스터디룸",
@@ -160,10 +134,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         // 6. 판교 오피스룸
         StudyRoom room6 = studyRoomRepository.save(new StudyRoom(
-
-
-        studyRoomRepository.save(new StudyRoom(
-
                 "판교 오피스룸",
                 "경기 성남시 분당구",
                 "IT 스터디와 회의에 어울리는 넓은 공간",
@@ -182,10 +152,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         // 7. 수원 스퀘어룸
         StudyRoom room7 = studyRoomRepository.save(new StudyRoom(
-
-
-        studyRoomRepository.save(new StudyRoom(
-
                 "수원 스퀘어룸",
                 "경기 수원시 팔달구",
                 "적당한 크기로 소규모 스터디에 알맞은 공간",
@@ -204,10 +170,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         // 8. 대전 테크허브
         StudyRoom room8 = studyRoomRepository.save(new StudyRoom(
-
-
-        studyRoomRepository.save(new StudyRoom(
-
                 "대전 테크허브",
                 "대전 유성구",
                 "카이스트 인근의 이공계 스터디 특화 공간",
@@ -226,10 +188,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         // 9. 광주 크리에이티브룸
         StudyRoom room9 = studyRoomRepository.save(new StudyRoom(
-
-
-        studyRoomRepository.save(new StudyRoom(
-
                 "광주 크리에이티브룸",
                 "광주 서구",
                 "디자인/기획 스터디에 어울리는 감각적인 공간",
@@ -237,9 +195,9 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
                 6,
                 new BigDecimal("9500"),
                 new BigDecimal("4.2"),
-
                 "https://images.unsplash.com/photo-1497366811353-8f9f5f8b6f8b?auto=format&fit=crop&w=900&q=80"
         ));
+
         studyRoomLocationRepository.save(new StudyRoomLocation(
                 room9,
                 new BigDecimal("35.152814"),
@@ -248,12 +206,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         // 10. 대구 스터디센터
         StudyRoom room10 = studyRoomRepository.save(new StudyRoom(
-
-                "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80"
-        ));
-
-        studyRoomRepository.save(new StudyRoom(
-
                 "대구 스터디센터",
                 "대구 수성구",
                 "대형 스터디 그룹을 위한 넉넉한 공간",
@@ -272,10 +224,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         // 11. 해운대 스터디카페
         StudyRoom room11 = studyRoomRepository.save(new StudyRoom(
-
-
-        studyRoomRepository.save(new StudyRoom(
-
                 "해운대 스터디카페",
                 "부산 해운대구",
                 "바다 전망을 갖춘 여유로운 스터디 공간",
@@ -294,10 +242,6 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         // 12. 제주 오션스터디
         StudyRoom room12 = studyRoomRepository.save(new StudyRoom(
-
-
-        studyRoomRepository.save(new StudyRoom(
-
                 "제주 오션스터디",
                 "제주 제주시",
                 "여행 겸 워케이션으로 인기 있는 공간",
@@ -314,8 +258,4 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
                 new BigDecimal("126.531188")
         ));
     }
-
-
-    }
-
 }

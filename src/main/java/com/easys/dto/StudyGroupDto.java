@@ -4,10 +4,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
-
-
 import java.time.LocalDateTime;
 
 // 모임 일정 수동 등록 요청 바디.
@@ -18,17 +14,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class StudyGroupDto {
     private String title;
-
-    private String category;
-    private LocalDate targetDate;
-    private String meetingTime;
-    private int memberCount;
-    private String description;
-}
-
     private String description;
     private String type; // STUDY / MENTORING / GENERAL
     private LocalDateTime startAt;
     private LocalDateTime endAt;
 }
-

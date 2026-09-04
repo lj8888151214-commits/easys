@@ -1126,7 +1126,7 @@ function Profile() {
         ================================================= */}
 
         {!isEditing && (
-
+          <>
 
           <section className="profile-card security-card">
 
@@ -1145,6 +1145,8 @@ function Profile() {
             >
               비밀번호 변경
             </button>
+
+          </section>
 
           <section className="profile-card reservations-card">
 
@@ -1268,6 +1270,7 @@ function Profile() {
 
           </section>
 
+          </>
         )}
 
 

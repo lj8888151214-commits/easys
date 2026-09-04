@@ -1,9 +1,11 @@
 package com.easys.service;
 
+import com.easys.dto.AdminReservationResponseDto;
 import com.easys.dto.ReservationCreateDto;
 import com.easys.dto.ReservationResponseDto;
 import com.easys.entity.*;
 import com.easys.repository.MemberRepository;
+import com.easys.repository.PaymentRepository;
 import com.easys.repository.ReservationRepository;
 import com.easys.repository.StudyApplicationRepository;
 import com.easys.repository.StudyRepository;
@@ -49,7 +51,6 @@ public class ReservationService {
     private final PaymentRepository paymentRepository;
     private final StudyApplicationRepository studyApplicationRepository;
 
-    private final PersonalScheduleService personalScheduleService;
     private final StudyGroupService studyGroupService;
     private final EmailService emailService;
     private final NotificationService notificationService;
@@ -228,9 +229,6 @@ public class ReservationService {
         Reservation savedReservation =
                 reservationRepository.save(reservation);
 
-
-        return ReservationResponseDto.from(savedReservation);
-
         // 11. 결제 대기(READY) 상태의 Payment 생성
         // 결제창에는 서버가 계산한 금액(totalPrice)만 사용하며,
         // 실제 결제 승인은 PaymentService.confirmPayment()에서 이 금액을 기준으로 검증한다.
@@ -387,6 +385,27 @@ public class ReservationService {
             Long reservationId
     ) {
 
+        Reservation reservation =
+                reservationRepository.findById(reservationId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "존재하지 않는 예약입니다."
+                                )
+                        );
+
+        if (reservation.getStatus()
+                != ReservationStatus.PENDING) {
+
+            throw new IllegalArgumentException(
+                    "결제 대기 상태의 예약만 확정할 수 있습니다."
+            );
+        }
+
+        confirmReservationAndCreateCalendar(reservation);
+
+        return ReservationResponseDto.from(reservation, findPayment(reservation.getId()));
+    }
+
     // =====================================================
     // 관리자 기능
     // =====================================================
@@ -454,26 +473,6 @@ public class ReservationService {
                         reservation.getReservationDate(),
                         reservation.getEndTime()
                 );
-
-
-        // 캘린더 일정 생성
-        PersonalSchedule schedule =
-                personalScheduleService.createSchedule(
-                        reservation.getMember(),
-                        "스터디룸 예약 - "
-                                + reservation.getStudyRoom().getName(),
-                        reservation.getStudyRoom().getLocation()
-                                + " / "
-                                + reservation.getPeopleCount()
-                                + "명 예약",
-                        startAt,
-                        endAt
-                );
-
-        // 예약 확정 + 캘린더 연결
-        reservation.confirm(schedule);
-
-        return ReservationResponseDto.from(reservation);
 
         if (reservation.isStudyReservation()) {
 
@@ -721,9 +720,6 @@ public class ReservationService {
         }
 
 
-        // 연결된 캘린더 일정이 있다면 삭제
-        if (reservation.getPersonalSchedule() != null) {
-
         // 일반 사용자는 이용 시작 1시간 전부터는 취소할 수 없다.
         // (관리자 취소는 cancelReservationByAdmin()을 통해 별도로 처리되며
         // 이 마감 정책의 적용을 받지 않는다.)
@@ -753,15 +749,10 @@ public class ReservationService {
         reservation.cancel();
         cancelPaymentIfExists(reservation.getId());
 
-
-            personalScheduleService.deleteSchedule(
-                    reservation.getPersonalSchedule().getId(),
-                    reservation.getMember()
-            );
+        if (scheduleIdToDelete != null) {
+            reservationRepository.flush();
+            personalScheduleService.deleteSchedule(scheduleIdToDelete, reservationOwner);
         }
-
-
-        reservation.cancel();
 
         if (groupScheduleIdToDelete != null) {
             reservationRepository.flush();

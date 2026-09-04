@@ -49,6 +49,9 @@ public interface ReservationRepository
     // 스터디 멤버 전체가 볼 수 있는 그 스터디의 예약 목록 (최근 생성 순)
     List<Reservation> findByStudyOrderByCreatedAtDesc(Study study);
 
+    // 관리자 페이지: 전체 예약 목록 (최근 생성 순)
+    List<Reservation> findAllByOrderByCreatedAtDesc();
+
 
 
 //      시간 중복 검사

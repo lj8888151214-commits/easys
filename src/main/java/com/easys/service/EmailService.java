@@ -5,6 +5,7 @@ import com.easys.entity.Reservation;
 
 import com.easys.repository.EmailVerificationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -14,8 +15,12 @@ import com.easys.entity.EmailVerification;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
