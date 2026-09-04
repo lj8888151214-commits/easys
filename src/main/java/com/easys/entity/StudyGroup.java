@@ -3,10 +3,6 @@ package com.easys.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
-
-
-
 import java.time.LocalDateTime;
 
 // 모임 캘린더에 뜨는 일정.
@@ -29,22 +25,6 @@ public class StudyGroup {
     private Long id;
 
     @Column(nullable = false)
-
-    private String title; // 예: Spring Boot 스터디
-
-    private String category; // SPRING BOOT, JAVA, SQL, REACT 등
-
-    @Column(nullable = false)
-    private LocalDate targetDate; // 모임 날짜
-
-    private String meetingTime; // 예: "19:00", "20:00"
-
-    private int memberCount; // 참여 인원 수
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
-}
-
     private String title;
 
     @Column(columnDefinition = "TEXT")
@@ -70,4 +50,3 @@ public class StudyGroup {
     @Column(nullable = false)
     private LocalDateTime endAt;
 }
-

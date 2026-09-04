@@ -123,7 +123,8 @@ public class StudyRoomService {
                 request.maxCapacity(),
                 request.pricePerHour(),
                 studyRoom.getRating(),
-                request.imageUrl()
+                request.imageUrl(),
+                studyRoom.getOwnerEmail()
         );
 
         return StudyRoomResponseDto.from(studyRoom);
