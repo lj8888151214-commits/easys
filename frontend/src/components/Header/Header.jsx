@@ -4,7 +4,6 @@ import "./Header.css";
 
 import logo from "../../assets/images/logo.png";
 import logoSecond from "../../assets/images/logo_second.png";
-import NotificationBell from "./NotificationBell";
 
 const NAV_ITEMS = [
   { to: "/streaming", label: "스트리밍" },
@@ -233,9 +232,6 @@ function Header() {
 
             {user ? (
               <div className="user-member">
-
-                {/* 알림 */}
-                <NotificationBell />
 
                 {/* 프로필 이미지 */}
                 <Link

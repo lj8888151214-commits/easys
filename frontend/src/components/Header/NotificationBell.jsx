@@ -83,10 +83,21 @@ function NotificationBell() {
     }
   };
 
+  const isMentoringNotification = (notification) =>
+    typeof notification.type === "string" &&
+    notification.type.startsWith("MENTORING_") &&
+    notification.targetId;
+
   const handleNotificationClick = (notification) => {
     if (notification.studyId) {
       setOpen(false);
       navigate(`/study/${notification.studyId}`);
+      return;
+    }
+
+    if (isMentoringNotification(notification)) {
+      setOpen(false);
+      navigate(`/mentor?chatReservationId=${notification.targetId}`);
     }
   };
 
@@ -137,7 +148,9 @@ function NotificationBell() {
                 <li
                   key={notification.id}
                   className={`${notification.read ? "" : "unread"} ${
-                    notification.studyId ? "clickable" : ""
+                    notification.studyId || isMentoringNotification(notification)
+                      ? "clickable"
+                      : ""
                   }`.trim()}
                   onClick={() => handleNotificationClick(notification)}
                 >

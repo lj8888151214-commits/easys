@@ -4,7 +4,6 @@ import com.easys.entity.Member;
 import com.easys.entity.MemberRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
@@ -20,7 +19,4 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     // 해당 권한을 가진 회원이 존재하는지 체크 (관리자 부트스트랩용)
     boolean existsByRole(MemberRole role);
-
-    // 해당 권한을 가진 회원 전체 조회 (관리자 알림 메일 발송용)
-    List<Member> findByRole(MemberRole role);
 }

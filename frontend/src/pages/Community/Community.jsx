@@ -756,61 +756,21 @@ function Community() {
                       <div className="post-stats">
 
                         <span className="post-like-count">
-                          <svg
-                            className="post-stat-icon"
-                            viewBox="0 0 24 24"
-                            width="17"
-                            height="17"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                          >
-                            <path d="M12 20.5s-7.5-4.6-10-9.2C0.3 8 1.7 4.5 5 3.4c2.2-0.7 4.4 0.2 5.6 1.9L12 6.8l1.4-1.5c1.2-1.7 3.4-2.6 5.6-1.9 3.3 1.1 4.7 4.6 3 7.9-2.5 4.6-10 9.2-10 9.2z" />
-                          </svg>{" "}
+                          ♡{" "}
                           {Number(
                             post.likeCount || 0
                           )}
                         </span>
 
                         <span>
-                          <svg
-                            className="post-stat-icon"
-                            viewBox="0 0 24 24"
-                            width="17"
-                            height="17"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                          >
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                          </svg>{" "}
+                          💬{" "}
                           {Number(
                             post.commentCount || 0
                           )}
                         </span>
 
                         <span>
-                          <svg
-                            className="post-stat-icon"
-                            viewBox="0 0 24 24"
-                            width="17"
-                            height="17"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                          >
-                            <path d="M1 12s4-7.5 11-7.5S23 12 23 12s-4 7.5-11 7.5S1 12 1 12z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>{" "}
+                          👁{" "}
                           {Number(
                             post.viewCount || 0
                           )}

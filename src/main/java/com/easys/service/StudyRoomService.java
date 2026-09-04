@@ -1,14 +1,10 @@
 package com.easys.service;
 
 import com.easys.dto.StudyRoomAdminRequestDto;
-import com.easys.dto.StudyRoomAdminResponseDto;
-import com.easys.dto.StudyRoomDeleteResultDto;
 import com.easys.dto.StudyRoomResponseDto;
 import com.easys.entity.StudyRoom;
 import com.easys.entity.StudyRoomStatus;
-import com.easys.repository.ReservationRepository;
 import com.easys.repository.StudyRoomRepository;
-import com.easys.repository.StudyRoomReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +17,6 @@ import java.util.List;
 public class StudyRoomService {
 
     private final StudyRoomRepository studyRoomRepository;
-    private final ReservationRepository reservationRepository;
-    private final StudyRoomReviewRepository studyRoomReviewRepository;
 
     // 운영 중인 스터디룸 전체 조회
     public List<StudyRoomResponseDto> getStudyRooms() {
@@ -77,18 +71,18 @@ public class StudyRoomService {
     // =====================================================
 
     // 전체 스터디룸 조회 (운영 중지 포함)
-    public List<StudyRoomAdminResponseDto> getStudyRoomsForAdmin() {
+    public List<StudyRoomResponseDto> getStudyRoomsForAdmin() {
 
         return studyRoomRepository
                 .findAllByOrderByCreatedAtDesc()
                 .stream()
-                .map(StudyRoomAdminResponseDto::from)
+                .map(StudyRoomResponseDto::from)
                 .toList();
     }
 
     // 스터디룸 등록
     @Transactional
-    public StudyRoomAdminResponseDto createStudyRoom(
+    public StudyRoomResponseDto createStudyRoom(
             StudyRoomAdminRequestDto request
     ) {
 
@@ -102,18 +96,17 @@ public class StudyRoomService {
                 request.maxCapacity(),
                 request.pricePerHour(),
                 null,
-                request.imageUrl(),
-                normalizeOwnerEmail(request.ownerEmail())
+                request.imageUrl()
         );
 
-        return StudyRoomAdminResponseDto.from(
+        return StudyRoomResponseDto.from(
                 studyRoomRepository.save(studyRoom)
         );
     }
 
     // 스터디룸 수정
     @Transactional
-    public StudyRoomAdminResponseDto updateStudyRoom(
+    public StudyRoomResponseDto updateStudyRoom(
             Long roomId,
             StudyRoomAdminRequestDto request
     ) {
@@ -130,48 +123,30 @@ public class StudyRoomService {
                 request.maxCapacity(),
                 request.pricePerHour(),
                 studyRoom.getRating(),
-                request.imageUrl(),
-                normalizeOwnerEmail(request.ownerEmail())
+                request.imageUrl()
         );
 
-        return StudyRoomAdminResponseDto.from(studyRoom);
+        return StudyRoomResponseDto.from(studyRoom);
     }
 
-    // 스터디룸 삭제
-    //
-    // 예약/리뷰 이력이 하나도 없는 스터디룸은 DB에서 완전히 삭제한다.
-    // 이미 예약이나 리뷰가 남아있는 스터디룸은 그 기록들이 FK로 이 스터디룸을
-    // 참조하고 있어 완전히 지우면 안 되므로, 기존처럼 운영 중지(INACTIVE)
-    // 처리만 한다.
+    // 스터디룸 삭제 (실제로는 운영 중지 처리 - 기존 예약/리뷰 이력 보존)
     @Transactional
-    public StudyRoomDeleteResultDto deleteStudyRoomByAdmin(Long roomId) {
+    public StudyRoomResponseDto deactivateStudyRoomByAdmin(Long roomId) {
 
         StudyRoom studyRoom = findStudyRoomForAdmin(roomId);
+        studyRoom.deactivate();
 
-        boolean hasHistory = reservationRepository.existsByStudyRoom(studyRoom)
-                || studyRoomReviewRepository.existsByStudyRoom(studyRoom);
-
-        if (hasHistory) {
-            studyRoom.deactivate();
-            return new StudyRoomDeleteResultDto(false, StudyRoomAdminResponseDto.from(studyRoom));
-        }
-
-        studyRoomRepository.delete(studyRoom);
-        return new StudyRoomDeleteResultDto(true, null);
+        return StudyRoomResponseDto.from(studyRoom);
     }
 
     // 스터디룸 운영 재개
     @Transactional
-    public StudyRoomAdminResponseDto activateStudyRoomByAdmin(Long roomId) {
+    public StudyRoomResponseDto activateStudyRoomByAdmin(Long roomId) {
 
         StudyRoom studyRoom = findStudyRoomForAdmin(roomId);
         studyRoom.activate();
 
-        return StudyRoomAdminResponseDto.from(studyRoom);
-    }
-
-    private String normalizeOwnerEmail(String ownerEmail) {
-        return (ownerEmail == null || ownerEmail.isBlank()) ? null : ownerEmail.trim();
+        return StudyRoomResponseDto.from(studyRoom);
     }
 
     private void validateRequest(StudyRoomAdminRequestDto request) {

@@ -1,8 +1,7 @@
 package com.easys.controller;
 
 import com.easys.dto.StudyRoomAdminRequestDto;
-import com.easys.dto.StudyRoomAdminResponseDto;
-import com.easys.dto.StudyRoomDeleteResultDto;
+import com.easys.dto.StudyRoomResponseDto;
 import com.easys.service.StudyRoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,7 +26,7 @@ public class AdminStudyRoomController {
 
     // 전체 스터디룸 조회 (운영 중지 포함)
     @GetMapping
-    public ResponseEntity<List<StudyRoomAdminResponseDto>> getStudyRooms() {
+    public ResponseEntity<List<StudyRoomResponseDto>> getStudyRooms() {
 
         return ResponseEntity.ok(
                 studyRoomService.getStudyRoomsForAdmin()
@@ -36,7 +35,7 @@ public class AdminStudyRoomController {
 
     // 스터디룸 등록
     @PostMapping
-    public ResponseEntity<StudyRoomAdminResponseDto> createStudyRoom(
+    public ResponseEntity<StudyRoomResponseDto> createStudyRoom(
             @RequestBody StudyRoomAdminRequestDto request
     ) {
 
@@ -47,7 +46,7 @@ public class AdminStudyRoomController {
 
     // 스터디룸 수정
     @PutMapping("/{roomId}")
-    public ResponseEntity<StudyRoomAdminResponseDto> updateStudyRoom(
+    public ResponseEntity<StudyRoomResponseDto> updateStudyRoom(
             @PathVariable Long roomId,
             @RequestBody StudyRoomAdminRequestDto request
     ) {
@@ -57,21 +56,20 @@ public class AdminStudyRoomController {
         );
     }
 
-    // 스터디룸 삭제
-    // (예약/리뷰 이력이 없으면 완전 삭제, 있으면 운영 중지 처리)
+    // 스터디룸 삭제 (운영 중지 처리)
     @DeleteMapping("/{roomId}")
-    public ResponseEntity<StudyRoomDeleteResultDto> deleteStudyRoom(
+    public ResponseEntity<StudyRoomResponseDto> deactivateStudyRoom(
             @PathVariable Long roomId
     ) {
 
         return ResponseEntity.ok(
-                studyRoomService.deleteStudyRoomByAdmin(roomId)
+                studyRoomService.deactivateStudyRoomByAdmin(roomId)
         );
     }
 
     // 스터디룸 운영 재개
     @PutMapping("/{roomId}/activate")
-    public ResponseEntity<StudyRoomAdminResponseDto> activateStudyRoom(
+    public ResponseEntity<StudyRoomResponseDto> activateStudyRoom(
             @PathVariable Long roomId
     ) {
 

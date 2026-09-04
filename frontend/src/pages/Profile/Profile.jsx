@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Profile.css";
 
+
+
 const RESERVATION_STATUS = {
   PENDING: { label: "결제 대기", className: "pending" },
   PAID: { label: "승인 대기", className: "paid" },
@@ -15,6 +17,7 @@ const MY_STUDIES_PAGE_SIZE = 6;
 function formatPrice(price) {
   return Math.round(Number(price)).toLocaleString("ko-KR") + "원";
 }
+
 
 function Profile() {
 
@@ -67,6 +70,8 @@ function Profile() {
   const [loading, setLoading] = useState(true);
 
   // =====================================================
+
+
   // 내 예약 내역 (스터디룸)
   // =====================================================
 
@@ -86,6 +91,7 @@ function Profile() {
   const [myStudiesPage, setMyStudiesPage] = useState(1);
 
   // =====================================================
+
   // 사용자 정보 조회
   // =====================================================
 
@@ -177,6 +183,8 @@ function Profile() {
 
 
   // =====================================================
+
+
   // 내 예약 내역 (스터디룸) 조회
   // =====================================================
 
@@ -355,6 +363,7 @@ function Profile() {
 
 
   // =====================================================
+
   // 프로필 수정 시작
   // =====================================================
 
@@ -782,6 +791,8 @@ function Profile() {
 
 
   // =====================================================
+
+
   // 예약 내역 페이지네이션
   // =====================================================
 
@@ -813,6 +824,7 @@ function Profile() {
 
 
   // =====================================================
+
   // 화면
   // =====================================================
 
@@ -1106,10 +1118,33 @@ function Profile() {
 
 
         {/* =================================================
+
+            비밀번호 변경
+
             내 예약 내역 (스터디룸)
+
         ================================================= */}
 
         {!isEditing && (
+
+
+          <section className="profile-card security-card">
+
+            <h2>
+              계정 보안
+            </h2>
+
+            <p>
+              비밀번호 변경하기
+            </p>
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => navigate("/profile/password")}
+            >
+              비밀번호 변경
+            </button>
 
           <section className="profile-card reservations-card">
 
@@ -1334,6 +1369,7 @@ function Profile() {
 
               </nav>
             )}
+
 
           </section>
 
