@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import "./BroadCast.css";
 import "./Panorama.css";
 import "./Streaming.css";
 
