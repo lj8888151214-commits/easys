@@ -45,6 +45,7 @@ public class MentoringReservationService {
     private final MentoringOfferingRepository mentoringOfferingRepository;
     private final PaymentRepository paymentRepository;
     private final PersonalScheduleService personalScheduleService;
+    private final NotificationService notificationService;
 
     // =====================================================
     // 멘토링 신청
@@ -314,6 +315,14 @@ public class MentoringReservationService {
         // 승인만으로 결제 완료 처리하지 않는다. 결제는 토스 결제가 실제로
         // 성공한 뒤 onMentoringPaymentConfirmed()에서만 반영된다.
         reservation.approve();
+
+        notificationService.notify(
+                reservation.getMember(),
+                "멘토가 선정되었습니다",
+                mentoringName(reservation) + " 신청이 승인되었습니다. 결제를 진행해주세요.",
+                "MENTORING_RESERVATION_APPROVED",
+                reservation.getId()
+        );
     }
 
     // =====================================================
@@ -333,6 +342,30 @@ public class MentoringReservationService {
         }
 
         createCalendarSchedulesIfNeeded(reservation);
+
+        notificationService.notify(
+                reservation.getMentor().getMember(),
+                "새로운 멘토링 예약이 결제 완료되었습니다",
+                reservation.getMember().getNickname() + "님의 " + mentoringName(reservation) + " 결제가 완료되었습니다.",
+                "MENTORING_PAYMENT_COMPLETED",
+                reservation.getId()
+        );
+
+        notificationService.notify(
+                reservation.getMember(),
+                "결제가 완료되었습니다",
+                "결제가 완료되었습니다. " + mentoringName(reservation) + " 일정이 확정되었습니다.",
+                "MENTORING_PAYMENT_COMPLETED",
+                reservation.getId()
+        );
+    }
+
+    // 알림 문구에 쓸 멘토링 이름 (특정 멘토링을 선택해 신청한 경우 그 이름을,
+    // 과거 방식(offering 없음)이면 "멘토 닉네임 멘토링"을 사용한다)
+    private String mentoringName(MentoringReservation reservation) {
+        return reservation.getOffering() != null
+                ? reservation.getOffering().getTitle()
+                : reservation.getMentor().getMember().getNickname() + " 멘토링";
     }
 
     // =====================================================

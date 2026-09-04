@@ -662,6 +662,24 @@
   background: #edf5ef;
 }
 
+.mentoring-record-chat-link {
+  padding: 6px 12px;
+  border: 1px solid #9eb8a4;
+  border-radius: 12px;
+  background: #edf5ef;
+  color: #3d7a4d;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentoring-record-chat-link:hover {
+  border-color: #78907d;
+  background: #dfeee2;
+  transform: translateY(-2px);
+}
+
 .mentoring-record-delete-link {
   padding: 6px 12px;
   border: 1px solid #e5c3c3;
@@ -1354,7 +1372,8 @@
 .reservation-modal,
 .register-modal,
 .reservation-detail-modal,
-.reject-reason-modal {
+.reject-reason-modal,
+.mentoring-chat-modal {
   position: relative;
   width: 100%;
   max-height: 90vh;
@@ -1393,6 +1412,15 @@
 .reject-reason-modal {
   max-width: 460px;
   padding: 36px;
+}
+
+.mentoring-chat-modal {
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  height: 640px;
+  max-height: 85vh;
+  padding: 40px 32px 24px;
 }
 
 .modal-close {
@@ -3287,5 +3315,165 @@
       radial-gradient(circle at 100% 45%, rgba(202, 223, 208, 0.38) 0, rgba(202, 223, 208, 0.38) 80px, transparent 81px),
       radial-gradient(circle at 5% 88%, rgba(212, 228, 215, 0.32) 0, rgba(212, 228, 215, 0.32) 100px, transparent 101px),
       radial-gradient(circle at 95% 85%, rgba(202, 223, 208, 0.3) 0, rgba(202, 223, 208, 0.3) 70px, transparent 71px);
+  }
+}
+
+/* =====================================================
+   멘토링 채팅 모달
+   ===================================================== */
+
+.mentoring-chat-modal h2 {
+  margin: 4px 0 2px;
+  color: #243329;
+  font-size: 22px;
+  letter-spacing: -1px;
+}
+
+.mentoring-chat-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #edf0ed;
+}
+
+.mentoring-chat-meta span:first-child {
+  color: #243329;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mentoring-chat-meta span:last-child {
+  color: #8a938d;
+  font-size: 11px;
+}
+
+.mentoring-chat-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 2px;
+  overflow-y: auto;
+}
+
+.mentoring-chat-empty {
+  margin: auto;
+  color: #8a938d;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.mentoring-chat-bubble-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.mentoring-chat-bubble-row.me {
+  justify-content: flex-end;
+}
+
+.mentoring-chat-bubble {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  background: #f1f4f1;
+}
+
+.mentoring-chat-bubble p {
+  margin: 0;
+  color: #243329;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+.mentoring-chat-bubble span {
+  display: block;
+  margin-top: 4px;
+  color: #9aa39d;
+  font-size: 10px;
+  text-align: right;
+}
+
+.mentoring-chat-bubble-row.me .mentoring-chat-bubble {
+  border-radius: 16px;
+  border-bottom-right-radius: 4px;
+  background: #243329;
+}
+
+.mentoring-chat-bubble-row.me .mentoring-chat-bubble p {
+  color: #fff;
+}
+
+.mentoring-chat-bubble-row.me .mentoring-chat-bubble span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.mentoring-chat-input-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #edf0ed;
+}
+
+.mentoring-chat-input-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 16px;
+  border: 1px solid #dfe5df;
+  border-radius: 20px;
+  outline: none;
+  background: #fafcf9;
+  color: #243329;
+  font-family: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+  transition: 0.2s ease;
+}
+
+.mentoring-chat-input-form input:focus {
+  border-color: #78907d;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(120, 144, 125, 0.08);
+}
+
+.mentoring-chat-input-form button {
+  flex-shrink: 0;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 20px;
+  background: #243329;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.mentoring-chat-input-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(36, 51, 41, 0.16);
+}
+
+@media screen and (max-width: 600px) {
+  .mentoring-chat-modal {
+    max-width: 100%;
+    height: 100%;
+    max-height: 88vh;
+    padding: 32px 18px 16px;
+  }
+
+  .mentoring-chat-modal h2 {
+    font-size: 19px;
+  }
+
+  .mentoring-chat-bubble {
+    max-width: 85%;
   }
 }
