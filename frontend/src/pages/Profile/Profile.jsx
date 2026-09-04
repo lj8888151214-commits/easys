@@ -1118,35 +1118,11 @@ function Profile() {
 
 
         {/* =================================================
-
-            비밀번호 변경
-
             내 예약 내역 (스터디룸)
-
         ================================================= */}
 
         {!isEditing && (
           <>
-
-          <section className="profile-card security-card">
-
-            <h2>
-              계정 보안
-            </h2>
-
-            <p>
-              비밀번호 변경하기
-            </p>
-
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => navigate("/profile/password")}
-            >
-              비밀번호 변경
-            </button>
-
-          </section>
 
           <section className="profile-card reservations-card">
 

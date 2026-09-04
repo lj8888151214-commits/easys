@@ -439,10 +439,10 @@ public class ReservationService {
                         );
 
         if (reservation.getStatus()
-                != ReservationStatus.PENDING) {
+                != ReservationStatus.PAID) {
 
             throw new IllegalArgumentException(
-                    "결제 대기 상태의 예약만 확정할 수 있습니다."
+                    "결제가 완료된 예약만 승인할 수 있습니다."
             );
         }
 

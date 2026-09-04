@@ -26,6 +26,9 @@ const RESERVATION_END_HOUR = 23;
 // 서버에서 이루어지며, 여기서는 UX 보조용으로 미리 비활성화만 한다).
 const RESERVATION_GRACE_PERIOD_MINUTES = 10;
 
+// 스터디룸 목록 한 페이지에 보여줄 개수
+const ROOMS_PAGE_SIZE = 12;
+
 const TIME_SLOTS = Array.from(
   { length: RESERVATION_END_HOUR - RESERVATION_START_HOUR },
   (_, index) => {
@@ -95,6 +98,7 @@ function StudyReservation() {
   const [rooms, setRooms] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [roomsError, setRoomsError] = useState("");
+  const [roomsPage, setRoomsPage] = useState(1);
 
   // 검색 / 필터
   const [keyword, setKeyword] = useState("");
@@ -598,12 +602,11 @@ function StudyReservation() {
         );
       }
 
-      alert("예약이 접수되었습니다. 결제 완료 시 예약이 확정됩니다.");
-
-      if (data) {
-        setReservedTimes((prev) => [...prev, data]);
+      if (!data || !data.id) {
+        throw new Error("예약에 실패했습니다.");
       }
-      setSelectedHours([]);
+
+      navigate(`/payment?type=study&id=${data.id}`);
     } catch (error) {
       console.error("예약 생성 오류:", error);
       setReservationError(error.message || "예약에 실패했습니다.");
@@ -815,7 +818,7 @@ function StudyReservation() {
           {!loadingRooms && !roomsError && displayRooms.length > 0 && (
             <div className="place-grid">
 
-              {filteredRooms.map((place) => (
+              {pagedRooms.map((place) => (
                 <article
                   className={`place-card ${
                     selectedPlace?.id === place.id ? "selected" : ""
@@ -890,6 +893,41 @@ function StudyReservation() {
               ))}
 
             </div>
+          )}
+
+          {!loadingRooms && !roomsError && roomsTotalPages > 1 && (
+            <nav className="place-pagination" aria-label="스터디룸 목록 페이지">
+              <button
+                type="button"
+                className="place-pagination-arrow"
+                disabled={roomsCurrentPage === 1}
+                onClick={() => setRoomsPage(roomsCurrentPage - 1)}
+              >
+                ‹
+              </button>
+
+              {Array.from({ length: roomsTotalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  type="button"
+                  key={page}
+                  className={`place-pagination-page ${
+                    page === roomsCurrentPage ? "active" : ""
+                  }`}
+                  onClick={() => setRoomsPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                className="place-pagination-arrow"
+                disabled={roomsCurrentPage === roomsTotalPages}
+                onClick={() => setRoomsPage(roomsCurrentPage + 1)}
+              >
+                ›
+              </button>
+            </nav>
           )}
 
         </div>
