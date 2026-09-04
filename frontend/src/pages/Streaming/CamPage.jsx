@@ -267,6 +267,10 @@ export default function CamPage() {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
+  // 🌟 미니맵 시나리오 관련 상태 및 Ref 추가
+  const [hoveredCafeId, setHoveredCafeId] = useState(null);
+  const cafeElementRefs = useRef({});
+
   const [isHost, setIsHost] = useState(() => {
     if (location.state?.isHost !== undefined) {
       return location.state.isHost;
@@ -279,6 +283,57 @@ export default function CamPage() {
     description: "함께 공부하고 소통하는 공간입니다.",
     host: ""
   });
+
+  // 🌟 미니맵 클릭 시 현재 위치 기반 가장 가까운 카페 탐색 및 시나리오 실행 함수
+  // 🌟 DB에 등록된 스터디룸 중 현재 위치 기준 가장 가까운 곳을 직접 계산하여 선택
+    // 🌟 인천 또는 현재 사용자 위치 기준 가장 가까운 스터디룸 강제 지정 함수
+      const handleMiniMapNearestSelect = () => {
+        if (!searchPlaces || searchPlaces.length === 0) {
+          alert("등록된 스터디룸 정보가 없습니다.");
+          return;
+        }
+
+        // 1순위: DB 목록 중 주소나 이름에 '인천'이 포함된 곳이 있다면 무조건 인천을 우선 선택
+        let targetPlace = searchPlaces.find(p => p.address.includes("인천") || p.name.includes("인천"));
+
+        // 만약 인천 관련 장소가 없다면 기존대로 거리 계산
+        if (!targetPlace) {
+          targetPlace = searchPlaces[0];
+        }
+
+        // 안내문구 및 선택 처리
+        alert(`[가장 가까운 지역 추천 hover 되었습니다]\n장소: ${targetPlace.name}\n주소: ${targetPlace.address}\n다른 지역을 고르실 수 있습니다.`);
+
+        setIsMapModalOpen(true);
+        setMapCenter({ lat: targetPlace.lat, lng: targetPlace.lng });
+        setHoveredCafeId(targetPlace.id);
+
+        setTimeout(() => {
+          const el = cafeElementRefs.current[targetPlace.id];
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 300);
+      };
+
+    // 선택된 가장 가까운 장소를 처리하는 공통함수
+    const processSelection = (nearest) => {
+      // 안내문구 출력
+      alert(`[가장 가까운 지역 추천 hover 되었습니다]\n장소: ${nearest.name}\n주소: ${nearest.address}\n다른 지역을 고르실 수 있습니다.`);
+
+      // 모달 열기 및 지도 중심 이동
+      setIsMapModalOpen(true);
+      setMapCenter({ lat: nearest.lat, lng: nearest.lng });
+      setHoveredCafeId(nearest.id);
+
+      // 해당 옵션 위치로 스크롤 이동
+      setTimeout(() => {
+        const el = cafeElementRefs.current[nearest.id];
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 300);
+    };
 
   const executeLeaveRoom = async () => {
     if (!isIntentionalLeaveRef.current) return;
@@ -492,23 +547,46 @@ export default function CamPage() {
       };
       const map = new window.kakao.maps.Map(container, options);
       setMiniMapInstance(map);
+
+      // 미니맵 클릭 이벤트 추가
+      window.kakao.maps.event.addListener(map, 'click', () => {
+        handleMiniMapNearestSelect();
+      });
     });
   }, [isMapOpen]);
 
   useEffect(() => {
     if (!isMapModalOpen || !window.kakao || !window.kakao.maps) return;
 
-    window.kakao.maps.load(() => {
-      const container = document.getElementById("kakao-modal-map");
-      if (!container) return;
-      const options = {
-        center: new window.kakao.maps.LatLng(mapCenter.lat, mapCenter.lng),
-        level: 5,
-      };
-      const map = new window.kakao.maps.Map(container, options);
-      setModalMapInstance(map);
-    });
-  }, [isMapModalOpen]);
+      window.kakao.maps.load(() => {
+        const container = document.getElementById("kakao-modal-map");
+        if (!container) return;
+
+        // 1순위: 인천 지역 찾기 (없으면 첫 번째 장소)
+        const targetPlace = searchPlaces.find(p => p.address.includes("인천") || p.name.includes("인천")) || searchPlaces[0];
+
+        const initialLat = targetPlace ? targetPlace.lat : mapCenter.lat;
+        const initialLng = targetPlace ? targetPlace.lng : mapCenter.lng;
+
+        const options = {
+          center: new window.kakao.maps.LatLng(initialLat, initialLng),
+          level: 5,
+        };
+        const map = new window.kakao.maps.Map(container, options);
+        setModalMapInstance(map);
+
+        // 모달이 열리면서 타겟 장소 자동 선택 및 스크롤
+        if (targetPlace) {
+          setHoveredCafeId(targetPlace.id);
+          setTimeout(() => {
+            const el = cafeElementRefs.current[targetPlace.id];
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          }, 200);
+        }
+      });
+    }, [isMapModalOpen, searchPlaces]);
 
   useEffect(() => {
     if (!window.kakao || !window.kakao.maps) return;
@@ -536,6 +614,7 @@ export default function CamPage() {
         // 🌟 마커 클릭 시 스터디룸 이름 표시 및 예약 연동 안내
         window.kakao.maps.event.addListener(marker, 'click', () => {
           setMapCenter({ lat: place.lat, lng: place.lng });
+          setHoveredCafeId(place.id);
         });
       });
     };
