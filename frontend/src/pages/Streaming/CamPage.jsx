@@ -1568,10 +1568,10 @@ export default function CamPage() {
               {isHost && isMapOpen && (
                   <div style={{ width: "100%", height: "260px", background: "#fff", border: "2px solid #ef4444", borderRadius: "16px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
                     <div style={{ background: "#ef4444", color: "#fff", padding: "8px 14px", fontSize: "12px", fontWeight: "700", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span>🗺️ DB 등록 스터디룸 위치 (카카오맵)</span>
+                      <span>🗺️ DB 등록 스터디룸 위치 (미니맵 클릭 시 추천)</span>
                       <button type="button" onClick={() => setIsMapModalOpen(true)} style={{ background: "#fff", color: "#ef4444", border: "none", padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "bold", cursor: "pointer" }}>🔍 크게 보기</button>
                     </div>
-                    <div id="kakao-mini-map" style={{ width: "100%", height: "200px" }} />
+                    <div id="kakao-mini-map" style={{ width: "100%", height: "200px", cursor: "pointer" }} />
                   </div>
               )}
 
@@ -1582,13 +1582,20 @@ export default function CamPage() {
                     <div style={{ background: "#ef4444", color: "#fff", padding: "14px 20px", fontSize: "15px", fontWeight: "700", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                         <span>🗺️ 볕자리 찾기 - DB 등록 스터디룸 목록</span>
-                        <button
-                          type="button"
-                          onClick={() => navigate("/study-reservation")}
-                          style={{ background: "#059669", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}
-                        >
-                          📅 제휴 스터디 카페 예약 및 결제하기 →
-                        </button>
+                   {/* CamPage.jsx 내부의 제휴 스터디 카페 예약 및 결제하기 버튼 부근 수정 */}
+                   <button
+                     type="button"
+                     onClick={() => {
+                       const targetRoom = searchPlaces.find(p => String(p.id) === String(hoveredCafeId)) || searchPlaces[0];
+                       const roomId = targetRoom ? (targetRoom.id || targetRoom.studyRoomId) : "";
+
+                       // 새 탭/새 창으로 열기 (쿼리 스트링으로 장소 ID 전달)
+                       window.open(`/study-reservation${roomId ? `?preselectedRoomId=${roomId}` : ""}`, "_blank");
+                     }}
+                     style={{ background: "#059669", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}
+                   >
+                     📅 제휴 스터디 카페 예약 및 결제하기 →
+                   </button>
                       </div>
                       <button type="button" onClick={() => setIsMapModalOpen(false)} style={{ background: "none", border: "none", color: "#fff", fontSize: "18px", fontWeight: "bold", cursor: "pointer" }}>✕ 닫기</button>
                     </div>
@@ -1600,18 +1607,39 @@ export default function CamPage() {
                           {searchPlaces.length > 0 ? `총 ${searchPlaces.length}개 공간` : "등록된 스터디룸이 없습니다."}
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                          {searchPlaces.map((place) => (
-                            <div
-                              key={place.id}
-                              onClick={() => setMapCenter({ lat: place.lat, lng: place.lng })}
-                              style={{ background: "#fff", padding: "12px", borderRadius: "8px", border: "1px solid #e5e7eb", cursor: "pointer", display: "flex", flexDirection: "column", gap: "6px" }}
-                            >
-                              <div style={{ fontWeight: "700", fontSize: "13px", color: "#111827" }}>{place.name}</div>
-                              <div style={{ fontSize: "11px", color: "#4b5563" }}>{place.address}</div>
-
-
-                            </div>
-                          ))}
+                          {searchPlaces.map((place) => {
+                            // 🌟 숫자로 인한 타입 불일치를 막기 위해 String으로 변환해서 비교합니다.
+                            const isHighlighted = String(hoveredCafeId) === String(place.id);
+                            return (
+                              <div
+                                key={place.id}
+                                ref={(el) => (cafeElementRefs.current[place.id] = el)}
+                                onClick={() => {
+                                  setMapCenter({ lat: place.lat, lng: place.lng });
+                                  setHoveredCafeId(place.id);
+                                }}
+                                style={{
+                                  background: isHighlighted ? "#e0e7ff" : "#fff",
+                                  padding: "12px",
+                                  borderRadius: "8px",
+                                  border: isHighlighted ? "2px solid #4f46e5" : "1px solid #e5e7eb",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "6px",
+                                  transition: "background 0.2s ease"
+                                }}
+                              >
+                                <div style={{ fontWeight: "700", fontSize: "13px", color: "#111827" }}>{place.name}</div>
+                                <div style={{ fontSize: "11px", color: "#4b5563" }}>{place.address}</div>
+                                {place.pricePerHour && (
+                                  <div style={{ fontSize: "11px", fontWeight: "600", color: "#4f46e5" }}>
+                                    시간당 가격: {place.pricePerHour.toLocaleString()}원
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                       <div id="kakao-modal-map" style={{ flex: 1, position: "relative", height: "100%" }} />
