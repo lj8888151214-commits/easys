@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import "./BroadCast.css";
 import "./Panorama.css";
 import "./Streaming.css";
 
 import streamingBg from "../../assets/images/streaming-bg.jpg";
 import mainVideo1 from "../../assets/videos/main_video1.mp4";
 
-import mainVideo4 from "../../assets/videos/main_video4.mp4";
-import mainVideo5 from "../../assets/videos/main_video5.mp4";
+import mainVideo2 from "../../assets/videos/main_video1.mp4";
+import mainVideo3 from "../../assets/videos/main_video1.mp4";
 
 // 🌟 카테고리별로 서로 다른 비디오를 연결해주는 매핑 함수
 const getVideoByCategory = (category) => {
