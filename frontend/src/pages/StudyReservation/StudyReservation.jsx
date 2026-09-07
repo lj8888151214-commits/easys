@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState, useRef } from "react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import "./StudyReservation.css";
 import studyReservationBg from "../../assets/images/StudyReservation.jpg";
 
@@ -83,9 +83,12 @@ function StudyReservation() {
   const [searchParams] = useSearchParams();
   const studyId = searchParams.get("studyId");
   const isStudyMode = !!studyId;
+    const location = useLocation();
 
   const [scrollY, setScrollY] = useState(0);
 
+  // 🌟 각 카드 DOM 요소를 추적하기 위한 ref 맵
+  const cardElementRefs = useRef({});
   const dateOptions = useMemo(() => buildDateOptions(), []);
 
   // 스터디 예약 모드 전용 상태
@@ -178,6 +181,32 @@ function StudyReservation() {
   useEffect(() => {
     loadRooms("");
   }, []);
+
+  // 🌟 지도에서 넘어온 경우 해당 스터디룸 자동 선택 및 스크롤 로직
+  useEffect(() => {
+      if (!loadingRooms && rooms.length > 0 && location.state?.preselectedRoomId) {
+        const targetId = String(location.state.preselectedRoomId);
+
+        const foundRoom = rooms.find(
+          (room) => String(room.id || room.studyRoomId) === targetId
+        );
+
+        if (foundRoom) {
+          setSelectedPlace(foundRoom);
+
+          // DOM 렌더링이 완전히 끝난 후 확실하게 찾아가도록 requestAnimationFrame 활용
+          const placeId = foundRoom.id || foundRoom.studyRoomId;
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              const el = cardElementRefs.current[placeId];
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+              }
+            }, 300);
+          });
+        }
+      }
+    }, [loadingRooms, rooms, location.state]);
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -287,6 +316,7 @@ function StudyReservation() {
       try {
         setLoadingAvailability(true);
 
+        const roomId = selectedPlace.id || selectedPlace.studyRoomId;
         const response = await fetch(
           `${API_BASE}/reservations/availability?roomId=${selectedPlace.id}&date=${selectedDate}`,
           { credentials: "include" }
@@ -344,7 +374,7 @@ function StudyReservation() {
     setReviewSubmitError("");
 
     if (selectedPlace) {
-      loadReviews(selectedPlace.id);
+      loadReviews(selectedPlace.id || selectedPlace.studyRoomId);
     } else {
       setReviews([]);
     }
@@ -818,33 +848,37 @@ function StudyReservation() {
           {!loadingRooms && !roomsError && displayRooms.length > 0 && (
             <div className="place-grid">
 
-              {pagedRooms.map((place) => (
-                <article
-                  className={`place-card ${
-                    selectedPlace?.id === place.id ? "selected" : ""
-                  }`}
-                  key={place.id}
-                  onClick={() => setSelectedPlace(place)}
-                >
+                        {pagedRooms.map((place) => {
+                          const placeId = place.id || place.studyRoomId;
+                          const isSelected = selectedPlace && (
+                            String(selectedPlace.id || selectedPlace.studyRoomId) === String(placeId) ||
+                            selectedPlace.name === place.name
+                          );
 
-                  <div className="place-image">
+                          return (
+                            <article
+                              className={`place-card ${isSelected ? "selected" : ""}`}
+                              key={placeId}
+                              ref={(el) => {
+                                if (el) cardElementRefs.current[placeId] = el;
+                              }}
+                              onClick={() => setSelectedPlace(place)}
+                            >
 
-                    <img
-                      src={place.imageUrl || studyReservationBg}
-                      alt={place.name}
-                    />
-
-                    <span className="place-rating">
-                      ★ {place.rating ? Number(place.rating).toFixed(1) : "-"}
-                    </span>
-
-                    {selectedPlace?.id === place.id && (
-                      <span className="place-selected">
-                        ✓ 선택됨
-                      </span>
-                    )}
-
-                  </div>
+                              <div className="place-image">
+                                <img
+                                  src={place.imageUrl || studyReservationBg}
+                                  alt={place.name}
+                                />
+                                <span className="place-rating">
+                                  ★ {place.rating ? Number(place.rating).toFixed(1) : "-"}
+                                </span>
+                                {isSelected && (
+                                  <span className="place-selected">
+                                    ✓ 선택됨
+                                  </span>
+                                )}
+                              </div>
 
 
                   <div className="place-card-content">
@@ -889,11 +923,12 @@ function StudyReservation() {
 
                   </div>
 
-                </article>
-              ))}
+                            </article>
+                          );
+                        })}
 
-            </div>
-          )}
+                      </div>
+                    )}
 
           {!loadingRooms && !roomsError && roomsTotalPages > 1 && (
             <nav className="place-pagination" aria-label="스터디룸 목록 페이지">

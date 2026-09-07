@@ -5,7 +5,23 @@ import "./Panorama.css";
 import "./Streaming.css";
 
 import streamingBg from "../../assets/images/streaming-bg.jpg";
-import stream1 from "../../assets/videos/stream1.mp4";
+import mainVideo1 from "../../assets/videos/main_video1.mp4";
+
+import mainVideo4 from "../../assets/videos/main_video4.mp4";
+import mainVideo5 from "../../assets/videos/main_video5.mp4";
+
+// 🌟 카테고리별로 서로 다른 비디오를 연결해주는 매핑 함수
+const getVideoByCategory = (category) => {
+  switch (category) {
+    case "SPRING BOOT":
+      return mainVideo1;
+    case "JAVA":
+      return mainVideo4;
+    case "FRONTEND":
+      return mainVideo5;
+    default:
+  }
+};
 
 export default function Streaming() {
   const navigate = useNavigate();
@@ -65,15 +81,17 @@ export default function Streaming() {
       return;
     }
 
+    const assignedVideo = getVideoByCategory(roomCategory);
+
     const newStream = {
-      video: stream1,
+      video: assignedVideo,
       category: roomCategory,
       title: roomTitle.trim(),
       description: roomDescription.trim() || "함께 소통하며 공부하는 스터디룸입니다.",
       viewers: 1,
       host: currentUser || "게스트",
       screenShare: true,
-      isHost: true, // 생성자는 무조건 호스트
+      isHost: true,
     };
 
     const backendHost = window.location.hostname;
@@ -159,34 +177,37 @@ export default function Streaming() {
         </div>
       </section>
 
-      <section className="stream-list-section panorama-section">
-        <div className="stream-section-heading">
-          <div>
-            <span className="section-label">LIVE PANORAMA</span>
-            <h2>실시간 라이브 파노라마</h2>
-          </div>
-        </div>
-
-        <div className="stream-panorama-container">
-          <div className="stream-panorama-track">
-            {liveStreams.length === 0 ? (
-              <div className="panorama-empty-card">
-                <p>현재 개설된 라이브 방송이 없습니다. 첫 방송을 시작해보세요!</p>
+      {/* 실시간 라이브 파노라마 섹션 */}
+      <section className="streaming-content">
+        <section className="stream-list-section panorama-section">
+          <div className="stream-start-content">
+            <div className="stream-section-heading">
+              <div>
+                <span className="section-label">LIVE PANORAMA</span>
+                <h2>실시간 라이브 파노라마</h2>
               </div>
-            ) : (
-              liveStreams.map((stream, index) => (
-                <article className="stream-card panorama-card" key={`stream-${stream.id}-${index}`}>
-                  <div className="stream-thumbnail">
-                    <video
-                      ref={(element) => { videoRefs.current[index] = element; }}
-                      className="stream-video"
-                      src={stream.video || stream1}
-                      muted
-                      autoPlay
-                      loop
-                      playsInline
-                    />
-                    <div className="stream-video-overlay" />
+            </div>
+
+            <div className="stream-panorama-container">
+              <div className="stream-panorama-track">
+                {liveStreams.length === 0 ? (
+                  <div className="panorama-empty-card">
+                    <p>현재 개설된 라이브 방송이 없습니다. 첫 방송을 시작해보세요!</p>
+                  </div>
+                ) : (
+                  liveStreams.map((stream, index) => (
+                    <article className="stream-card panorama-card" key={`stream-${stream.id}-${index}`}>
+                      <div className="stream-thumbnail">
+                        <video
+                          ref={(element) => { videoRefs.current[index] = element; }}
+                          className="stream-video"
+                          src={stream.video || getVideoByCategory(stream.category)}
+                          muted
+                          autoPlay
+                          loop
+                          playsInline
+                        />
+                        <div className="stream-video-overlay" />
 
                     <span className="stream-number-badge" style={{ fontSize: "14px", padding: "4px 10px", borderRadius: "6px", maxWidth: "80%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {stream.title}
@@ -200,29 +221,32 @@ export default function Streaming() {
                     <p>{stream.description}</p>
                     <span className="stream-host">{stream.host}</span>
 
-                    <div className="stream-card-bottom">
-                      <span>👤 {stream.viewers || 1}명 시청 중</span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          navigate(`/streaming/cam?roomId=${stream.id}`, {
-                            state: { roomInfo: stream, isHost: false }
-                          })
-                        }
-                      >
-                        시청하기 →
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))
-            )}
+                        <div className="stream-card-bottom">
+                          <span>👤 {stream.viewers || 1}명 시청 중</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              navigate(`/streaming/cam?roomId=${stream.id}`, {
+                                state: { roomInfo: stream, isHost: false }
+                              })
+                            }
+                          >
+                            시청하기 →
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
       </section>
 
+      {/* 방송 시작 CTA 섹션 (파노라마와 가로 폭 동일하게 맞춤) */}
       <section className="streaming-content">
-        <section className="stream-start-section">
+        <section className="stream-start-section" style={{ maxWidth: "1400px", margin: "40px auto", boxSizing: "border-box" }}>
           <div className="stream-start-content">
             <span className="section-label">CREATE YOUR STREAM</span>
             <h2>직접 방송을<br />시작해 보세요.</h2>
