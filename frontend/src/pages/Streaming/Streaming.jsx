@@ -180,7 +180,7 @@ export default function Streaming() {
           <span className="streaming-eyebrow">EASYS STREAMING</span>
           <h1>스트리밍</h1>
           <p>실시간으로 배우고 소통하며<br />함께 성장해보세요.</p>
-git add .
+
 
 
         </div>
