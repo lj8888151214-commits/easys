@@ -8,15 +8,6 @@ import "./Payment.css";
 // (여러 번 마운트되어도 승인 요청이 중복되지 않도록 ref로 막는다.)
 // =====================================================
 
-const BACK_LINKS = {
-  mentoring: { to: "/mentor", label: "멘토링으로 돌아가기" },
-  study: { to: "/study-reservation", label: "스터디 예약으로 돌아가기" }
-};
-
-const DONE_NOTICES = {
-  study: "관리자 승인이 완료되면 예약이 최종 확정됩니다."
-};
-
 export default function PaymentSuccess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -68,10 +59,6 @@ export default function PaymentSuccess() {
     confirmPayment();
   }, [searchParams, navigate]);
 
-  const type = searchParams.get("type") || "mentoring";
-  const backLink = BACK_LINKS[type] || BACK_LINKS.mentoring;
-  const doneNotice = DONE_NOTICES[type];
-
   return (
     <div className="payment-page">
       <div className="payment-card">
@@ -85,9 +72,8 @@ export default function PaymentSuccess() {
               결제금액{" "}
               {Number(searchParams.get("amount") || 0).toLocaleString()}원
             </p>
-            {doneNotice && <p className="payment-notice">{doneNotice}</p>}
-            <Link to={backLink.to} className="payment-submit-button payment-link-button">
-              {backLink.label}
+            <Link to="/mentor" className="payment-submit-button payment-link-button">
+              멘토링으로 돌아가기
             </Link>
           </>
         )}

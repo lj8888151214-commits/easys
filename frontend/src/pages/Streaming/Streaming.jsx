@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 import "./BroadCast.css";
 import "./Panorama.css";
 import "./Streaming.css";
-
 
 import streamingBg from "../../assets/images/streaming-bg.jpg";
 import stream1 from "../../assets/videos/stream1.mp4";
@@ -14,82 +12,19 @@ export default function Streaming() {
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
 
-
   const [currentUser, setCurrentUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [roomTitle, setRoomTitle] = useState("");
   const [roomCategory, setRoomCategory] = useState("SPRING BOOT");
   const [roomDescription, setRoomDescription] = useState("");
 
-  const [liveStreams, setLiveStreams] = useState(() => {
-    const saved = localStorage.getItem("myCreatedStreams");
-    const initialDefault = [
-      {
-        id: 1,
-        video: stream1,
-        category: "SPRING BOOT",
-        title: "Spring Boot 처음부터 시작하기",
-        description: "Spring Boot를 함께 공부해봅니다.",
-        viewers: 24,
-        host: "개발하는 홍길동",
-        screenShare: true,
-      },
-      {
-        id: 2,
-        video: stream1,
-        category: "JAVA",
-        title: "Java 객체지향 기초",
-        description: "Java 객체지향 개념을 쉽게 알아봅니다.",
-        viewers: 12,
-        host: "Java 공부방",
-        screenShare: true,
-      },
-      {
-        id: 3,
-        video: stream1,
-        category: "FRONTEND",
-        title: "React로 게시판 만들기",
-        description: "React를 이용해서 게시판을 만들어봅니다.",
-        viewers: 18,
-        host: "프론트엔드 연구소",
-        screenShare: false,
-      },
-    ];
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return [...parsed, ...initialDefault];
-      } catch (e) {
-        return initialDefault;
-      }
-    }
-    return initialDefault;
-  });
-
-
-  const [liveStreams, setLiveStreams] = useState(() => {
-    ];
+  const [liveStreams, setLiveStreams] = useState([]);
   const videoRefs = useRef([]);
 
   useEffect(() => {
-
     const handleScroll = () => setScrollY(window.scrollY);
-
-
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const header = document.querySelector(".main-header");
-    if (header) header.classList.add("scrolled");
-    return () => {
-      if (header) header.classList.remove("scrolled");
-    };
   }, []);
 
   useEffect(() => {
@@ -103,15 +38,46 @@ export default function Streaming() {
         }
       } catch (err) {}
     };
-
     fetchMe();
   }, []);
 
+  const handleOpenCreateModal = () => {
+    if (!currentUser) {
+      alert("로그인 후 스트리밍 공간을 생성할 수 있습니다.");
+      navigate("/login");
+      return;
+    }
+    setIsModalOpen(true);
+  };
 
-  // 🌟 백엔드 서버로부터 현재 송출 중인 실시간 방송 목록 불러오기 (5초 주기 폴링)
-  // 단일 선언된 방 생성 핸들러
+  // 🌟 방 생성 핸들러 (방 생성자는 무조건 isHost: true 부여)
+  const handleCreateRoom = async (e) => {
+    e.preventDefault();
+    if (!roomTitle.trim()) {
+      alert("방송 제목을 입력해주세요.");
+      return;
+    }
+
+    const newStream = {
+      video: stream1,
+      category: roomCategory,
+      title: roomTitle.trim(),
+      description: roomDescription.trim() || "함께 소통하며 공부하는 스터디룸입니다.",
+      viewers: 1,
+      host: currentUser || "게스트",
+      screenShare: true,
       isHost: true, // 생성자는 무조건 호스트
-           await fetch(`http://${backendHost}:8080/api/streams`, {
+    };
+
+    const backendHost = window.location.hostname;
+
+    try {
+      const response = await fetch(`http://${backendHost}:8080/api/streams`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newStream),
+        credentials: "include",
+      });
 
       if (response.ok) {
         const savedData = await response.json();
@@ -124,92 +90,25 @@ export default function Streaming() {
       } else {
         alert("방 생성에 실패했습니다.");
       }
-           console.log("서버 전송 실패, 로컬 우선 반영");
-      // 백엔드 목록 조회 useEffect 수정
-
-  const handleOpenCreateModal = () => {
-    if (!currentUser) {
-      alert("로그인 후 스트리밍 공간을 생성할 수 있습니다.");
-      navigate("/login");
-      return;
+    } catch (err) {
+      alert("서버와 통신 중 오류가 발생했습니다.");
     }
-    setIsModalOpen(true);
   };
 
-  const handleCreateRoom = async (e) => {
-    e.preventDefault();
-    if (!roomTitle.trim()) {
-      alert("방송 제목을 입력해주세요.");
-      return;
-    }
-
-    const roomId = Date.now();
-    const newStream = {
-      id: roomId,
-      video: stream1,
-      category: roomCategory,
-      title: roomTitle.trim(),
-      description: roomDescription.trim() || "함께 소통하며 공부하는 스터디룸입니다.",
-      viewers: 1,
-      host: currentUser || "게스트",
-      screenShare: true,
-    };
-
+  // 🌟 실시간 방 목록 폴링 + 웹소켓 수신 연동
+  useEffect(() => {
     const backendHost = window.location.hostname;
 
-    try {
-      await fetch(`http://${backendHost}:8080/api/streams`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newStream),
-        credentials: "include",
-      });
-    } catch (err) {
-      console.log("서버 전송 실패, 로컬 우선 반영");
-    }
-
-    setLiveStreams((prev) => {
-      const updated = [newStream, ...prev];
-      const userCustoms = updated.filter(item => item.id > 3);
-      localStorage.setItem("myCreatedStreams", JSON.stringify(userCustoms));
-      return updated;
-    });
-
-    setIsModalOpen(false);
-    navigate(`/streaming/cam?roomId=${roomId}`, { state: { roomInfo: newStream } });
-  };
-
-
-  useEffect(() => {
-
     const fetchActiveStreams = async () => {
-      const backendHost = window.location.hostname;
       try {
-
-            const response = await fetch(`http://${backendHost}:8080/api/streams`, { credentials: "include" });
+        const response = await fetch(`http://${backendHost}:8080/api/streams`, {
           credentials: "include",
         });
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data)) setLiveStreams(data);
-                setLiveStreams((prev) => {
-              }
-      } catch (error) {
-        // API가 아직 없다면 기존 기본 목록 유지
-      }
-
-        const response = await fetch(`http://${backendHost}:8080/api/streams`, { credentials: "include" });
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setLiveStreams((prev) => {
-              const defaultItems = prev.filter(item => item.id <= 3);
-              return [...data, ...defaultItems];
-            });
-          }
         }
       } catch (error) {}
-
     };
 
     fetchActiveStreams();
@@ -220,15 +119,7 @@ export default function Streaming() {
     const wsUrl = `${protocol}//${backendHost}:8080/signal?roomId=lobby-stream-list`;
     const ws = new WebSocket(wsUrl);
 
-
-  // 비디오 자동 재생 처리
-
     ws.onmessage = (event) => {
-        try {
-        try { await video.play(); } catch (error) {}
-        } catch (error) {
-          console.log("영상 자동 재생 대기:", error);
-        }
       try {
         const data = JSON.parse(event.data);
         if (data.type === "streamList") {
@@ -242,23 +133,6 @@ export default function Streaming() {
       ws.close();
     };
   }, []);
-
-
-  useEffect(() => {
-    videoRefs.current.forEach((video) => {
-      if (!video) return;
-      video.muted = true;
-      const playVideo = async () => {
-        try { await video.play(); } catch (error) {}
-      };
-      if (video.readyState >= 2) {
-        playVideo();
-      } else {
-        video.addEventListener("canplay", playVideo, { once: true });
-      }
-    });
-  }, [liveStreams]);
-
 
   return (
     <main className="streaming-page">
@@ -274,108 +148,6 @@ export default function Streaming() {
         <div className="streaming-hero-content">
           <span className="streaming-eyebrow">EASYS STREAMING</span>
           <h1>스트리밍</h1>
-
-      {/* CONTENT 메인 컨테이너 */}
-        {/* 방송 시작 */}
-          <p>실시간으로 배우고 소통하며<br />함께 성장해보세요.</p>
-              onClick={handleOpenCreateModal}
-        </div>
-      </section>
-
-      {/* 현재 방송 목록 (파노라마 가로 스크롤 영역) */}
-      <section className="stream-list-section panorama-section">
-        <div className="stream-section-heading">
-          <div>
-            <span className="section-label">LIVE PANORAMA</span>
-            <h2>실시간 라이브 파노라마</h2>
-          </div>
-        </div>
-
-        <div className="stream-panorama-container">
-          <div className="stream-panorama-track">
-            {liveStreams.length === 0 ? (
-              <div className="panorama-empty-card">
-                <p>현재 개설된 라이브 방송이 없습니다. 첫 방송을 시작해보세요!</p>
-              </div>
-            ) : (
-              liveStreams.map((stream, index) => (
-            <article className="stream-card" key={`stream-${stream.id}`}>
-                  <div className="stream-thumbnail">
-                    <video
-                      ref={(element) => { videoRefs.current[index] = element; }}
-                      className="stream-video"
-                      src={stream.video || stream1}
-                      muted
-                      autoPlay
-                      loop
-                      playsInline
-                    />
-                    <div className="stream-video-overlay" />
-                    <span className="stream-number-badge">{index + 1}</span>
-                    <span className="stream-live">● LIVE</span>
-                  </div>
-
-                  <div className="stream-card-content">
-                    <span className="stream-category">{stream.category}</span>
-                    <h3>{stream.title}</h3>
-                    <p>{stream.description}</p>
-                    <span className="stream-host">{stream.host}</span>
-
-                    <div className="stream-card-bottom">
-                      <span>👤 {stream.viewers || 1}명 시청 중</span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          navigate(`/streaming/cam?roomId=${stream.id}`, {
-                            state: { roomInfo: stream, isHost: false }
-                          })
-                        }
-                      >
-                        시청하기 →
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))
-
-          {liveStreams.map((stream, index) => (
-            <article className="stream-card" key={`stream-2-${stream.id}`}>
-              <div className="stream-thumbnail">
-                <video
-                  className="stream-video"
-                  src={stream.video || stream1}
-                  muted
-                  autoPlay
-                  loop
-                  playsInline
-                  preload="auto"
-                />
-                <div className="stream-video-overlay" />
-                <span className="stream-live">● LIVE</span>
-                {stream.screenShare && (
-                  <span className="screen-share-badge">🖥 화면공유</span>
-                )}
-                <span className="stream-play">▶</span>
-              </div>
-
-              <div className="stream-card-content">
-                <span className="stream-category">{stream.category}</span>
-                <h3>{stream.title}</h3>
-                <p>{stream.description}</p>
-                <span className="stream-host">{stream.host}</span>
-
-                <div className="stream-card-bottom">
-                  <span>👤 {stream.viewers || 1}명 시청 중</span>
-                  <button type="button" onClick={() => navigate("/streaming/cam")}>
-                    시청하기 →
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-            )}
-      {/* 스트리밍 기능 소개 및 하단 컨텐츠 */}
-
           <p>
             실시간으로 배우고 소통하며
             <br />
@@ -518,33 +290,8 @@ export default function Streaming() {
               <h3>실시간 채팅</h3>
               <p>방송을 보면서 질문하고 다른 사람들과 자유롭게 소통해보세요.</p>
             </div>
-
-          </div>
-        </div>
-      </section>
-
-
-        {/* 예정된 방송 */}
-      <section className="streaming-content">
-        <section className="stream-start-section">
-        {/* 하단 배너 */}
-          <div className="stream-start-content">
-            <span className="section-label">CREATE YOUR STREAM</span>
-            <h2>직접 방송을<br />시작해 보세요.</h2>
-          <button type="button" onClick={handleOpenCreateModal}>
-            방송 둘러보기 →
-            </button>
           </div>
         </section>
-      </section>
-          <div style={{ width: "420px", background: "#fff", borderRadius: "16px", padding: "28px", display: "flex", flexDirection: "column", gap: "20px", boxShadow: "0 12px 32px rgba(0,0,0,0.2)" }}>
-              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#111827" }}>🚀 나만의 스트리밍 공간 만들기</h3>
-              <button type="button" onClick={() => setIsModalOpen(false)} style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", color: "#6b7280" }}>✕</button>
-            <form onSubmit={handleCreateRoom} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "13px", fontWeight: "600", color: "#374151" }}>방송 제목</label>
-              </div>
-                  style={{ flex: 1, padding: "12px", background: "#4f46e5", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}
 
         <section className="stream-bottom-banner">
           <span className="section-label">EASYS LIVE</span>
@@ -631,7 +378,6 @@ export default function Streaming() {
           </div>
         </div>
       )}
-
     </main>
   );
 }

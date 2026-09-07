@@ -16,4 +16,7 @@ public interface PersonalScheduleRepository extends JpaRepository<PersonalSchedu
             LocalDateTime startAt,
             LocalDateTime endAt
     );
+
+    // 특정 스트리밍 방에 연결된 방송 일정만 조회한다 (미니 달력용, 소유자 무관 전체 공개).
+    List<PersonalSchedule> findByStreamingRoomIdOrderByStartAtAsc(Long streamingRoomId);
 }

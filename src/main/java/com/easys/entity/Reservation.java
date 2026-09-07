@@ -107,6 +107,9 @@ public class Reservation {
         this.updatedAt = LocalDateTime.now();
     }
 
+
+    // 결제 완료 후 예약 확정
+
     // 이 예약이 스터디를 위한 예약인지 (false면 개인 예약)
     public boolean isStudyReservation() {
         return this.study != null;
@@ -124,6 +127,7 @@ public class Reservation {
     }
 
     // 개인 예약 확정 (나의 캘린더 일정 연결)
+
     public void confirm(PersonalSchedule personalSchedule) {
         this.status = ReservationStatus.CONFIRMED;
         this.personalSchedule = personalSchedule;
@@ -147,9 +151,6 @@ public class Reservation {
         this.groupSchedule = null;
         this.updatedAt = LocalDateTime.now();
     }
-
-
-
 
 
 

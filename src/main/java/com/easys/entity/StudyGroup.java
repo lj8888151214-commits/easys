@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 // study가 설정되어 있으면 스터디룸 예약이 확정되면서 자동 생성된
 // 일정이고(참여자는 study의 소유자 + 승인된 신청자 전원), study가 없고
 // createdBy만 있으면 사용자가 캘린더에서 수동으로 등록한 일정이다.
+
 @Entity
 @Getter
 @Setter

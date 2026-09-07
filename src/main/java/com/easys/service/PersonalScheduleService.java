@@ -2,7 +2,9 @@ package com.easys.service;
 
 import com.easys.entity.Member;
 import com.easys.entity.PersonalSchedule;
+import com.easys.entity.StreamingStudio;
 import com.easys.repository.PersonalScheduleRepository;
+import com.easys.repository.StreamingStudioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +18,7 @@ import java.util.List;
 public class PersonalScheduleService {
 
     private final PersonalScheduleRepository personalScheduleRepository;
+    private final StreamingStudioRepository streamingStudioRepository;
 
     public PersonalSchedule createSchedule(Member member, String title, String content,
                                            LocalDateTime startAt, LocalDateTime endAt) {
@@ -28,6 +31,43 @@ public class PersonalScheduleService {
         );
 
         return personalScheduleRepository.save(schedule);
+    }
+
+    // 스트리밍 방송 일정 등록/추가용. streamingRoomId가 채워져 있으면(방장이 방
+    // 안에서 방송 일정을 등록하는 경우) 요청자가 그 방의 실제 방장(닉네임 일치)인지
+    // 서버에서 검증한 뒤에만 저장한다. 시청자가 "내 캘린더에 추가"할 때는
+    // streamingRoomId 없이 호출되어 일반 개인 일정과 동일하게 저장된다.
+    public PersonalSchedule createSchedule(Member member, String title, String content,
+                                           LocalDateTime startAt, LocalDateTime endAt,
+                                           Long streamingRoomId) {
+        if (startAt.isAfter(endAt)) {
+            throw new IllegalArgumentException("시작 시간은 종료 시간보다 늦을 수 없습니다.");
+        }
+
+        if (streamingRoomId != null) {
+            StreamingStudio studio = streamingStudioRepository.findById(streamingRoomId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 스트리밍 방입니다."));
+
+            String host = studio.getHost() != null ? studio.getHost().trim() : "";
+            String nickname = member.getNickname() != null ? member.getNickname().trim() : "";
+
+            if (host.isEmpty() || !host.equals(nickname)) {
+                throw new IllegalArgumentException("방장만 이 방의 일정을 등록할 수 있습니다.");
+            }
+        }
+
+        PersonalSchedule schedule = new PersonalSchedule(
+                member, title, content, startAt, endAt, streamingRoomId
+        );
+
+        return personalScheduleRepository.save(schedule);
+    }
+
+    // 특정 스트리밍 방에 등록된 방송 일정만 조회한다 (미니 달력용).
+    // 로그인 여부와 무관하게 방 안의 누구에게나 동일하게 보여주는 목록이다.
+    @Transactional(readOnly = true)
+    public List<PersonalSchedule> getByStreamingRoom(Long streamingRoomId) {
+        return personalScheduleRepository.findByStreamingRoomIdOrderByStartAtAsc(streamingRoomId);
     }
 
     @Transactional(readOnly = true)

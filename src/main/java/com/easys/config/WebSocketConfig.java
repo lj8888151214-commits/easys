@@ -100,9 +100,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
         private static final Map<String, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
         private static final Map<String, String> sessionRooms = new ConcurrentHashMap<>();
 
-        private static final Map<String, Map<String, WebSocketSession>> rooms = new ConcurrentHashMap<>();
-        private static final Map<String, String> sessionRooms = new ConcurrentHashMap<>();
-
         private static final Map<String, String> userNicknames = new ConcurrentHashMap<>();
 
         // 🌟 방 생성 시각 및 최소 입장 인원 기록 맵
@@ -160,8 +157,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
             Map<String, WebSocketSession> roomSessions = rooms.get(roomId);
 
-            Map<String, WebSocketSession> roomSessions = rooms.get(roomId);
-
 
             String initialNick = (String) session.getAttributes().get("nickname");
             if (initialNick == null || initialNick.isBlank()) {
@@ -185,8 +180,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
             System.out.println("🟢 [WS 연결] 방: " + roomId + " | ID: " + session.getId() + " | 닉네임: " + initialNick);
 
-
-            session.sendMessage(new TextMessage("{\"type\":\"init\",\"myId\":\"" + session.getId() + "\"}"));
             broadcastUserList(roomId);
         }
 
@@ -206,7 +199,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
                         userNicknames.put(session.getId(), nickname);
                     }
 
-                    broadcastUserList();
+                    broadcastUserList(roomId);
+                }
 
                 // 🌟 호스트가 스트리밍을 종료하거나 뒤로 갈 때 브로드캐스트 및 DB 삭제 수행
                 // 🌟 호스트가 스트리밍 종료/뒤로가기로 인해 'stream-ended' 신호를 보낼 때
@@ -276,7 +270,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
             userNicknames.remove(session.getId());
 
             System.out.println("🔴 [WS 종료] ID: " + session.getId() + " | 총 인원: " + sessions.size());
-            broadcastUserList();
+            broadcastUserList(roomId);
 
 
             if (roomId != null && rooms.containsKey(roomId)) {
@@ -293,18 +287,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
                     // 현재 남아있는 사용자 목록만 갱신해 줍니다.
                     // (오직 호스트가 '스트리밍 종료'나 '뒤로가기'를 눌러서 명시적으로 신호를 보낼 때만
                     //  handleTextMessage의 "stream-ended"가 작동하여 게스트들이 튕겨 나갑니다.)
-                    broadcastUserList(roomId);
-                }
-            }
-
-
-            if (roomId != null && rooms.containsKey(roomId)) {
-                rooms.get(roomId).remove(session.getId());
-
-                if (rooms.get(roomId).isEmpty()) {
-                    rooms.remove(roomId);
-                    com.easys.controller.StreamController.removeStream(roomId);
-                } else {
                     broadcastUserList(roomId);
                 }
             }
@@ -371,31 +353,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
                         } catch (IOException ignored) {}
                     }
                 }
-
-            } catch (Exception e) {}
-        }
-
-        public static void broadcastStreamList(List<Map<String, Object>> streams) {
-            try {
-                String payload = new ObjectMapper().writeValueAsString(Map.of(
-                        "type", "streamList",
-                        "streams", streams
-                ));
-                TextMessage msg = new TextMessage(payload);
-
-                for (Map<String, WebSocketSession> roomSessions : rooms.values()) {
-                    for (WebSocketSession s : roomSessions.values()) {
-                        if (s.isOpen()) {
-                            try {
-                                s.sendMessage(msg);
-                            } catch (IOException ignored) {}
-                        }
-                    }
-                }
-
-            } catch (Exception e) {
-                System.err.println("StreamList 브로드캐스트 에러: " + e.getMessage());
-            }
 
             } catch (Exception e) {}
         }

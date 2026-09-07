@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import "./Calendar.css";
 import calendarBg from "../../assets/images/calendar-bg.jpg";
 
-const API_URL = "http://localhost:8080/api/calendar/personal";
+// vite.config.js가 host: true(LAN 개방)로 설정돼 있어, 이 페이지를
+// localhost가 아닌 다른 기기(스트리밍 시청자/방장의 폰 등)에서 열 수도
+// 있다. "localhost"로 고정하면 그 요청은 항상 자기 자신의 8080 포트를
+// 가리키게 되어 실패하므로, 스트리밍 쪽 다른 페이지들과 동일하게
+// window.location.hostname을 그대로 사용한다.
+const API_URL = `http://${window.location.hostname}:8080/api/calendar/personal`;
 const CATEGORY_STORAGE_KEY = "easys-calendar-categories";
 // 모임 캘린더 조회/등록 API
 //
@@ -13,11 +18,30 @@ const CATEGORY_STORAGE_KEY = "easys-calendar-categories";
 // 있어 접두사가 제거되면 존재하지 않는 경로("/study-groups")로 요청이
 // 가서 항상 404가 났다. API_URL(개인 캘린더)과 동일하게 절대 경로로 백엔드에
 // 직접 요청해 프록시의 접두사 제거를 우회한다.
-const GROUP_API_URL = "http://localhost:8080/api/study-groups";
+const GROUP_API_URL = `http://${window.location.hostname}:8080/api/study-groups`;
 
 // 날짜 칸 하나에 실제로 표시할 일정 개수. 이보다 많으면 "+N개"로 접어서
 // 일정이 아무리 많아도 날짜 칸 높이가 계속 늘어나지 않게 한다.
 const MAX_VISIBLE_DAY_EVENTS = 3;
+
+// 시청자가 방송 일정을 "내 캘린더에 추가"할 때 CamPage.jsx가 title 앞에 붙이는
+// 마커. streaming_room_id는 공개 목록 노출을 막기 위해 항상 null로 저장하므로,
+// 화면에서 "이건 방송에서 가져온 일정"임을 구분할 유일한 신호가 이 마커다.
+// 화면에는 마커 자체는 안 보이고 빨간 점 표시로만 구분한다.
+const BROADCAST_TITLE_MARKER = "[방송] ";
+
+function isBroadcastCopy(schedule) {
+  return (
+    typeof schedule?.title === "string" &&
+    schedule.title.startsWith(BROADCAST_TITLE_MARKER)
+  );
+}
+
+function displayScheduleTitle(schedule) {
+  return isBroadcastCopy(schedule)
+    ? schedule.title.slice(BROADCAST_TITLE_MARKER.length)
+    : schedule.title;
+}
 
 function toLocalDateTimeParam(date) {
   const yyyy = date.getFullYear();
@@ -901,8 +925,17 @@ function Calendar() {
 
                         <div className="schedule-info">
                           <div className="schedule-title-row">
+                            {schedule.streamingRoomId && (
+                              <span className="rec-badge" title="스트리밍 방송 일정">
+                                REC
+                              </span>
+                            )}
+                            {isBroadcastCopy(schedule) && (
+                              <span className="rec-dot" title="방송에서 추가한 일정" />
+                            )}
+
                             <strong>
-                              {schedule.title}
+                              {displayScheduleTitle(schedule)}
                             </strong>
 
                             <span
@@ -1050,11 +1083,19 @@ function Calendar() {
                                           schedule.id
                                         }
                                         title={
-                                          schedule.title
+                                          displayScheduleTitle(schedule)
                                         }
                                       >
+                                        {schedule.streamingRoomId && (
+                                          <span className="rec-badge">
+                                            REC
+                                          </span>
+                                        )}
+                                        {isBroadcastCopy(schedule) && (
+                                          <span className="rec-dot" />
+                                        )}
                                         {
-                                          schedule.title
+                                          displayScheduleTitle(schedule)
                                         }
                                       </div>
                                     );
@@ -1696,7 +1737,19 @@ function Calendar() {
                     <div className={`schedule-color ${type}`} />
 
                     <div className="schedule-info">
-                      <strong>{schedule.title}</strong>
+                      <strong>
+                        {dayScheduleModal.kind === "personal" &&
+                          schedule.streamingRoomId && (
+                            <span className="rec-badge">REC</span>
+                          )}
+                        {dayScheduleModal.kind === "personal" &&
+                          isBroadcastCopy(schedule) && (
+                            <span className="rec-dot" />
+                          )}
+                        {dayScheduleModal.kind === "personal"
+                          ? displayScheduleTitle(schedule)
+                          : schedule.title}
+                      </strong>
                     </div>
                   </div>
                 );

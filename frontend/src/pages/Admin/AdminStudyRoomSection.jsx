@@ -10,7 +10,6 @@ const EMPTY_FORM = {
   maxCapacity: 4,
   pricePerHour: "",
   imageUrl: "",
-  ownerEmail: "",
 };
 
 function formatPrice(price) {
@@ -73,7 +72,6 @@ function AdminStudyRoomSection() {
       maxCapacity: room.maxCapacity,
       pricePerHour: room.pricePerHour,
       imageUrl: room.imageUrl || "",
-      ownerEmail: room.ownerEmail || "",
     });
     setFormError("");
   };
@@ -101,7 +99,6 @@ function AdminStudyRoomSection() {
       maxCapacity: Number(form.maxCapacity),
       pricePerHour: Number(form.pricePerHour),
       imageUrl: form.imageUrl.trim(),
-      ownerEmail: form.ownerEmail.trim(),
     };
 
     try {
@@ -146,7 +143,7 @@ function AdminStudyRoomSection() {
     if (
       !window.confirm(
         isActive
-          ? `"${room.name}"을(를) 삭제할까요? 예약/후기 이력이 없으면 완전히 삭제되고, 이력이 있으면 운영 중지 처리됩니다.`
+          ? `"${room.name}"을(를) 운영 중지할까요? (예약/후기 목록에서 사라집니다)`
           : `"${room.name}"을(를) 다시 운영할까요?`
       )
     ) {
@@ -168,15 +165,6 @@ function AdminStudyRoomSection() {
         throw new Error("처리에 실패했습니다.");
       }
 
-      if (isActive) {
-        const data = await response.json();
-        alert(
-          data.deleted
-            ? "완전히 삭제되었습니다."
-            : "예약/후기 이력이 있어 운영 중지 처리되었습니다."
-        );
-      }
-
       loadRooms();
     } catch (error) {
       console.error("스터디룸 상태 변경 오류:", error);
@@ -196,7 +184,6 @@ function AdminStudyRoomSection() {
       {formMode && (
         <form className="admin-room-form" onSubmit={handleSubmit}>
           <h3>{formMode === "edit" ? "스터디룸 수정" : "새 스터디룸 등록"}</h3>
-
           <div className="admin-form-grid">
             <label>
               이름
@@ -260,16 +247,6 @@ function AdminStudyRoomSection() {
                 placeholder="https://..."
               />
             </label>
-
-            <label>
-              사장님 이메일
-              <input
-                type="email"
-                value={form.ownerEmail}
-                onChange={(e) => handleFormChange("ownerEmail", e.target.value)}
-                placeholder="예약 결제 완료 알림을 받을 이메일"
-              />
-            </label>
           </div>
 
           <label className="admin-form-full">
@@ -308,7 +285,6 @@ function AdminStudyRoomSection() {
                 <th>인원</th>
                 <th>가격</th>
                 <th>평점</th>
-                <th>사장님 이메일</th>
                 <th>상태</th>
                 <th></th>
               </tr>
@@ -321,32 +297,29 @@ function AdminStudyRoomSection() {
                   <td>{room.minCapacity}~{room.maxCapacity}명</td>
                   <td>{formatPrice(room.pricePerHour)}</td>
                   <td>{room.rating ? Number(room.rating).toFixed(1) : "-"}</td>
-                  <td>{room.ownerEmail || "-"}</td>
                   <td>
                     <span className={`admin-status ${room.status === "ACTIVE" ? "on" : "off"}`}>
                       {room.status === "ACTIVE" ? "운영중" : "중지됨"}
                     </span>
                   </td>
-                  <td>
-                    <div className="admin-row-actions">
-                      <button type="button" onClick={() => openEditForm(room)}>
-                        수정
-                      </button>
-                      <button
-                        type="button"
-                        className={room.status === "ACTIVE" ? "danger" : ""}
-                        onClick={() => handleToggleStatus(room)}
-                      >
-                        {room.status === "ACTIVE" ? "삭제" : "복구"}
-                      </button>
-                    </div>
+                  <td className="admin-row-actions">
+                    <button type="button" onClick={() => openEditForm(room)}>
+                      수정
+                    </button>
+                    <button
+                      type="button"
+                      className={room.status === "ACTIVE" ? "danger" : ""}
+                      onClick={() => handleToggleStatus(room)}
+                    >
+                      {room.status === "ACTIVE" ? "삭제" : "복구"}
+                    </button>
                   </td>
                 </tr>
               ))}
 
               {rooms.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="admin-state-message">
+                  <td colSpan={7} className="admin-state-message">
                     등록된 스터디룸이 없어요.
                   </td>
                 </tr>

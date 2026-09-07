@@ -48,6 +48,7 @@ public record ReservationResponseDto(
         String paymentStatus,
 
         Integer amount
+
 ) {
 
     public static ReservationResponseDto from(Reservation reservation) {
