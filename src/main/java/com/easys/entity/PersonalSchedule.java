@@ -38,6 +38,11 @@ public class PersonalSchedule {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    // 스트리밍 방(StreamingStudio.id)에서 등록/추가된 방송 관련 일정이면 그 방의 id.
+    // 일반 개인 일정은 null이다.
+    @Column(name = "streaming_room_id")
+    private Long streamingRoomId;
+
     public PersonalSchedule(Member member, String title, String content,
                             LocalDateTime startAt, LocalDateTime endAt) {
         this.member = member;
@@ -47,6 +52,12 @@ public class PersonalSchedule {
         this.endAt = endAt;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public PersonalSchedule(Member member, String title, String content,
+                            LocalDateTime startAt, LocalDateTime endAt, Long streamingRoomId) {
+        this(member, title, content, startAt, endAt);
+        this.streamingRoomId = streamingRoomId;
     }
 
     public void update(String title, String content,

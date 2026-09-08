@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/calendar/personal")
@@ -57,10 +58,25 @@ public class PersonalScheduleController {
                         request.title(),
                         request.content(),
                         request.startAt(),
-                        request.endAt()
+                        request.endAt(),
+                        request.streamingRoomId()
                 );
 
         return ResponseEntity.ok(new PersonalScheduleResponseDto(schedule));
+    }
+
+    // 특정 스트리밍 방에 등록된 방송 일정만 조회 (미니 달력용).
+    // 방장/시청자 모두 같은 응답을 받는다 - 접근 제어는 "생성" 시점에서만 한다.
+    @GetMapping("/room/{roomId}")
+    public ResponseEntity<?> getRoomSchedules(@PathVariable Long roomId) {
+
+        List<PersonalScheduleResponseDto> list = personalScheduleService
+                .getByStreamingRoom(roomId)
+                .stream()
+                .map(PersonalScheduleResponseDto::new)
+                .toList();
+
+        return ResponseEntity.ok(list);
     }
 
     @PutMapping("/{id}")
@@ -110,7 +126,10 @@ public class PersonalScheduleController {
             String title,
             String content,
             LocalDateTime startAt,
-            LocalDateTime endAt
+            LocalDateTime endAt,
+            // 스트리밍 방장이 방 안에서 일정을 등록할 때만 전송(StreamingStudio.id).
+            // 서버가 요청자가 그 방의 실제 방장인지 검증한 뒤에만 저장된다.
+            Long streamingRoomId
     ) {
     }
 }

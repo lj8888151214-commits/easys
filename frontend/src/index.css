@@ -2,6 +2,18 @@
   box-sizing: border-box;
 }
 
+/* 고정(fixed) Header 실제 높이. Header.css의 .main-header 높이와 반드시 일치시킬 것.
+   Header 아래 여백이 필요한 개별 페이지에서 padding-top: calc(var(--header-height) + Npx) 형태로 사용한다. */
+:root {
+  --header-height: 80px;
+}
+
+@media screen and (max-width: 768px) {
+  :root {
+    --header-height: 65px;
+  }
+}
+
 html,
 body,
 #root {

@@ -427,6 +427,61 @@
   color: #9a7d43;
 }
 
+/* 스트리밍 방송 일정(streamingRoomId가 있는 개인 일정) 표시용 작은 뱃지.
+   일반 개인 일정과 색 톤(초록 계열)을 건드리지 않도록 빨간 계열만 별도로 씀. */
+.rec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  margin-right: 2px;
+  border-radius: 6px;
+  background: #fdecea;
+  color: #e74c3c;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+  white-space: nowrap;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.rec-badge::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e74c3c;
+  flex-shrink: 0;
+}
+
+.calendar-event .rec-badge {
+  padding: 0 3px;
+  font-size: 8px;
+  margin-right: 3px;
+}
+
+/* 시청자가 "내 캘린더에 추가"한 방송 일정 표시용 - REC 뱃지(방장 본인용)와
+   구분되는 더 단순한 빨간 점 하나만. 텍스트/모양을 건드리지 않고 존재 여부만
+   표시한다. */
+.rec-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e74c3c;
+  margin-right: 5px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.calendar-event .rec-dot {
+  width: 5px;
+  height: 5px;
+  margin-right: 3px;
+}
+
 .schedule-actions {
   display: flex;
   align-items: center;
@@ -1224,6 +1279,13 @@
   .calendar-event {
     padding: 4px;
     font-size: 9px;
+  }
+
+  .calendar-event .rec-badge {
+    padding: 0 2px;
+    font-size: 7px;
+    margin-right: 2px;
+    gap: 2px;
   }
 
   .calendar-day-more {
