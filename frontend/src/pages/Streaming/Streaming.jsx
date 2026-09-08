@@ -1,12 +1,33 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import StudyReservation from "../StudyReservation/StudyReservation";
 
 import "./BroadCast.css";
 import "./Panorama.css";
 import "./Streaming.css";
 
 import streamingBg from "../../assets/images/streaming-bg.jpg";
+
 import stream1 from "../../assets/videos/stream1.mp4";
+
+import mainVideo1 from "../../assets/videos/main_video1.mp4";
+import mainVideo4 from "../../assets/videos/main_video2.mp4";
+import mainVideo5 from "../../assets/videos/stream1.mp4";
+
+// 🌟 카테고리별로 서로 다른 비디오를 연결해주는 매핑 함수
+const getVideoByCategory = (category) => {
+  switch (category) {
+    case "SPRING BOOT":
+      return mainVideo1;
+    case "JAVA":
+      return mainVideo4;
+    case "FRONTEND":
+      return mainVideo5;
+    default:
+      return mainVideo1;
+  }
+};
+
 
 export default function Streaming() {
   const navigate = useNavigate();
@@ -14,6 +35,10 @@ export default function Streaming() {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 🌟 스터디 예약 화면을 넓은 팝업(모달)으로 띄우기 위한 상태
+  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
+
   const [roomTitle, setRoomTitle] = useState("");
   const [roomCategory, setRoomCategory] = useState("SPRING BOOT");
   const [roomDescription, setRoomDescription] = useState("");
@@ -148,11 +173,18 @@ export default function Streaming() {
         <div className="streaming-hero-content">
           <span className="streaming-eyebrow">EASYS STREAMING</span>
           <h1>스트리밍</h1>
+
           <p>
             실시간으로 배우고 소통하며
             <br />
             함께 성장해보세요.
           </p>
+
+          <p>실시간으로 배우고 소통하며<br />함께 성장해보세요.</p>
+
+
+
+
         </div>
       </section>
 
@@ -183,6 +215,7 @@ export default function Streaming() {
             </button>
           </div>
         </div>
+
 
         <div className="stream-panorama-container">
           <div className="stream-panorama-track">
@@ -219,6 +252,39 @@ export default function Streaming() {
                     <p>{stream.description}</p>
                     <span className="stream-host">{stream.host}</span>
 
+            <div className="stream-panorama-container">
+              <div className="stream-panorama-track">
+                {liveStreams.length === 0 ? (
+                  <div className="panorama-empty-card">
+                    <p>현재 개설된 라이브 방송이 없습니다. 첫 방송을 시작해보세요!</p>
+                  </div>
+                ) : (
+                  liveStreams.map((stream, index) => (
+                    <article className="stream-card panorama-card" key={`stream-${stream.id}-${index}`}>
+                      <div className="stream-thumbnail">
+                        <video
+                          ref={(element) => { videoRefs.current[index] = element; }}
+                          className="stream-video"
+                          src={stream.video || getVideoByCategory(stream.category)}
+                          muted
+                          autoPlay
+                          loop
+                          playsInline
+                        />
+                        <div className="stream-video-overlay" />
+
+                        <span className="stream-number-badge" style={{ fontSize: "14px", padding: "4px 10px", borderRadius: "6px", maxWidth: "80%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {stream.title}
+                        </span>
+                        <span className="stream-live">● LIVE</span>
+                      </div>
+
+                      <div className="stream-card-content">
+                        <span className="stream-category">{stream.category}</span>
+                        <p>{stream.description}</p>
+                        <span className="stream-host">{stream.host}</span>
+
+
                     <div className="stream-card-bottom">
                       <span>👤 {stream.viewers || 1}명 시청 중</span>
                       <button
@@ -237,6 +303,7 @@ export default function Streaming() {
           </div>
         </div>
       </section>
+
 
       <section className="streaming-content">
         <section className="stream-start-section">
@@ -311,6 +378,7 @@ export default function Streaming() {
         </section>
       </section>
 
+      {/* 방 생성 모달 */}
       {isModalOpen && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ width: "420px", background: "#fff", borderRadius: "16px", padding: "28px", display: "flex", flexDirection: "column", gap: "20px", boxShadow: "0 12px 32px rgba(0,0,0,0.2)" }}>
@@ -375,6 +443,26 @@ export default function Streaming() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 🌟 스터디룸 예약 및 결제 화면을 넓은 팝업으로 띄우는 레이어 */}
+      {isReservationModalOpen && (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.65)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: "95vw", maxWidth: "1440px", height: "92vh", background: "#fff", borderRadius: "16px", overflowY: "auto", position: "relative", padding: "30px", boxSizing: "border-box", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3)" }}>
+
+            {/* 닫기 버튼 (X) */}
+            <button
+              type="button"
+              onClick={() => setIsReservationModalOpen(false)}
+              style={{ position: "sticky", top: "10px", float: "right", background: "#e5e7eb", border: "none", fontSize: "20px", fontWeight: "bold", width: "44px", height: "44px", borderRadius: "50%", cursor: "pointer", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
+            >
+      
+            </button>
+
+            {/* 스터디 예약 화면 컴포넌트 렌더링 */}
+            <StudyReservation />
           </div>
         </div>
       )}
