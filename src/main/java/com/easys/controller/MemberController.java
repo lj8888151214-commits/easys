@@ -4,6 +4,7 @@ import com.easys.dto.MemberCreateDto;
 import com.easys.dto.MemberResponseDto;
 import com.easys.dto.MemberUpdateDto;
 import com.easys.dto.PasswordUpdateDto;
+import com.easys.dto.ResetPasswordRequestDto;
 import com.easys.entity.Member;
 import com.easys.repository.MemberRepository;
 import com.easys.service.MemberService;
@@ -183,6 +184,42 @@ public class MemberController {
                     Map.of(
                             "message",
                             "비밀번호가 변경되었습니다."
+                    )
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "message",
+                            e.getMessage()
+                    )
+            );
+        }
+    }
+
+
+    // =====================================================
+    // 비밀번호 재설정
+    // /email/send, /email/verify로 이메일 인증을 먼저 완료한 뒤 호출한다.
+    // 로그인 없이(비로그인 상태) 진행되는 흐름이라 PasswordUpdateDto가 아닌
+    // 별도의 ResetPasswordRequestDto를 사용한다.
+    // POST /member/reset-password
+    // =====================================================
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @RequestBody ResetPasswordRequestDto request
+    ) {
+
+        try {
+
+            memberService.resetPassword(request);
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "message",
+                            "비밀번호가 재설정되었습니다."
                     )
             );
 

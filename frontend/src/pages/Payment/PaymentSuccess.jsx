@@ -13,6 +13,9 @@ export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState("confirming");
   const confirmedRef = useRef(false);
+  const type = searchParams.get("type") || "mentoring";
+  const backTo = type === "study" ? "/profile" : "/mentor";
+  const backLabel = type === "study" ? "내 예약 내역으로 돌아가기" : "멘토링으로 돌아가기";
 
   useEffect(() => {
     if (confirmedRef.current) return;
@@ -72,8 +75,8 @@ export default function PaymentSuccess() {
               결제금액{" "}
               {Number(searchParams.get("amount") || 0).toLocaleString()}원
             </p>
-            <Link to="/mentor" className="payment-submit-button payment-link-button">
-              멘토링으로 돌아가기
+            <Link to={backTo} className="payment-submit-button payment-link-button">
+              {backLabel}
             </Link>
           </>
         )}

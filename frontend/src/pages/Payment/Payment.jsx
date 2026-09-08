@@ -14,7 +14,8 @@ const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
 // =====================================================
 
 const PAYMENT_INFO_ENDPOINTS = {
-  mentoring: (id) => `/api/payments/mentoring/${id}`
+  mentoring: (id) => `/api/payments/mentoring/${id}`,
+  study: (id) => `/api/payments/study/${id}`
 };
 
 export default function Payment() {
