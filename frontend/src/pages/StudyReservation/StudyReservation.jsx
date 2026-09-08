@@ -82,8 +82,9 @@ function StudyReservation() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const studyId = searchParams.get("studyId");
+  const preselectedQueryRoomId = searchParams.get("preselectedRoomId");
   const isStudyMode = !!studyId;
-    const location = useLocation();
+  const location = useLocation();
 
   const [scrollY, setScrollY] = useState(0);
 
@@ -182,31 +183,31 @@ function StudyReservation() {
     loadRooms("");
   }, []);
 
-  // 🌟 지도에서 넘어온 경우 해당 스터디룸 자동 선택 및 스크롤 로직
+  // 🌟 새 창 쿼리 파라미터 또는 location.state에서 넘어온 경우 자동 선택 및 스크롤 로직
   useEffect(() => {
-      if (!loadingRooms && rooms.length > 0 && location.state?.preselectedRoomId) {
-        const targetId = String(location.state.preselectedRoomId);
+    const targetId = preselectedQueryRoomId || location.state?.preselectedRoomId;
 
-        const foundRoom = rooms.find(
-          (room) => String(room.id || room.studyRoomId) === targetId
-        );
+    if (!loadingRooms && rooms.length > 0 && targetId) {
+      const foundRoom = rooms.find(
+        (room) => String(room.id || room.studyRoomId) === String(targetId)
+      );
 
-        if (foundRoom) {
-          setSelectedPlace(foundRoom);
+      if (foundRoom) {
+        setSelectedPlace(foundRoom);
 
-          // DOM 렌더링이 완전히 끝난 후 확실하게 찾아가도록 requestAnimationFrame 활용
-          const placeId = foundRoom.id || foundRoom.studyRoomId;
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              const el = cardElementRefs.current[placeId];
-              if (el) {
-                el.scrollIntoView({ behavior: "smooth", block: "center" });
-              }
-            }, 300);
-          });
-        }
+        // DOM 렌더링이 완전히 끝난 후 확실하게 찾아가도록 requestAnimationFrame 활용
+        const placeId = foundRoom.id || foundRoom.studyRoomId;
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            const el = cardElementRefs.current[placeId];
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          }, 300);
+        });
       }
-    }, [loadingRooms, rooms, location.state]);
+    }
+  }, [loadingRooms, rooms, preselectedQueryRoomId, location.state]);
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -318,7 +319,7 @@ function StudyReservation() {
 
         const roomId = selectedPlace.id || selectedPlace.studyRoomId;
         const response = await fetch(
-          `${API_BASE}/reservations/availability?roomId=${selectedPlace.id}&date=${selectedDate}`,
+          `${API_BASE}/reservations/availability?roomId=${roomId}&date=${selectedDate}`,
           { credentials: "include" }
         );
 
@@ -462,8 +463,6 @@ function StudyReservation() {
   };
 
   // 이용 시작 후 여유 시간(10분)이 지난 시간대는 신규 예약 대상에서 제외한다.
-  // (서버도 동일하게 최종 검증하지만, 눌러보고 나서야 에러를 보게 하는
-  // 대신 미리 비활성화한다.)
   const isSlotPastDeadline = (slot) => {
     const slotStart = new Date(`${selectedDate}T${slot.startTime}:00`);
 
@@ -474,7 +473,6 @@ function StudyReservation() {
     );
 
     return new Date() >= deadline;
-
   };
 
   /* ================================
@@ -494,10 +492,7 @@ function StudyReservation() {
     });
   };
 
-
-
-  // 인원수를 늘렸을 때 이미 선택해둔 시간대 중 잔여 좌석이 부족해진
-  // 시간대가 있으면 선택에서 제외한다.
+  // 인원수를 늘렸을 때 이미 선택해둔 시간대 중 잔여 좌석이 부족해진 시간대 제외
   useEffect(() => {
     setSelectedHours((prev) =>
       prev.filter((startTime) => {
@@ -507,7 +502,6 @@ function StudyReservation() {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [peopleCount]);
-
 
   /* ================================
      시간 선택/해제 (여러 시간대를 각각 토글)
@@ -525,8 +519,6 @@ function StudyReservation() {
      예약 요약 계산
   ================================= */
 
-  // 선택된 시간대가 서로 끊김 없이 이어져 있는지 (하나의 예약 시간대가
-  // 되려면 연속되어야 한다 - 1시간 단위 정책은 유지된다).
   const isContiguousSelection = useMemo(() => {
     if (selectedHours.length === 0) return false;
 
@@ -542,8 +534,6 @@ function StudyReservation() {
     return true;
   }, [selectedHours]);
 
-  // 선택된 시간대들을 하나의 예약 시간대(시작~종료)로 합친다.
-  // 연속되지 않은 시간을 선택했으면 null(예약 불가)이 된다.
   const effectiveSlot = useMemo(() => {
     if (!isContiguousSelection) return null;
 
@@ -578,10 +568,7 @@ function StudyReservation() {
     (!isStudyMode || (!!study && isStudyOwner)) &&
     peopleCount >= selectedPlace.minCapacity &&
     peopleCount <= selectedPlace.maxCapacity &&
-
-
     getRemainingCapacity(effectiveSlot) >= peopleCount &&
-
     !submitting;
 
   /* ================================
@@ -602,7 +589,7 @@ function StudyReservation() {
         },
         credentials: "include",
         body: JSON.stringify({
-          studyRoomId: selectedPlace.id,
+          studyRoomId: selectedPlace.id || selectedPlace.studyRoomId,
           studyId: isStudyMode ? Number(studyId) : null,
           reservationDate: selectedDate,
           startTime: `${effectiveSlot.startTime}:00`,
@@ -848,6 +835,7 @@ function StudyReservation() {
           {!loadingRooms && !roomsError && displayRooms.length > 0 && (
             <div className="place-grid">
 
+
                         {pagedRooms.map((place) => {
                           const placeId = place.id || place.studyRoomId;
                           const isSelected = selectedPlace && (
@@ -901,34 +889,89 @@ function StudyReservation() {
                       <div>
                         <span>
                           {place.minCapacity}~{place.maxCapacity}명
+
+              {displayRooms.map((place) => {
+                const placeId = place.id || place.studyRoomId;
+                const isSelected = selectedPlace && (
+                  String(selectedPlace.id || selectedPlace.studyRoomId) === String(placeId) ||
+                  selectedPlace.name === place.name
+                );
+
+                return (
+                  <article
+                    className={`place-card ${isSelected ? "selected" : ""}`}
+                    key={placeId}
+                    ref={(el) => {
+                      if (el) cardElementRefs.current[placeId] = el;
+                    }}
+                    onClick={() => setSelectedPlace(place)}
+                  >
+
+                    <div className="place-image">
+                      <img
+                        src={place.imageUrl || studyReservationBg}
+                        alt={place.name}
+                      />
+                      <span className="place-rating">
+                        ★ {place.rating ? Number(place.rating).toFixed(1) : "-"}
+                      </span>
+                      {isSelected && (
+                        <span className="place-selected">
+                          ✓ 선택됨
+
                         </span>
+                      )}
+                    </div>
 
-                        <strong>
-                          {formatPrice(place.pricePerHour)}
-                          <small>/시간</small>
-                        </strong>
+
+                    <div className="place-card-content">
+
+                      <span className="place-location">
+                        {place.location}
+                      </span>
+
+                      <h3>
+                        {place.name}
+                      </h3>
+
+                      <p>
+                        {place.description}
+                      </p>
+
+
+                      <div className="place-card-bottom">
+
+                        <div>
+                          <span>
+                            {place.minCapacity}~{place.maxCapacity}명
+                          </span>
+
+                          <strong>
+                            {formatPrice(place.pricePerHour)}
+                            <small>/시간</small>
+                          </strong>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedPlace(place);
+                          }}
+                        >
+                          선택
+                        </button>
+
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setSelectedPlace(place);
-                        }}
-                      >
-                        선택
-                      </button>
 
                     </div>
 
-                  </div>
+                  </article>
+                );
+              })}
 
-                            </article>
-                          );
-                        })}
-
-                      </div>
-                    )}
+            </div>
+          )}
 
           {!loadingRooms && !roomsError && roomsTotalPages > 1 && (
             <nav className="place-pagination" aria-label="스터디룸 목록 페이지">
