@@ -11,6 +11,9 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.Random;
 
 /*
  * 결제 기능이 붙기 전까지 테스트용으로 사용할
@@ -37,6 +40,10 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
 
         if (reservationRepository.count() > 0
                 || studyRoomReviewRepository.count() > 0) {
+            // 예약/리뷰가 이미 있으면 더미 스터디룸을 갈아엎지는 않지만,
+            // 지도 기능이 나중에 추가된 것이라 좌표가 없는 기존 스터디룸이
+            // 있을 수 있으므로 그 부분만 채워준다.
+            backfillMissingLocations();
             return;
         }
 
@@ -257,5 +264,76 @@ public class StudyRoomDataInitializer implements CommandLineRunner {
                 new BigDecimal("33.499621"),
                 new BigDecimal("126.531188")
         ));
+    }
+
+    /*
+     * 좌표가 없는 기존 스터디룸에 대략적인 지역 중심 좌표를 채워 넣는다.
+     * 실제 주소 기반 정확한 좌표가 아니라, 지도에 표시/길찾기 데모가
+     * 가능하도록 하는 임시(더미) 좌표다.
+     */
+    private void backfillMissingLocations() {
+
+        List<StudyRoom> rooms = studyRoomRepository.findAll();
+        Random random = new Random();
+
+        for (StudyRoom room : rooms) {
+
+            if (studyRoomLocationRepository.existsByStudyRoomId(room.getId())) {
+                continue;
+            }
+
+            double[] center = resolveRegionCenter(room.getLocation());
+
+            // 같은 지역 안에서도 마커가 겹치지 않도록 약간의 오차를 준다
+            double latitude = center[0] + (random.nextDouble() - 0.5) * 0.02;
+            double longitude = center[1] + (random.nextDouble() - 0.5) * 0.02;
+
+            studyRoomLocationRepository.save(new StudyRoomLocation(
+                    room,
+                    BigDecimal.valueOf(latitude).setScale(7, RoundingMode.HALF_UP),
+                    BigDecimal.valueOf(longitude).setScale(7, RoundingMode.HALF_UP)
+            ));
+        }
+    }
+
+    // 스터디룸의 "location" 문자열(예: "서울 강남구")에 포함된 지역 키워드로
+    // 대략적인 중심 좌표를 찾는다. 일치하는 키워드가 없으면 서울로 취급한다.
+    private double[] resolveRegionCenter(String location) {
+
+        if (location == null) {
+            return new double[]{37.5665, 126.9780};
+        }
+
+        if (location.contains("인천")) return new double[]{37.4563, 126.7052};
+        if (location.contains("부산")) return new double[]{35.1796, 129.0756};
+        if (location.contains("대구")) return new double[]{35.8714, 128.6014};
+        if (location.contains("광주")) return new double[]{35.1595, 126.8526};
+        if (location.contains("대전")) return new double[]{36.3504, 127.3845};
+        if (location.contains("울산")) return new double[]{35.5384, 129.3114};
+        if (location.contains("세종")) return new double[]{36.4801, 127.2890};
+        if (location.contains("제주")) return new double[]{33.4996, 126.5312};
+        if (location.contains("강원")) return new double[]{37.8228, 128.1555};
+
+        if (location.contains("경기") || location.contains("성남") || location.contains("수원")
+                || location.contains("고양") || location.contains("용인") || location.contains("판교")) {
+            return new double[]{37.4138, 127.5183};
+        }
+
+        if (location.contains("충청") || location.contains("충남") || location.contains("충북")
+                || location.contains("청주")) {
+            return new double[]{36.6357, 127.4917};
+        }
+
+        if (location.contains("전라") || location.contains("전남") || location.contains("전북")
+                || location.contains("전주")) {
+            return new double[]{35.7175, 127.1530};
+        }
+
+        if (location.contains("경상") || location.contains("경남") || location.contains("경북")) {
+            return new double[]{36.4919, 128.8889};
+        }
+
+        // "서울 강남구", "서울 광진구"처럼 구 단위까지만 있는 경우 등 기본값
+        return new double[]{37.5665, 126.9780};
     }
 }

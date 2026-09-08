@@ -5,6 +5,9 @@ import studyReservationBg from "../../assets/images/StudyReservation.jpg";
 
 const API_BASE = "/api";
 
+// CamPage.jsx의 카카오맵 연동과 동일한 JS 키를 사용한다.
+const KAKAO_JS_KEY = "f7d216c9253bd3d4d3cf2eaf836373f8";
+
 // 지역 필터 버튼 => 스터디룸 location 문자열에 하나라도 포함되어야 하는 키워드 목록
 const REGIONS = [
   { label: "전체", keywords: [] },
@@ -108,6 +111,17 @@ function StudyReservation() {
   const [keyword, setKeyword] = useState("");
   const [activeRegion, setActiveRegion] = useState("전체");
 
+  // 지도로 보기
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [roomLocations, setRoomLocations] = useState([]);
+  const [loadingLocations, setLoadingLocations] = useState(false);
+  const [locationsError, setLocationsError] = useState("");
+  const [hoveredLocationId, setHoveredLocationId] = useState(null);
+  // 특정 카드에서 "지도로 보기"를 눌렀을 때, 그 스터디룸 하나만 지도에 띄우기 위한 필터
+  const [mapFocusRoomId, setMapFocusRoomId] = useState(null);
+  const mapInstanceRef = useRef(null);
+  const mapMarkersRef = useRef([]);
+
   // 선택 상태
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [selectedDate, setSelectedDate] = useState(dateOptions[0].value);
@@ -208,6 +222,185 @@ function StudyReservation() {
       }
     }
   }, [loadingRooms, rooms, preselectedQueryRoomId, location.state]);
+
+  /* ================================
+     지도로 보기 (카카오맵)
+  ================================= */
+
+  // 카카오맵 SDK 스크립트 로드 (CamPage.jsx와 동일한 패턴, scriptId를 공유해 중복 로드를 막는다)
+  useEffect(() => {
+    const scriptId = "kakao-map-script";
+
+    if (document.getElementById(scriptId)) {
+      if (window.kakao && window.kakao.maps) {
+        window.kakao.maps.load(() => {});
+      }
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS_KEY}&autoload=false`;
+    script.async = true;
+    script.onload = () => {
+      window.kakao.maps.load(() => {});
+    };
+    document.head.appendChild(script);
+  }, []);
+
+  // 지도 모달을 열면 스터디룸 위치 목록을 불러온다
+  useEffect(() => {
+    if (!isMapModalOpen || roomLocations.length > 0) return;
+
+    let cancelled = false;
+
+    const loadLocations = async () => {
+      try {
+        setLoadingLocations(true);
+        setLocationsError("");
+
+        const response = await fetch(`${API_BASE}/study-rooms/locations`, {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(`지도 데이터를 불러오지 못했습니다. (HTTP ${response.status})`);
+        }
+
+        const data = await response.json();
+        if (!cancelled) setRoomLocations(data);
+      } catch (err) {
+        if (!cancelled) {
+          setLocationsError(err.message || "지도 데이터를 불러오지 못했습니다.");
+        }
+      } finally {
+        if (!cancelled) setLoadingLocations(false);
+      }
+    };
+
+    loadLocations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isMapModalOpen, roomLocations.length]);
+
+  // 카드에서 "지도로 보기"를 누르면 그 스터디룸 하나만, 섹션 상단의
+  // "지도로 보기"를 누르면 전체를 보여준다.
+  const visibleMapLocations = useMemo(() => {
+    if (!mapFocusRoomId) return roomLocations;
+
+    return roomLocations.filter(
+      (loc) => String(loc.studyRoomId) === String(mapFocusRoomId)
+    );
+  }, [roomLocations, mapFocusRoomId]);
+
+  // 지도 모달이 열리고 위치 데이터가 준비되면 지도를 그리고 마커를 찍는다
+  useEffect(() => {
+    if (!isMapModalOpen || visibleMapLocations.length === 0) return;
+
+    let cancelled = false;
+
+    const renderMap = () => {
+      if (cancelled) return;
+
+      const container = document.getElementById("study-map-container");
+      if (!container || !window.kakao || !window.kakao.maps) return;
+
+      const map = new window.kakao.maps.Map(container, {
+        center: new window.kakao.maps.LatLng(36.5, 127.8),
+        level: 13,
+      });
+      mapInstanceRef.current = map;
+
+      // 기존 마커 정리 후 다시 그리기
+      mapMarkersRef.current.forEach((marker) => marker.setMap(null));
+      mapMarkersRef.current = [];
+
+      const bounds = new window.kakao.maps.LatLngBounds();
+
+      visibleMapLocations.forEach((loc) => {
+        const position = new window.kakao.maps.LatLng(loc.latitude, loc.longitude);
+        const marker = new window.kakao.maps.Marker({ position, map });
+
+        window.kakao.maps.event.addListener(marker, "click", () => {
+          setHoveredLocationId(loc.studyRoomId);
+          map.panTo(position);
+        });
+
+        mapMarkersRef.current.push(marker);
+        bounds.extend(position);
+      });
+
+      if (visibleMapLocations.length === 1) {
+        // 하나만 보여줄 때는 bounds보다 적당히 확대된 레벨로 바로 보여준다
+        map.setCenter(
+          new window.kakao.maps.LatLng(
+            visibleMapLocations[0].latitude,
+            visibleMapLocations[0].longitude
+          )
+        );
+        map.setLevel(4);
+      } else {
+        map.setBounds(bounds);
+      }
+    };
+
+    if (window.kakao && window.kakao.maps) {
+      window.kakao.maps.load(renderMap);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const waitForKakao = setInterval(() => {
+      if (window.kakao && window.kakao.maps) {
+        clearInterval(waitForKakao);
+        window.kakao.maps.load(renderMap);
+      }
+    }, 200);
+
+    return () => {
+      cancelled = true;
+      clearInterval(waitForKakao);
+    };
+  }, [isMapModalOpen, visibleMapLocations]);
+
+  // 특정 카드의 "지도로 보기" 버튼: 그 스터디룸 하나만 표시하도록 필터를 걸고 모달을 연다
+  const handleOpenMapForRoom = (place) => {
+    const placeId = place.id || place.studyRoomId;
+    setMapFocusRoomId(placeId);
+    setHoveredLocationId(placeId);
+    setIsMapModalOpen(true);
+  };
+
+  // 지도(또는 사이드 목록)에서 특정 스터디룸을 골랐을 때: 선택 처리 + 카드로 스크롤
+  const handleSelectFromMap = (loc) => {
+    const matched = rooms.find(
+      (room) => String(room.id || room.studyRoomId) === String(loc.studyRoomId)
+    );
+
+    if (!matched) return;
+
+    setSelectedPlace(matched);
+    setIsMapModalOpen(false);
+
+    const placeId = matched.id || matched.studyRoomId;
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const el = cardElementRefs.current[placeId];
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 300);
+    });
+  };
+
+  // 길찾기: 카카오맵의 길찾기 링크로 새 탭에서 연다 (앱이 설치돼 있으면 앱으로도 연결된다)
+  const handleNavigateToRoom = (loc) => {
+    const url = `https://map.kakao.com/link/to/${encodeURIComponent(loc.name)},${loc.latitude},${loc.longitude}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -809,9 +1002,22 @@ function StudyReservation() {
               <span>현재 예약 가능한 공간이에요.</span>
             </div>
 
-            <span className="place-count">
-              {displayRooms.length}개의 공간
-            </span>
+            <div className="place-section-actions">
+              <span className="place-count">
+                {displayRooms.length}개의 공간
+              </span>
+
+              <button
+                type="button"
+                className="map-toggle-button"
+                onClick={() => {
+                  setMapFocusRoomId(null);
+                  setIsMapModalOpen(true);
+                }}
+              >
+                🗺️ 지도로 보기
+              </button>
+            </div>
           </div>
 
           {loadingRooms && (
@@ -835,62 +1041,7 @@ function StudyReservation() {
           {!loadingRooms && !roomsError && displayRooms.length > 0 && (
             <div className="place-grid">
 
-
-                        {pagedRooms.map((place) => {
-                          const placeId = place.id || place.studyRoomId;
-                          const isSelected = selectedPlace && (
-                            String(selectedPlace.id || selectedPlace.studyRoomId) === String(placeId) ||
-                            selectedPlace.name === place.name
-                          );
-
-                          return (
-                            <article
-                              className={`place-card ${isSelected ? "selected" : ""}`}
-                              key={placeId}
-                              ref={(el) => {
-                                if (el) cardElementRefs.current[placeId] = el;
-                              }}
-                              onClick={() => setSelectedPlace(place)}
-                            >
-
-                              <div className="place-image">
-                                <img
-                                  src={place.imageUrl || studyReservationBg}
-                                  alt={place.name}
-                                />
-                                <span className="place-rating">
-                                  ★ {place.rating ? Number(place.rating).toFixed(1) : "-"}
-                                </span>
-                                {isSelected && (
-                                  <span className="place-selected">
-                                    ✓ 선택됨
-                                  </span>
-                                )}
-                              </div>
-
-
-                  <div className="place-card-content">
-
-                    <span className="place-location">
-                      {place.location}
-                    </span>
-
-                    <h3>
-                      {place.name}
-                    </h3>
-
-                    <p>
-                      {place.description}
-                    </p>
-
-
-                    <div className="place-card-bottom">
-
-                      <div>
-                        <span>
-                          {place.minCapacity}~{place.maxCapacity}명
-
-              {displayRooms.map((place) => {
+              {pagedRooms.map((place) => {
                 const placeId = place.id || place.studyRoomId;
                 const isSelected = selectedPlace && (
                   String(selectedPlace.id || selectedPlace.studyRoomId) === String(placeId) ||
@@ -918,11 +1069,9 @@ function StudyReservation() {
                       {isSelected && (
                         <span className="place-selected">
                           ✓ 선택됨
-
                         </span>
                       )}
                     </div>
-
 
                     <div className="place-card-content">
 
@@ -938,7 +1087,6 @@ function StudyReservation() {
                         {place.description}
                       </p>
 
-
                       <div className="place-card-bottom">
 
                         <div>
@@ -952,15 +1100,28 @@ function StudyReservation() {
                           </strong>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setSelectedPlace(place);
-                          }}
-                        >
-                          선택
-                        </button>
+                        <div className="place-card-buttons">
+                          <button
+                            type="button"
+                            className="place-card-map-button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleOpenMapForRoom(place);
+                            }}
+                          >
+                            🗺️ 지도로 보기
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setSelectedPlace(place);
+                            }}
+                          >
+                            선택
+                          </button>
+                        </div>
 
                       </div>
 
@@ -1009,6 +1170,113 @@ function StudyReservation() {
           )}
 
         </div>
+
+
+        {/* ================================
+            지도 모달
+        ================================= */}
+
+        {isMapModalOpen && (
+          <div className="study-map-overlay">
+            <div className="study-map-modal">
+
+              <div className="study-map-header">
+                <span>
+                  {mapFocusRoomId
+                    ? `🗺️ ${visibleMapLocations[0]?.name || "선택한 공간"} 위치`
+                    : "🗺️ 스터디 공간 지도로 보기"}
+                </span>
+                <button
+                  type="button"
+                  className="study-map-close"
+                  onClick={() => setIsMapModalOpen(false)}
+                >
+                  ✕ 닫기
+                </button>
+              </div>
+
+              <div className="study-map-body">
+
+                <div className="study-map-sidebar">
+                  <div className="study-map-sidebar-title">
+                    {mapFocusRoomId
+                      ? "📍 선택한 스터디 공간"
+                      : `📍 등록된 스터디 공간 (${roomLocations.length}곳)`}
+                  </div>
+
+                  {mapFocusRoomId && (
+                    <button
+                      type="button"
+                      className="study-map-show-all"
+                      onClick={() => setMapFocusRoomId(null)}
+                    >
+                      전체 스터디룸 보기
+                    </button>
+                  )}
+
+                  {loadingLocations && (
+                    <p className="place-state-message">지도 데이터를 불러오는 중입니다...</p>
+                  )}
+
+                  {!loadingLocations && locationsError && (
+                    <p className="place-state-message error">{locationsError}</p>
+                  )}
+
+                  <div className="study-map-list">
+                    {visibleMapLocations.map((loc) => (
+                      <div
+                        key={loc.studyRoomId}
+                        className={`study-map-list-item ${
+                          hoveredLocationId === loc.studyRoomId ? "active" : ""
+                        }`}
+                        onClick={() => {
+                          setHoveredLocationId(loc.studyRoomId);
+                          if (mapInstanceRef.current) {
+                            mapInstanceRef.current.panTo(
+                              new window.kakao.maps.LatLng(loc.latitude, loc.longitude)
+                            );
+                          }
+                        }}
+                      >
+                        <strong>{loc.name}</strong>
+                        <span>{loc.address}</span>
+                        <strong className="study-map-list-price">
+                          {formatPrice(loc.pricePerHour)}<small>/시간</small>
+                        </strong>
+
+                        <div className="study-map-list-actions">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleNavigateToRoom(loc);
+                            }}
+                          >
+                            🧭 길찾기
+                          </button>
+                          <button
+                            type="button"
+                            className="primary"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleSelectFromMap(loc);
+                            }}
+                          >
+                            이 공간 선택
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div id="study-map-container" className="study-map-container" />
+
+              </div>
+
+            </div>
+          </div>
+        )}
 
 
         {/* ================================

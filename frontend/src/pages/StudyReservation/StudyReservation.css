@@ -333,6 +333,192 @@
   font-weight: 700;
 }
 
+.place-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.map-toggle-button {
+  padding: 9px 16px;
+  border: 1px solid #d4e4d7;
+  border-radius: 20px;
+  background: #f4f8f4;
+  color: #2e4033;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.map-toggle-button:hover {
+  background: #d4e4d7;
+}
+
+/* =====================================================
+   지도 모달
+===================================================== */
+
+.study-map-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 30, 24, 0.55);
+  z-index: 9999;
+}
+
+.study-map-modal {
+  width: 88vw;
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(20, 30, 24, 0.35);
+}
+
+.study-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: 16px 22px;
+  background: #2e4033;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.study-map-close {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.study-map-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.study-map-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: #f8faf8;
+  border-right: 1px solid #e3e8e3;
+  overflow-y: auto;
+}
+
+.study-map-sidebar-title {
+  color: #2e4033;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.study-map-show-all {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border: 1px solid #d4e4d7;
+  border-radius: 14px;
+  background: #f4f8f4;
+  color: #2e4033;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.study-map-show-all:hover {
+  background: #d4e4d7;
+}
+
+.study-map-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.study-map-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid #e3e8e3;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.study-map-list-item strong {
+  color: #202b23;
+  font-size: 13px;
+}
+
+.study-map-list-item span {
+  color: #718277;
+  font-size: 12px;
+}
+
+.study-map-list-item.active {
+  border-color: #2e4033;
+  background: #f0f5f1;
+}
+
+.study-map-list-price {
+  color: #2e4033 !important;
+}
+
+.study-map-list-price small {
+  margin-left: 3px;
+  color: #929a94;
+  font-weight: 500;
+}
+
+.study-map-list-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.study-map-list-actions button {
+  flex: 1;
+  padding: 7px 0;
+  border: 1px solid #d4e4d7;
+  border-radius: 8px;
+  background: #f4f8f4;
+  color: #2e4033;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.study-map-list-actions button.primary {
+  border-color: #2e4033;
+  background: #2e4033;
+  color: #fff;
+}
+
+.study-map-container {
+  flex: 1;
+  height: 100%;
+}
+
 .place-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -529,6 +715,17 @@
 
 .place-card-bottom button:hover {
   background: #d4e4d7;
+}
+
+.place-card-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.place-card-map-button {
+  background: transparent !important;
+  border: 1px solid #d4e4d7 !important;
+  white-space: nowrap;
 }
 
 
@@ -1084,6 +1281,28 @@
   .place-section-header {
     align-items: flex-start;
     gap: 10px;
+  }
+
+  .place-section-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .study-map-modal {
+    width: 96vw;
+    height: 92vh;
+  }
+
+  .study-map-body {
+    flex-direction: column;
+  }
+
+  .study-map-sidebar {
+    width: 100%;
+    max-height: 40%;
+    border-right: 0;
+    border-bottom: 1px solid #e3e8e3;
   }
 
   .place-section-header h2 {
