@@ -163,7 +163,9 @@ public class SecurityConfig {
                                 "/admin/**"
                         ).hasRole("ADMIN")
 
-                        .requestMatchers("/api/ai/**").permitAll() // 🌟 AI 경로 허용 추가
+                        // AI 챗봇 일반 질문은 비로그인 사용자도 사용 가능. 개인 데이터를
+                        // 다루는 기능이 추가되면 그 기능을 실행하는 시점에 별도로 로그인을 확인한다.
+                        .requestMatchers("/api/ai/**").permitAll()
                         .requestMatchers("/api/member/me", "/api/study-groups").authenticated() // 필요에 따라 설정
 
                         // 그 외 모든 요청은 로그인 필요
@@ -265,8 +267,8 @@ public class SecurityConfig {
 
         configuration.setAllowedOriginPatterns(
                 List.of(
-                        "http://localhost:5173",
-                        "http://127.0.0.1:5173",
+                        "http://localhost:*",
+                        "http://127.0.0.1:*",
                         "http://192.168.*.*:*",
                         "http://10.*.*.*:*"
                 )

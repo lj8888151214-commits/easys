@@ -19,6 +19,14 @@ function formatRange(startAt, endAt) {
   return `${day} ${startTime} ~ ${endTime}`;
 }
 
+// REC 일정 호버 툴팁용: 날짜는 캘린더 칸에 이미 보이므로 시간만 표시한다.
+function formatTimeOnly(startAt, endAt) {
+  const start = new Date(startAt);
+  const end = new Date(endAt);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(start.getHours())}:${pad(start.getMinutes())} ~ ${pad(end.getHours())}:${pad(end.getMinutes())}`;
+}
+
 export function MiniCalendar({
   isCalendarOpen,
   setIsCalendarOpen,
@@ -161,6 +169,21 @@ export function MiniCalendar({
 
   const closeCancel = () => setCancelTarget(null);
 
+  // REC 일정에 마우스를 올렸을 때 보여줄 커스텀 툴팁(제목/시간).
+  // document.body에 포탈로 그려서 미니 캘린더 패널의 overflow에 잘리지 않게 한다.
+  const [hoveredEventTooltip, setHoveredEventTooltip] = useState(null); // { schedule, top, left }
+
+  const handleEventMouseEnter = (e, sch) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHoveredEventTooltip({
+      schedule: sch,
+      top: rect.top,
+      left: rect.left + rect.width / 2,
+    });
+  };
+
+  const handleEventMouseLeave = () => setHoveredEventTooltip(null);
+
   const handleConfirmCancel = async () => {
     if (!cancelTarget || isCancelling) return; // 중복 클릭 방지
     setIsCancelling(true);
@@ -192,7 +215,7 @@ export function MiniCalendar({
       className={`mini-calendar-panel ${isCalendarOpen ? "open" : ""}`}
     >
       <div className="mini-cal-header">
-        <h3>📅 모임 미니 캘린더</h3>
+        <h3>📅 미니 캘린더</h3>
         <button
           type="button"
           className="mini-cal-close-button"
@@ -260,6 +283,8 @@ export function MiniCalendar({
                               setConfirmSchedule(sch);
                             }
                           }}
+                          onMouseEnter={(e) => handleEventMouseEnter(e, sch)}
+                          onMouseLeave={handleEventMouseLeave}
                         >
                           {alreadyCopied && !isHost ? "✓ " : ""}
                           <span className="rec-badge">REC</span>
@@ -289,6 +314,20 @@ export function MiniCalendar({
           전체 캘린더 페이지로 이동하기 →
         </a>
       </div>
+
+      {hoveredEventTooltip && createPortal(
+        <div
+          className="mini-cal-event-tooltip"
+          style={{ top: hoveredEventTooltip.top, left: hoveredEventTooltip.left }}
+        >
+          <div className="mini-cal-event-tooltip-header">🔴 방송 일정</div>
+          <div className="mini-cal-event-tooltip-title">{hoveredEventTooltip.schedule.title}</div>
+          <div className="mini-cal-event-tooltip-time">
+            {formatTimeOnly(hoveredEventTooltip.schedule.startAt, hoveredEventTooltip.schedule.endAt)}
+          </div>
+        </div>,
+        document.body
+      )}
 
       {isHost && isAddModalOpen && createPortal(
         <div className="schedule-modal-overlay mini-cal-modal-overlay" onClick={closeAddModal}>

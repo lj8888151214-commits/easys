@@ -1,0 +1,308 @@
+/* EASYS AI 챗봇 - PC 전용 플로팅 버튼 + 채팅창.
+   프로젝트 기본 팔레트(#9dc5a8 연녹, #2e4033 진녹, #f8faf8 배경)에 맞췄다.
+   모바일(≤768px, Header.css와 동일한 기준)에서는 이 플로팅 버튼을 숨기고,
+   대신 Header.jsx 안의 AI 아이콘이 같은 채팅창(.ai-chatbot-window)을 연다. */
+
+.ai-chatbot-toggle {
+  position: fixed;
+  right: 28px;
+  bottom: 140px;
+  width: 92px;
+  height: 92px;
+  /* 완전한 원(50%)으로 자르면 이미지 속 글자를 70%까지 줄여야 안 잘렸는데,
+     그러면 글자가 흐릿해 보였다. 라운드 사각형으로 바꿔서 이미지를 거의
+     원본 크기 그대로(아래 98%) 보여주면서도 모서리만 살짝 둥글게 잘라낸다. */
+  border-radius: 26px;
+  border: none;
+  padding: 0;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(46, 64, 51, 0.25);
+  cursor: pointer;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+  animation: aiChatGlow 3.2s ease-in-out infinite;
+}
+
+.ai-chatbot-toggle:hover {
+  transform: scale(1.08);
+}
+
+.ai-chatbot-toggle img {
+  /* 버튼이 이제 완전한 원이 아니라 모서리만 둥근 사각형이라, 이미지를
+     거의 원본 크기로 채워도(98%) 글자가 잘리지 않는다. object-fit: cover라
+     남는 2% 여백 없이 버튼을 꽉 채워서 텍스트가 작게 눌리지 않는다. */
+  width: 98%;
+  height: 98%;
+  object-fit: cover;
+  border-radius: 20px;
+}
+
+/* 은은한 glow - box-shadow만 오가므로 버튼이 움직이거나 커지지 않는다 */
+@keyframes aiChatGlow {
+  0%,
+  100% {
+    box-shadow: 0 4px 16px rgba(46, 64, 51, 0.25), 0 0 0 0 rgba(157, 197, 168, 0.45);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(46, 64, 51, 0.25), 0 0 0 10px rgba(157, 197, 168, 0);
+  }
+}
+
+.ai-chatbot-window {
+  position: fixed;
+  right: 28px;
+  bottom: 240px;
+  width: 400px;
+  max-width: 90vw;
+  height: 560px;
+  max-height: 72vh;
+  background: #ffffff;
+  border: 1px solid #d9e3da;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(46, 64, 51, 0.25);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: aiChatWindowIn 0.28s ease-out;
+}
+
+@keyframes aiChatWindowIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-chatbot-header {
+  background: #9dc5a8;
+  color: #2e4033;
+  padding: 14px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-chatbot-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-chatbot-header-title .ai-chatbot-avatar {
+  width: 26px;
+  height: 26px;
+}
+
+.ai-chatbot-close {
+  background: none;
+  border: none;
+  color: #2e4033;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.ai-chatbot-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8faf8;
+}
+
+.ai-chatbot-empty {
+  color: #7d9382;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 20px;
+  line-height: 1.6;
+}
+
+.ai-chatbot-message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.ai-chatbot-message-row.user {
+  justify-content: flex-end;
+}
+
+/* AI 답변이 EASYS 기능(멘토링/캘린더/스트리밍/스터디 예약/커뮤니티) 관련일 때만
+   답변 아래에 표시되는 바로가기 버튼. 아바타(24px)+gap(7px)만큼 들여써서
+   AI 말풍선과 왼쪽 줄을 맞춘다. */
+.ai-chatbot-shortcut {
+  align-self: flex-start;
+  margin-left: 31px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #2e4033;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ai-chatbot-shortcut:hover {
+  background: #243329;
+}
+
+.ai-chatbot-avatar {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #ffffff;
+  border: 1px solid #d9e3da;
+}
+
+.ai-chatbot-message {
+  max-width: 78%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ai-chatbot-message.user {
+  align-self: flex-end;
+  background: #9dc5a8;
+  color: #2e4033;
+  border-bottom-right-radius: 4px;
+}
+
+.ai-chatbot-message.ai {
+  align-self: flex-start;
+  background: #ffffff;
+  border: 1px solid #e2e8e3;
+  color: #243329;
+  border-bottom-left-radius: 4px;
+}
+
+/* AI 응답 중 typing indicator (점 3개) */
+.ai-chatbot-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.ai-chatbot-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9dc5a8;
+  animation: aiChatTyping 1.2s ease-in-out infinite;
+}
+
+.ai-chatbot-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.ai-chatbot-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes aiChatTyping {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.ai-chatbot-error {
+  align-self: center;
+  color: #d9534f;
+  font-size: 12.5px;
+  text-align: center;
+  padding: 4px 8px;
+}
+
+.ai-chatbot-input-area {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid #e2e8e3;
+  background: #ffffff;
+}
+
+.ai-chatbot-input-area input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d9e3da;
+  border-radius: 8px;
+  font-size: 13.5px;
+}
+
+.ai-chatbot-input-area input:focus {
+  outline: none;
+  border-color: #9dc5a8;
+}
+
+.ai-chatbot-input-area button {
+  background: #2e4033;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ai-chatbot-input-area button:disabled {
+  background: #b7c2ba;
+  cursor: not-allowed;
+}
+
+/* 채팅창은 모바일에서도 열리므로(헤더 아이콘으로 진입) 크기만 화면에 맞춘다.
+   플로팅 버튼은 아래 768px 기준에서 숨긴다 - Header.css의 모바일 기준과 동일. */
+@media screen and (max-width: 480px) {
+  .ai-chatbot-window {
+    right: 12px;
+    bottom: 20px;
+    width: calc(100vw - 24px);
+    height: calc(100vh - 100px);
+    max-height: none;
+  }
+}
+
+/* Header.css와 동일한 모바일 기준(768px). 이 지점부터는 Header 안의 AI 아이콘이
+   대신 표시되므로, PC 플로팅 버튼과 동시에 보이지 않도록 여기서 숨긴다. */
+@media screen and (max-width: 768px) {
+  .ai-chatbot-toggle {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-chatbot-toggle,
+  .ai-chatbot-window,
+  .ai-chatbot-typing span {
+    animation: none;
+  }
+}

@@ -205,6 +205,42 @@
   opacity: 0.8;
 }
 
+/* REC 일정 호버 시 표시되는 커스텀 툴팁. document.body에 포탈로 렌더링되어
+   position: fixed로 배치되므로 미니 캘린더 패널의 overflow에 잘리지 않는다. */
+.mini-cal-event-tooltip {
+  position: fixed;
+  transform: translate(-50%, calc(-100% - 8px));
+  background: #243329;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  box-shadow: 0 6px 16px rgba(36, 51, 41, 0.35);
+  z-index: 3000;
+  min-width: 130px;
+  max-width: 220px;
+  white-space: normal;
+  text-align: left;
+  pointer-events: none;
+}
+
+.mini-cal-event-tooltip-header {
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.mini-cal-event-tooltip-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+
+.mini-cal-event-tooltip-time {
+  color: #cfe3d5;
+  font-size: 10px;
+}
+
 .mini-cal-selected-bar {
   display: flex;
   justify-content: space-between;

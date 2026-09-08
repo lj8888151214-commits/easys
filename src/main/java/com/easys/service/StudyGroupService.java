@@ -3,7 +3,9 @@ package com.easys.service;
 import com.easys.dto.StudyGroupDto;
 import com.easys.entity.Member;
 import com.easys.entity.Reservation;
+import com.easys.entity.StreamingStudio;
 import com.easys.entity.StudyGroup;
+import com.easys.repository.StreamingStudioRepository;
 import com.easys.repository.StudyGroupRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import java.util.List;
 public class StudyGroupService {
 
     private final StudyGroupRepository studyGroupRepository;
+    private final StreamingStudioRepository streamingStudioRepository;
 
     // 스터디룸 예약이 확정될 때 자동으로 모임 일정 1건을 생성한다.
     public StudyGroup createForStudyReservation(Reservation reservation, LocalDateTime startAt, LocalDateTime endAt) {
@@ -48,6 +51,9 @@ public class StudyGroupService {
     }
 
     // 사용자가 캘린더에서 수동으로 모임 일정을 등록한다.
+    // dto.streamingRoomId가 채워져 있으면(스트리밍 방 미니 달력에서의 등록), 그 방의
+    // 실제 방장(StreamingStudio.host)이 creator 본인인지 서버에서 반드시 검증한다.
+    // 방장이 아니면 streamingRoomId를 무시하는 게 아니라 등록 자체를 거부한다.
     public StudyGroup createManual(Member creator, StudyGroupDto dto) {
 
         if (dto.getTitle() == null || dto.getTitle().isBlank()) {
@@ -60,11 +66,25 @@ public class StudyGroupService {
             throw new IllegalArgumentException("시작 시간은 종료 시간보다 늦을 수 없습니다.");
         }
 
+        Long streamingRoomId = dto.getStreamingRoomId();
+        if (streamingRoomId != null) {
+            StreamingStudio studio = streamingStudioRepository.findById(streamingRoomId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 스트리밍 방입니다."));
+
+            String host = studio.getHost() != null ? studio.getHost().trim() : "";
+            String nickname = creator.getNickname() != null ? creator.getNickname().trim() : "";
+
+            if (host.isEmpty() || !host.equals(nickname)) {
+                throw new IllegalArgumentException("방장만 이 방의 일정을 등록할 수 있습니다.");
+            }
+        }
+
         StudyGroup group = StudyGroup.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .type(dto.getType() != null && !dto.getType().isBlank() ? dto.getType() : "GENERAL")
                 .createdBy(creator)
+                .streamingRoomId(streamingRoomId)
                 .startAt(dto.getStartAt())
                 .endAt(dto.getEndAt())
                 .build();
@@ -93,5 +113,12 @@ public class StudyGroupService {
     @Transactional(readOnly = true)
     public List<StudyGroup> getUpcomingVisibleForMember(Member member) {
         return studyGroupRepository.findUpcomingVisibleForMember(member, LocalDateTime.now());
+    }
+
+    // 특정 스트리밍 방에서 방장이 등록한 원본 일정만 조회한다 (미니 달력용).
+    // 로그인 여부와 무관하게 방 안의 누구에게나 동일하게 보여주는 목록이다.
+    @Transactional(readOnly = true)
+    public List<StudyGroup> getByStreamingRoom(Long streamingRoomId) {
+        return studyGroupRepository.findByStreamingRoomIdOrderByStartAtAsc(streamingRoomId);
     }
 }

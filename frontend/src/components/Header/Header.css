@@ -254,6 +254,16 @@
 }
 
 /* =====================================================
+   모바일 전용 AI 채팅 아이콘
+   (PC에서는 AiChatbot.jsx의 플로팅 버튼을 쓰므로 기본은 숨김.
+    768px 이하에서만 보이게 아래 모바일 미디어쿼리에서 표시한다.)
+===================================================== */
+
+.header-ai-chat {
+  display: none;
+}
+
+/* =====================================================
    로그인 / 회원가입
 ===================================================== */
 
@@ -645,6 +655,34 @@
     min-width: 0;
     margin-left: auto;
     gap: 5px;
+  }
+
+  /* 모바일 AI 채팅 아이콘 - 검색과 로그인/프로필 사이에 표시 */
+  .header-ai-chat {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+  }
+
+  .header-ai-chat img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .header-ai-chat:hover,
+  .header-ai-chat.active {
+    transform: scale(1.08);
   }
 
   /* 검색창 */

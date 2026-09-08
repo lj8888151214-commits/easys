@@ -75,7 +75,21 @@ public class StudyGroupApiController {
         return ResponseEntity.ok(StudyGroupResponseDto.from(group));
     }
 
-    // 4. 모임 일정 삭제 (본인이 수동으로 등록한 일정만 가능)
+    // 4. 특정 스트리밍 방에서 방장이 등록한 원본 일정만 조회 (미니 달력용).
+    // 방장/시청자 모두 같은 응답을 받는다 - 접근 제어는 "생성"(createManual) 시점에서만 한다.
+    @GetMapping("/room/{roomId}")
+    public ResponseEntity<?> getRoomSchedules(@PathVariable Long roomId) {
+
+        List<StudyGroupResponseDto> list = studyGroupService
+                .getByStreamingRoom(roomId)
+                .stream()
+                .map(StudyGroupResponseDto::from)
+                .toList();
+
+        return ResponseEntity.ok(list);
+    }
+
+    // 5. 모임 일정 삭제 (본인이 수동으로 등록한 일정만 가능)
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteStudyGroup(
             @AuthenticationPrincipal CustomUserDetails userDetails,

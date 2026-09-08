@@ -49,4 +49,8 @@ public interface StudyGroupRepository extends JpaRepository<StudyGroup, Long> {
             @Param("member") Member member,
             @Param("from") LocalDateTime from
     );
+
+    // 특정 스트리밍 방(streamingRoomId)에서 방장이 등록한 원본 일정만 조회한다.
+    // 시청자의 복사본(streamingRoomId = null)이나 다른 방의 일정은 섞이지 않는다.
+    List<StudyGroup> findByStreamingRoomIdOrderByStartAtAsc(Long streamingRoomId);
 }

@@ -24,7 +24,11 @@ public record StudyGroupResponseDto(
 
         // 스터디룸 예약으로 자동 생성된 일정이면 연결된 스터디 id (없으면 null).
         // 프론트에서 캘린더 일정 클릭 시 /study/{studyId}로 이동하는 데 사용한다.
-        Long studyId
+        Long studyId,
+
+        // 스트리밍 방장이 방 안에서 등록한 원본 일정이면 그 방의 id (없으면 null).
+        // 미니 달력이 "이 방 소속 일정"인지 구분하는 데 사용한다.
+        Long streamingRoomId
 ) {
 
     public static StudyGroupResponseDto from(StudyGroup group) {
@@ -47,7 +51,8 @@ public record StudyGroupResponseDto(
                 group.getStartAt(),
                 group.getEndAt(),
                 members,
-                group.getStudy() != null ? group.getStudy().getId() : null
+                group.getStudy() != null ? group.getStudy().getId() : null,
+                group.getStreamingRoomId()
         );
     }
 }

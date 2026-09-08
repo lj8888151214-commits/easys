@@ -44,6 +44,11 @@ public class StudyGroup {
     @JoinColumn(name = "created_by_member_id")
     private Member createdBy;
 
+    // 스트리밍 방(StreamingStudio.id)에서 방장이 직접 등록한 원본 일정이면 그 방의 id.
+    // 시청자가 자신의 캘린더로 복사한 사본이나 일반 수동 등록 일정은 null이다.
+    @Column(name = "streaming_room_id")
+    private Long streamingRoomId;
+
     @Column(nullable = false)
     private LocalDateTime startAt;
 
