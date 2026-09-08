@@ -17,6 +17,16 @@ function formatTime(time) {
   return time ? time.slice(0, 5) : "-";
 }
 
+// 예약 이용 시간(종료 시각 기준)이 이미 지났는지 확인
+function isReservationPast(reservation) {
+  if (!reservation.reservationDate) return false;
+
+  const endTime = reservation.endTime || reservation.startTime || "23:59:59";
+  const endAt = new Date(`${reservation.reservationDate}T${endTime}`);
+
+  return !Number.isNaN(endAt.getTime()) && endAt < new Date();
+}
+
 function AdminStudyReservationSection() {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -218,16 +228,19 @@ function AdminStudyReservationSection() {
                             </button>
                           </>
                         )}
-                        {reservation.status === "CONFIRMED" && (
-                          <button
-                            type="button"
-                            className="danger"
-                            onClick={() => handleCancel(reservation)}
-                            disabled={cancellingId === reservation.id}
-                          >
-                            {cancellingId === reservation.id ? "취소 중..." : "취소"}
-                          </button>
-                        )}
+                        {reservation.status === "CONFIRMED" &&
+                          (isReservationPast(reservation) ? (
+                            "-"
+                          ) : (
+                            <button
+                              type="button"
+                              className="danger"
+                              onClick={() => handleCancel(reservation)}
+                              disabled={cancellingId === reservation.id}
+                            >
+                              {cancellingId === reservation.id ? "취소 중..." : "취소"}
+                            </button>
+                          ))}
                         {reservation.status !== "PAID" && reservation.status !== "CONFIRMED" && "-"}
                       </div>
                     </td>
