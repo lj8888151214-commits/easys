@@ -42,6 +42,19 @@ export default defineConfig({
           changeOrigin: true,
           secure: false,
     },
+
+    // 구글 소셜 로그인 (전체 페이지 이동이라 rewrite 없이 그대로 전달)
+        '/oauth2': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+          secure: false,
+    },
+
+        '/login/oauth2': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+          secure: false,
+    },
     },
   },
 })

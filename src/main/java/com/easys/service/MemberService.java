@@ -4,6 +4,7 @@ import com.easys.dto.MemberCreateDto;
 import com.easys.dto.MemberResponseDto;
 import com.easys.dto.MemberUpdateDto;
 import com.easys.dto.PasswordUpdateDto;
+import com.easys.dto.ResetPasswordRequestDto;
 import com.easys.entity.EmailVerification;
 import com.easys.entity.Member;
 import com.easys.repository.EmailVerificationRepository;
@@ -605,6 +606,138 @@ public class MemberService {
 
 
         // DB 저장
+        memberRepository.save(member);
+    }
+
+
+    // =====================================================
+    // 비밀번호 재설정 (이메일 인증 완료 후, 로그인 없이 진행)
+    // POST /member/reset-password
+    // =====================================================
+
+    @Transactional
+    public void resetPassword(
+            ResetPasswordRequestDto request
+    ) {
+
+        if (request == null) {
+
+            throw new IllegalArgumentException(
+                    "비밀번호 재설정 정보가 없습니다."
+            );
+        }
+
+
+        // =================================================
+        // 이메일
+        // =================================================
+
+        if (request.getEmail() == null ||
+                request.getEmail().trim().isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "이메일을 입력해주세요."
+            );
+        }
+
+        String email =
+                request.getEmail().trim();
+
+
+        Member member =
+                memberRepository
+                        .findByEmail(email)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "가입되지 않은 이메일입니다."
+                                )
+                        );
+
+
+        // =================================================
+        // 이메일 인증 확인 (회원가입과 동일한 검증 방식)
+        // =================================================
+
+        EmailVerification verification =
+                emailVerificationRepository
+                        .findTopByEmailOrderByCreatedAtDesc(email)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "이메일 인증을 먼저 완료해주세요."
+                                )
+                        );
+
+
+        if (!verification.isVerified()) {
+
+            throw new IllegalArgumentException(
+                    "이메일 인증을 먼저 완료해주세요."
+            );
+        }
+
+
+        // =================================================
+        // 새 비밀번호
+        // =================================================
+
+        if (request.getNewPassword() == null ||
+                request.getNewPassword().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "새 비밀번호를 입력해주세요."
+            );
+        }
+
+
+        if (request.getNewPasswordConfirm() == null ||
+                request.getNewPasswordConfirm().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "새 비밀번호 확인을 입력해주세요."
+            );
+        }
+
+
+        if (!request.getNewPassword()
+                .equals(request.getNewPasswordConfirm())) {
+
+            throw new IllegalArgumentException(
+                    "새 비밀번호가 일치하지 않습니다."
+            );
+        }
+
+
+        if (!PASSWORD_PATTERN
+                .matcher(request.getNewPassword())
+                .matches()) {
+
+            throw new IllegalArgumentException(
+                    "비밀번호는 영어 + 숫자 + 특수문자를 포함하여 8자 이상이어야 합니다."
+            );
+        }
+
+
+        if (passwordEncoder.matches(
+                request.getNewPassword(),
+                member.getPassword()
+        )) {
+
+            throw new IllegalArgumentException(
+                    "이전 비밀번호와 다른 비밀번호를 입력해주세요."
+            );
+        }
+
+
+        // =================================================
+        // 비밀번호 변경 및 저장
+        // =================================================
+
+        member.updatePassword(
+                passwordEncoder.encode(
+                        request.getNewPassword()
+                )
+        );
+
         memberRepository.save(member);
     }
 }

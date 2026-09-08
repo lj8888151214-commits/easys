@@ -1,5 +1,8 @@
 package com.easys.config;
 
+import com.easys.security.CustomOAuth2UserService;
+import com.easys.security.OAuth2LoginFailureHandler;
+import com.easys.security.OAuth2LoginSuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.context.annotation.Bean;
@@ -27,7 +30,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            CustomOAuth2UserService customOAuth2UserService,
+            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
+            OAuth2LoginFailureHandler oAuth2LoginFailureHandler
+    ) throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
@@ -62,6 +70,12 @@ public class SecurityConfig {
                                 "/member/join"
                         ).permitAll()
 
+                        // 비밀번호 재설정은 로그인 전 상태에서 호출된다
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/member/reset-password"
+                        ).permitAll()
+
                         .requestMatchers(
                                 "/api/calendar/personal",
                                 "/api/calendar/personal/**",
@@ -75,6 +89,12 @@ public class SecurityConfig {
 
                         .requestMatchers(
                                 "/auth/**"
+                        ).permitAll()
+
+                        // 구글 소셜 로그인 (인증 시작/콜백은 로그인 전 상태에서 호출된다)
+                        .requestMatchers(
+                                "/oauth2/**",
+                                "/login/oauth2/**"
                         ).permitAll()
 
                         .requestMatchers(
@@ -234,6 +254,17 @@ public class SecurityConfig {
                                 }
                         )
                         .permitAll()
+                )
+
+                // 구글 소셜 로그인
+                // - 시작: GET /oauth2/authorization/google (브라우저 전체 이동)
+                // - 콜백: GET /login/oauth2/code/google (구글이 리다이렉트)
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler(oAuth2LoginFailureHandler)
                 )
 
                 .logout(logout -> logout

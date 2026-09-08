@@ -50,13 +50,19 @@ public class Member {
     @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'USER'")
     private MemberRole role;
 
+    // 가입 경로 (일반 가입 / 구글 소셜 로그인)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'LOCAL'")
+    private MemberProvider provider;
+
     @Builder
     public Member(
             String birthday,
             String email,
             String password,
             String nickname,
-            String bio
+            String bio,
+            MemberProvider provider
     ) {
         this.birthday = birthday;
         this.email = email;
@@ -66,6 +72,7 @@ public class Member {
         this.bio = bio;
         this.profileImageUrl = null;
         this.role = MemberRole.USER;
+        this.provider = (provider != null) ? provider : MemberProvider.LOCAL;
     }
 
     // 관리자로 승격

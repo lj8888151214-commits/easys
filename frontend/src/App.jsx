@@ -20,6 +20,7 @@ import StudyReservation from "./pages/StudyReservation/StudyReservation";
 import Community from "./pages/Community/Community";
 
 import Login from "./pages/Login/Login";
+import FindAccount from "./pages/FindAccount/FindAccount";
 import Signup from "./pages/Signup/Signup";
 import Profile from "./pages/Profile/Profile";
 import PasswordChange from "./pages/PasswordChange/PasswordChange";
@@ -220,6 +221,16 @@ function App() {
         <Route
           path="/login"
           element={<Login />}
+        />
+
+
+        {/* =================================================
+            아이디 / 비밀번호 찾기
+        ================================================= */}
+
+        <Route
+          path="/find-account"
+          element={<FindAccount />}
         />
 
 
