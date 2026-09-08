@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./CamPage.css";
 
@@ -29,7 +29,7 @@ export function VideoCard({
   const handleCardFullScreen = () => {
     if (!cardRef.current) return;
     if (!document.fullscreenElement) {
-      cardRef.current.requestFullscreen().catch((err) => {});
+      cardRef.current.requestFullscreen().catch(() => {});
     } else {
       if (document.exitFullscreen) document.exitFullscreen();
     }
@@ -364,7 +364,7 @@ export default function CamPage() {
             }, index * 200);
           });
         }
-      } catch (err) {
+      } catch {
         alert("마이크 권한을 허용해주세요.");
       }
     }
@@ -377,6 +377,8 @@ export default function CamPage() {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchPlaces, setSearchPlaces] = useState([]);
   const [mapCenter, setMapCenter] = useState({ lat: 37.4563, lng: 126.7052 });
+  const [hoveredCafeId, setHoveredCafeId] = useState(null);
+  const cafeElementRefs = useRef({});
 
   const [miniMapInstance, setMiniMapInstance] = useState(null);
   const [modalMapInstance, setModalMapInstance] = useState(null);
@@ -621,7 +623,7 @@ export default function CamPage() {
         const data = await response.json();
         setRoomSchedules(Array.isArray(data) ? data : []);
       }
-    } catch (err) {}
+    } catch { /* 무시 가능한 오류 */ }
   };
 
   useEffect(() => {
@@ -666,7 +668,7 @@ export default function CamPage() {
 
       alert("일정이 등록되었습니다.");
       return true;
-    } catch (err) {
+    } catch {
       alert("일정 등록 중 오류가 발생했습니다.");
       return false;
     }
@@ -706,7 +708,7 @@ export default function CamPage() {
       const created = await response.json();
       alert("내 캘린더에 추가되었습니다.");
       return created;
-    } catch (err) {
+    } catch {
       alert("캘린더 추가 중 오류가 발생했습니다.");
       return null;
     }
@@ -737,7 +739,7 @@ export default function CamPage() {
 
       alert("일정이 취소되었습니다.");
       return true;
-    } catch (err) {
+    } catch {
       alert("일정 취소 중 오류가 발생했습니다.");
       return false;
     }
@@ -762,7 +764,7 @@ export default function CamPage() {
 
       alert("내 캘린더에서 취소되었습니다.");
       return true;
-    } catch (err) {
+    } catch {
       alert("일정 취소 중 오류가 발생했습니다.");
       return false;
     }
@@ -788,7 +790,7 @@ export default function CamPage() {
             }
           }
         }
-      } catch (err) {}
+      } catch { /* 무시 가능한 오류 */ }
     };
     fetchMe();
   }, []);
@@ -841,7 +843,7 @@ export default function CamPage() {
 
       recognition.onend = () => {
         if (isSttActive) {
-          try { recognition.start(); } catch (err) {}
+          try { recognition.start(); } catch { /* 무시 가능한 오류 */ }
         }
       };
 
@@ -905,7 +907,7 @@ export default function CamPage() {
       const candidate = queue.shift();
       try {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
-      } catch (e) {}
+      } catch { /* 무시 가능한 오류 */ }
     }
   };
 
@@ -921,7 +923,52 @@ export default function CamPage() {
         target: targetPeerId,
         offer: offer
       }));
-    } catch (e) {}
+    } catch { /* 무시 가능한 오류 */ }
+  };
+
+  // useEffect 클린업(아래)에서 stopStream을 호출하므로, 그보다 먼저 선언해야 한다.
+  const stopStream = () => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+
+    if (pipCamStreamRef.current) {
+      pipCamStreamRef.current.getTracks().forEach((track) => track.stop());
+      pipCamStreamRef.current = null;
+    }
+
+    if (pipScreenStreamRef.current) {
+      pipScreenStreamRef.current.getTracks().forEach((track) => track.stop());
+      pipScreenStreamRef.current = null;
+    }
+
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+
+    setLocalStream(null);
+    setShareMode("idle");
+    setIsAudioActive(false);
+    setIsLayoutSwapped(false);
+    isLayoutSwappedRef.current = false;
+
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsSttActive(false);
+    }
+
+    Object.values(pcsRef.current).forEach((pc) => pc.close());
+    pcsRef.current = {};
+    candidateQueueRef.current = {};
+
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({
+        type: "stream-stopped",
+        senderId: myIdRef.current
+      }));
+    }
   };
 
   useEffect(() => {
@@ -1048,7 +1095,7 @@ export default function CamPage() {
           if (pc && pc.remoteDescription && pc.remoteDescription.type) {
             try {
               await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-            } catch (e) {}
+            } catch { /* 무시 가능한 오류 */ }
           } else {
             if (!candidateQueueRef.current[data.senderId]) {
               candidateQueueRef.current[data.senderId] = [];
@@ -1104,7 +1151,7 @@ export default function CamPage() {
           // 백엔드(WebSocketConfig)는 전혀 손대지 않았다.
           loadRoomSchedules();
         }
-      } catch (e) {}
+      } catch { /* 무시 가능한 오류 */ }
     };
 
     return () => {
@@ -1115,50 +1162,6 @@ export default function CamPage() {
       ws.close();
     };
   }, [location.search]);
-
-  const stopStream = () => {
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
-    }
-
-    if (pipCamStreamRef.current) {
-      pipCamStreamRef.current.getTracks().forEach((track) => track.stop());
-      pipCamStreamRef.current = null;
-    }
-
-    if (pipScreenStreamRef.current) {
-      pipScreenStreamRef.current.getTracks().forEach((track) => track.stop());
-      pipScreenStreamRef.current = null;
-    }
-
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop());
-      localStreamRef.current = null;
-    }
-
-    setLocalStream(null);
-    setShareMode("idle");
-    setIsAudioActive(false);
-    setIsLayoutSwapped(false);
-    isLayoutSwappedRef.current = false;
-
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsSttActive(false);
-    }
-
-    Object.values(pcsRef.current).forEach((pc) => pc.close());
-    pcsRef.current = {};
-    candidateQueueRef.current = {};
-
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({
-        type: "stream-stopped",
-        senderId: myIdRef.current
-      }));
-    }
-  };
 
   const handleStartMedia = async (type) => {
     stopStream();
@@ -1251,7 +1254,7 @@ export default function CamPage() {
           }, index * 200);
         });
       }
-    } catch (err) {
+    } catch {
       alert("카메라 또는 화면 공유 권한을 허용해주세요.");
     }
   };
@@ -1532,10 +1535,27 @@ export default function CamPage() {
 
                   <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <div style={{ width: "85vw", height: "85vh", background: "#fff", borderRadius: "16px", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 12px 32px rgba(0,0,0,0.3)" }}>
-                      <div style={{ background: "#ef4444", color: "#fff", padding: "14px 20px", fontSize: "16px", fontWeight: "700", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
-                        <span>🗺️ 볕자리 찾기 - 스터디 카페 & 장소 검색</span>
+
+                      <div style={{ background: "#ef4444", color: "#fff", padding: "14px 20px", fontSize: "15px", fontWeight: "700", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <span>🗺️ 볕자리 찾기 - 스터디 카페 & 장소 검색</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const targetRoom = searchPlaces.find(p => String(p.id) === String(hoveredCafeId)) || searchPlaces[0];
+                              const roomId = targetRoom ? (targetRoom.id || targetRoom.studyRoomId) : "";
+
+                              // 새 탭/새 창으로 열기 (쿼리 스트링으로 장소 ID 전달)
+                              window.open(`/study-reservation${roomId ? `?preselectedRoomId=${roomId}` : ""}`, "_blank");
+                            }}
+                            style={{ background: "#059669", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}
+                          >
+                            📅 제휴 스터디 카페 예약 및 결제하기 →
+                          </button>
+                        </div>
                         <button type="button" onClick={() => setIsMapModalOpen(false)} style={{ background: "none", border: "none", color: "#fff", fontSize: "18px", fontWeight: "bold", cursor: "pointer" }}>✕ 닫기</button>
                       </div>
+
                       <div style={{ display: "flex", flex: 1, width: "100%", height: "calc(100% - 56px)", overflow: "hidden", position: "relative" }}>
                         <div style={{ width: "340px", background: "#f9fafb", borderRight: "1px solid #e5e7eb", display: "flex", flexDirection: "column", padding: "16px", gap: "12px", overflowY: "auto", zIndex: 2, flexShrink: 0 }}>
                           <div style={{ fontSize: "14px", fontWeight: "700", color: "#1f2937" }}>📍 지역 및 장소 검색</div>
@@ -1560,86 +1580,43 @@ export default function CamPage() {
                             {searchPlaces.length > 0 ? `검색된 추천 공간 (${searchPlaces.length}개)` : "원하는 지역이나 상호명을 검색해보세요."}
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                            {searchPlaces.map((place) => (
-                              <div
-                                key={place.id}
-                                onClick={() => setMapCenter({ lat: place.lat, lng: place.lng })}
-                                style={{ background: "#fff", padding: "10px", borderRadius: "8px", border: "1px solid #e5e7eb", cursor: "pointer" }}
-                              >
-                                <div style={{ fontWeight: "700", fontSize: "13px", color: "#111827" }}>{place.name}</div>
-                                <div style={{ fontSize: "11px", color: "#4b5563", marginTop: "2px" }}>{place.address}</div>
-                                <div style={{ fontSize: "10px", color: "#9ca3af", marginTop: "2px" }}>📞 {place.phone}</div>
-                              </div>
-                            ))}
+                            {searchPlaces.map((place) => {
+                              // 🌟 숫자로 인한 타입 불일치를 막기 위해 String으로 변환해서 비교합니다.
+                              const isHighlighted = String(hoveredCafeId) === String(place.id);
+                              return (
+                                <div
+                                  key={place.id}
+                                  ref={(el) => (cafeElementRefs.current[place.id] = el)}
+                                  onClick={() => {
+                                    setMapCenter({ lat: place.lat, lng: place.lng });
+                                    setHoveredCafeId(place.id);
+                                  }}
+                                  style={{
+                                    background: isHighlighted ? "#e0e7ff" : "#fff",
+                                    padding: "10px",
+                                    borderRadius: "8px",
+                                    border: isHighlighted ? "2px solid #4f46e5" : "1px solid #e5e7eb",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "6px",
+                                    transition: "background 0.2s ease"
+                                  }}
+                                >
+                                  <div style={{ fontWeight: "700", fontSize: "13px", color: "#111827" }}>{place.name}</div>
+                                  <div style={{ fontSize: "11px", color: "#4b5563" }}>{place.address}</div>
+                                  <div style={{ fontSize: "10px", color: "#9ca3af" }}>📞 {place.phone}</div>
+                                  {place.pricePerHour && (
+                                    <div style={{ fontSize: "11px", fontWeight: "600", color: "#4f46e5" }}>
+                                      시간당 가격: {place.pricePerHour.toLocaleString()}원
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
-
-                <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ width: "85vw", height: "85vh", background: "#fff", borderRadius: "16px", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 12px 32px rgba(0,0,0,0.3)" }}>
-
-                    <div style={{ background: "#ef4444", color: "#fff", padding: "14px 20px", fontSize: "15px", fontWeight: "700", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <span>🗺️ 볕자리 찾기 - DB 등록 스터디룸 목록</span>
-                   {/* CamPage.jsx 내부의 제휴 스터디 카페 예약 및 결제하기 버튼 부근 수정 */}
-                   <button
-                     type="button"
-                     onClick={() => {
-                       const targetRoom = searchPlaces.find(p => String(p.id) === String(hoveredCafeId)) || searchPlaces[0];
-                       const roomId = targetRoom ? (targetRoom.id || targetRoom.studyRoomId) : "";
-
-                       // 새 탭/새 창으로 열기 (쿼리 스트링으로 장소 ID 전달)
-                       window.open(`/study-reservation${roomId ? `?preselectedRoomId=${roomId}` : ""}`, "_blank");
-                     }}
-                     style={{ background: "#059669", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}
-                   >
-                     📅 제휴 스터디 카페 예약 및 결제하기 →
-                   </button>
-                      </div>
-                      <button type="button" onClick={() => setIsMapModalOpen(false)} style={{ background: "none", border: "none", color: "#fff", fontSize: "18px", fontWeight: "bold", cursor: "pointer" }}>✕ 닫기</button>
-                    </div>
-
-                    <div style={{ display: "flex", flex: 1, width: "100%", height: "calc(100% - 56px)", overflow: "hidden", position: "relative" }}>
-                      <div style={{ width: "340px", background: "#f9fafb", borderRight: "1px solid #e5e7eb", display: "flex", flexDirection: "column", padding: "16px", gap: "12px", overflowY: "auto", zIndex: 2, flexShrink: 0 }}>
-                        <div style={{ fontSize: "14px", fontWeight: "700", color: "#1f2937" }}>📍 등록된 스터디룸 목록</div>
-                        <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "-4px" }}>
-                          {searchPlaces.length > 0 ? `총 ${searchPlaces.length}개 공간` : "등록된 스터디룸이 없습니다."}
+                          <div id="kakao-modal-map" style={{ flex: 1, position: "relative", height: "100%" }} />
                         </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                          {searchPlaces.map((place) => {
-                            // 🌟 숫자로 인한 타입 불일치를 막기 위해 String으로 변환해서 비교합니다.
-                            const isHighlighted = String(hoveredCafeId) === String(place.id);
-                            return (
-                              <div
-                                key={place.id}
-                                ref={(el) => (cafeElementRefs.current[place.id] = el)}
-                                onClick={() => {
-                                  setMapCenter({ lat: place.lat, lng: place.lng });
-                                  setHoveredCafeId(place.id);
-                                }}
-                                style={{
-                                  background: isHighlighted ? "#e0e7ff" : "#fff",
-                                  padding: "12px",
-                                  borderRadius: "8px",
-                                  border: isHighlighted ? "2px solid #4f46e5" : "1px solid #e5e7eb",
-                                  cursor: "pointer",
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  gap: "6px",
-                                  transition: "background 0.2s ease"
-                                }}
-                              >
-                                <div style={{ fontWeight: "700", fontSize: "13px", color: "#111827" }}>{place.name}</div>
-                                <div style={{ fontSize: "11px", color: "#4b5563" }}>{place.address}</div>
-                                {place.pricePerHour && (
-                                  <div style={{ fontSize: "11px", fontWeight: "600", color: "#4f46e5" }}>
-                                    시간당 가격: {place.pricePerHour.toLocaleString()}원
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-
-                        </div>
-                        <div id="kakao-modal-map" style={{ flex: 1, position: "relative", height: "100%" }} />
                       </div>
                     </div>
                   </div>
