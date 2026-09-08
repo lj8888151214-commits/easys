@@ -55,6 +55,18 @@ public class Member {
     @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'LOCAL'")
     private MemberProvider provider;
 
+    // 관리자 전용 카카오톡 알림("나에게 보내기") 연동 토큰.
+    // 일반 회원가입/로그인과는 무관하며, 관리자가 예약 알림을 카카오톡으로도
+    // 받기 위해 별도로 카카오 계정을 연결했을 때만 값이 채워진다.
+    @Column(length = 500)
+    private String kakaoAccessToken;
+
+    @Column(length = 500)
+    private String kakaoRefreshToken;
+
+    @Column
+    private LocalDateTime kakaoTokenExpiresAt;
+
     @Builder
     public Member(
             String birthday,
@@ -103,5 +115,27 @@ public class Member {
             String password
     ) {
         this.password = password;
+    }
+
+    // 카카오톡 알림 연동 (관리자가 "나에게 보내기" 권한을 허용했을 때)
+    public void linkKakaoNotification(
+            String accessToken,
+            String refreshToken,
+            LocalDateTime expiresAt
+    ) {
+        this.kakaoAccessToken = accessToken;
+        this.kakaoRefreshToken = refreshToken;
+        this.kakaoTokenExpiresAt = expiresAt;
+    }
+
+    // 카카오톡 알림 연동 해제
+    public void unlinkKakaoNotification() {
+        this.kakaoAccessToken = null;
+        this.kakaoRefreshToken = null;
+        this.kakaoTokenExpiresAt = null;
+    }
+
+    public boolean isKakaoNotificationLinked() {
+        return kakaoAccessToken != null;
     }
 }

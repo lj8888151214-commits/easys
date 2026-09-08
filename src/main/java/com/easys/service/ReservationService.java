@@ -53,6 +53,7 @@ public class ReservationService {
 
     private final StudyGroupService studyGroupService;
     private final EmailService emailService;
+    private final KakaoNotificationService kakaoNotificationService;
     private final NotificationService notificationService;
 
 
@@ -659,6 +660,9 @@ public class ReservationService {
                 adminEmails,
                 reservation.getStudyRoom().getOwnerEmail()
         );
+
+        // 이메일과 별개로, 카카오톡 알림을 연결해둔 관리자에게는 카카오톡으로도 보낸다.
+        kakaoNotificationService.notifyAdminsOfPaidReservation(reservation);
 
         return ReservationResponseDto.from(reservation, findPayment(reservation.getId()));
 

@@ -1,22 +1,28 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import "./Admin.css";
 import { useAdminGuard } from "./useAdminGuard";
 import AdminStudyRoomSection from "./AdminStudyRoomSection";
 import AdminStudyReservationSection from "./AdminStudyReservationSection";
 import AdminCommunitySection from "./AdminCommunitySection";
 import AdminStudySection from "./AdminStudySection";
+import AdminNotificationSection from "./AdminNotificationSection";
 
 const TABS = [
   { key: "rooms", label: "스터디룸 관리" },
   { key: "reservations", label: "스터디룸 예약 관리" },
   { key: "community", label: "커뮤니티 관리" },
   { key: "study", label: "스터디 관리" },
+  { key: "notify", label: "알림 설정" },
 ];
 
 function Admin() {
   const guardStatus = useAdminGuard();
-  const [activeTab, setActiveTab] = useState("rooms");
+  const [searchParams] = useSearchParams();
+  // 카카오 알림 연결 후 /admin?kakaoLinked=1(또는 0)로 돌아오면 알림 설정 탭을 바로 보여준다
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("kakaoLinked") !== null ? "notify" : "rooms"
+  );
 
   if (guardStatus === "checking") {
     return <main className="admin-page admin-state">권한을 확인하는 중입니다...</main>;
@@ -55,6 +61,7 @@ function Admin() {
       {activeTab === "reservations" && <AdminStudyReservationSection />}
       {activeTab === "community" && <AdminCommunitySection />}
       {activeTab === "study" && <AdminStudySection />}
+      {activeTab === "notify" && <AdminNotificationSection />}
     </main>
   );
 }
