@@ -6,7 +6,7 @@ import studyReservationBg from "../../assets/images/StudyReservation.jpg";
 const API_BASE = "/api";
 
 // CamPage.jsx의 카카오맵 연동과 동일한 JS 키를 사용한다.
-const KAKAO_JS_KEY = "f7d216c9253bd3d4d3cf2eaf836373f8";
+const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
 
 // 지역 필터 버튼 => 스터디룸 location 문자열에 하나라도 포함되어야 하는 키워드 목록
 const REGIONS = [

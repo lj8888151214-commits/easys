@@ -4,7 +4,7 @@ import "./CamPage.css";
 
 import { MiniCalendar } from "./MiniCalendar";
 
-const KAKAO_JS_KEY = "f7d216c9253bd3d4d3cf2eaf836373f8";
+const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
 
 export function VideoCard({
                             peerId,
