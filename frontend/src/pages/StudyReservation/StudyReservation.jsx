@@ -619,12 +619,11 @@ function StudyReservation() {
         );
       }
 
-      alert("예약이 접수되었습니다. 결제 완료 시 예약이 확정됩니다.");
-
-      if (data) {
-        setReservedTimes((prev) => [...prev, data]);
+      if (!data || !data.id) {
+        throw new Error("예약에 실패했습니다.");
       }
-      setSelectedHours([]);
+
+      navigate(`/payment?type=study&id=${data.id}`);
     } catch (error) {
       console.error("예약 생성 오류:", error);
       setReservationError(error.message || "예약에 실패했습니다.");
@@ -836,6 +835,61 @@ function StudyReservation() {
           {!loadingRooms && !roomsError && displayRooms.length > 0 && (
             <div className="place-grid">
 
+
+                        {pagedRooms.map((place) => {
+                          const placeId = place.id || place.studyRoomId;
+                          const isSelected = selectedPlace && (
+                            String(selectedPlace.id || selectedPlace.studyRoomId) === String(placeId) ||
+                            selectedPlace.name === place.name
+                          );
+
+                          return (
+                            <article
+                              className={`place-card ${isSelected ? "selected" : ""}`}
+                              key={placeId}
+                              ref={(el) => {
+                                if (el) cardElementRefs.current[placeId] = el;
+                              }}
+                              onClick={() => setSelectedPlace(place)}
+                            >
+
+                              <div className="place-image">
+                                <img
+                                  src={place.imageUrl || studyReservationBg}
+                                  alt={place.name}
+                                />
+                                <span className="place-rating">
+                                  ★ {place.rating ? Number(place.rating).toFixed(1) : "-"}
+                                </span>
+                                {isSelected && (
+                                  <span className="place-selected">
+                                    ✓ 선택됨
+                                  </span>
+                                )}
+                              </div>
+
+
+                  <div className="place-card-content">
+
+                    <span className="place-location">
+                      {place.location}
+                    </span>
+
+                    <h3>
+                      {place.name}
+                    </h3>
+
+                    <p>
+                      {place.description}
+                    </p>
+
+
+                    <div className="place-card-bottom">
+
+                      <div>
+                        <span>
+                          {place.minCapacity}~{place.maxCapacity}명
+
               {displayRooms.map((place) => {
                 const placeId = place.id || place.studyRoomId;
                 const isSelected = selectedPlace && (
@@ -864,6 +918,7 @@ function StudyReservation() {
                       {isSelected && (
                         <span className="place-selected">
                           ✓ 선택됨
+
                         </span>
                       )}
                     </div>
