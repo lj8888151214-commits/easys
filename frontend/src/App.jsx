@@ -1,5 +1,5 @@
 import "./App.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -9,6 +9,7 @@ import {
 
 import Header from "./components/Header/Header";
 import Footer from "./components/Footer/Footer";
+import AiChatbot from "./components/AiChatbot/AiChatbot";
 
 import Home from "./pages/Home/Home.jsx";
 import Calendar from "./pages/Calendar/Calendar";
@@ -56,12 +57,19 @@ function ScrollToTop() {
 // =====================================================
 
 function App() {
+  // AI 챗봇 채팅창 열림 상태. PC에서는 이 컴포넌트(AiChatbot)의 플로팅 버튼이,
+  // 모바일에서는 Header 안의 AI 아이콘이 같은 채팅창을 열고 닫아야 해서
+  // (둘은 형제 컴포넌트라 직접 상태를 공유할 수 없음) 여기 App에서 관리한다.
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
+  const toggleAiChat = () => setIsAiChatOpen((prev) => !prev);
+  const closeAiChat = () => setIsAiChatOpen(false);
+
   return (
     <BrowserRouter>
 
       <ScrollToTop />
 
-      <Header />
+      <Header isAiChatOpen={isAiChatOpen} onToggleAiChat={toggleAiChat} />
 
       <Routes>
 
@@ -276,6 +284,8 @@ function App() {
       </Routes>
 
       <Footer />
+
+      <AiChatbot isOpen={isAiChatOpen} onToggle={toggleAiChat} onClose={closeAiChat} />
 
     </BrowserRouter>
   );

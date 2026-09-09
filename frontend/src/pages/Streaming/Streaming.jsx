@@ -10,25 +10,6 @@ import streamingBg from "../../assets/images/streaming-bg.jpg";
 
 import stream1 from "../../assets/videos/stream1.mp4";
 
-import mainVideo1 from "../../assets/videos/main_video1.mp4";
-import mainVideo4 from "../../assets/videos/main_video2.mp4";
-import mainVideo5 from "../../assets/videos/stream1.mp4";
-
-// 🌟 카테고리별로 서로 다른 비디오를 연결해주는 매핑 함수
-const getVideoByCategory = (category) => {
-  switch (category) {
-    case "SPRING BOOT":
-      return mainVideo1;
-    case "JAVA":
-      return mainVideo4;
-    case "FRONTEND":
-      return mainVideo5;
-    default:
-      return mainVideo1;
-  }
-};
-
-
 export default function Streaming() {
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
@@ -179,12 +160,6 @@ export default function Streaming() {
             <br />
             함께 성장해보세요.
           </p>
-
-          <p>실시간으로 배우고 소통하며<br />함께 성장해보세요.</p>
-
-
-
-
         </div>
       </section>
 
@@ -251,39 +226,6 @@ export default function Streaming() {
                     <h3>{stream.title}</h3>
                     <p>{stream.description}</p>
                     <span className="stream-host">{stream.host}</span>
-
-            <div className="stream-panorama-container">
-              <div className="stream-panorama-track">
-                {liveStreams.length === 0 ? (
-                  <div className="panorama-empty-card">
-                    <p>현재 개설된 라이브 방송이 없습니다. 첫 방송을 시작해보세요!</p>
-                  </div>
-                ) : (
-                  liveStreams.map((stream, index) => (
-                    <article className="stream-card panorama-card" key={`stream-${stream.id}-${index}`}>
-                      <div className="stream-thumbnail">
-                        <video
-                          ref={(element) => { videoRefs.current[index] = element; }}
-                          className="stream-video"
-                          src={stream.video || getVideoByCategory(stream.category)}
-                          muted
-                          autoPlay
-                          loop
-                          playsInline
-                        />
-                        <div className="stream-video-overlay" />
-
-                        <span className="stream-number-badge" style={{ fontSize: "14px", padding: "4px 10px", borderRadius: "6px", maxWidth: "80%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {stream.title}
-                        </span>
-                        <span className="stream-live">● LIVE</span>
-                      </div>
-
-                      <div className="stream-card-content">
-                        <span className="stream-category">{stream.category}</span>
-                        <p>{stream.description}</p>
-                        <span className="stream-host">{stream.host}</span>
-
 
                     <div className="stream-card-bottom">
                       <span>👤 {stream.viewers || 1}명 시청 중</span>

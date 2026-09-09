@@ -4,7 +4,11 @@ import "./Header.css";
 
 import logo from "../../assets/images/logo.png";
 import logoSecond from "../../assets/images/logo_second.png";
+
+import aiChatIcon from "../../assets/images/AI_LLM1.png";
+
 import NotificationBell from "./NotificationBell";
+
 
 const NAV_ITEMS = [
   { to: "/streaming", label: "스트리밍" },
@@ -56,7 +60,7 @@ function isColoredHeaderPath(pathname) {
   return false;
 }
 
-function Header() {
+function Header({ isAiChatOpen, onToggleAiChat }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -225,6 +229,17 @@ function Header() {
               </button>
             </form>
           </div>
+
+          {/* 모바일 전용 AI 채팅 아이콘 - PC에서는 AiChatbot.jsx의 플로팅 버튼을
+              쓰므로 여기는 Header.css에서 768px 이하일 때만 보이게 숨겨둔다. */}
+          <button
+            type="button"
+            className={`header-ai-chat ${isAiChatOpen ? "active" : ""}`}
+            onClick={onToggleAiChat}
+            aria-label="EASYS AI 챗봇"
+          >
+            <img src={aiChatIcon} alt="" />
+          </button>
 
           {/* ===================================================
               로그인 상태

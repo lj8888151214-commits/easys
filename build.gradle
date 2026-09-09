@@ -39,6 +39,7 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.google.genai:google-genai:1.57.0'
 }
 
 tasks.named('test') {
