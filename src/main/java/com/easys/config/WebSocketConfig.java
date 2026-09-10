@@ -328,12 +328,18 @@ public class WebSocketConfig implements WebSocketConfigurer {
             Map<String, WebSocketSession> roomSessions = rooms.get(roomId);
             if (roomSessions == null) return;
 
-            List<Map<String, String>> userList = new ArrayList<>();
+            // 🌟 해당 방의 호스트 닉네임 혹은 기준을 찾습니다.
+            // (방 번호나 방 생성 구조에 따라 방의 첫 번째 입장자 혹은 DB 정보를 활용할 수 있습니다.)
+            // 여기서는 맵에 저장된 첫 번째 세션이나 방 규칙에 맞춰 호스트 닉네임을 특정할 수 있습니다.
+
+            List<Map<String, Object>> userList = new ArrayList<>();
             for (Map.Entry<String, WebSocketSession> entry : roomSessions.entrySet()) {
                 if (entry.getValue().isOpen()) {
+                    String nick = userNicknames.getOrDefault(entry.getKey(), "게스트");
+
                     userList.add(Map.of(
                             "id", entry.getKey(),
-                            "nickname", userNicknames.getOrDefault(entry.getKey(), "게스트")
+                            "nickname", nick
                     ));
                 }
             }

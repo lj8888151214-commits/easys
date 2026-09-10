@@ -227,7 +227,6 @@ function StudyReservation() {
     );
   }, [rooms, activeRegion]);
 
-
   // 검색어/지역 필터가 바뀌면 1페이지로 되돌린다
   useEffect(() => {
     setRoomsPage(1);
@@ -282,7 +281,6 @@ function StudyReservation() {
   const isStudyOwner =
     !!study && !!currentUser && Number(study.memberId) === Number(currentUser.id);
 
-
   /* ================================
      선택한 장소 / 날짜가 바뀌면 시간 선택 초기화
   ================================= */
@@ -296,8 +294,7 @@ function StudyReservation() {
     } else if (!selectedPlace && !isStudyMode) {
       setPeopleCount(1);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPlace]);
+  }, [selectedPlace, isStudyMode]);
 
   useEffect(() => {
     setSelectedHours([]);
@@ -462,7 +459,6 @@ function StudyReservation() {
     return selectedPlace.maxCapacity - reservedPeople;
   };
 
-  // 이용 시작 후 여유 시간(10분)이 지난 시간대는 신규 예약 대상에서 제외한다.
   const isSlotPastDeadline = (slot) => {
     const slotStart = new Date(`${selectedDate}T${slot.startTime}:00`);
 
@@ -492,7 +488,6 @@ function StudyReservation() {
     });
   };
 
-  // 인원수를 늘렸을 때 이미 선택해둔 시간대 중 잔여 좌석이 부족해진 시간대 제외
   useEffect(() => {
     setSelectedHours((prev) =>
       prev.filter((startTime) => {
@@ -500,11 +495,10 @@ function StudyReservation() {
         return !!slot && getRemainingCapacity(slot) >= peopleCount;
       })
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [peopleCount]);
+  }, [peopleCount, selectedPlace, reservedTimes]);
 
   /* ================================
-     시간 선택/해제 (여러 시간대를 각각 토글)
+     시간 선택/해제
   ================================= */
 
   const toggleHour = (slot) => {
@@ -834,63 +828,7 @@ function StudyReservation() {
 
           {!loadingRooms && !roomsError && displayRooms.length > 0 && (
             <div className="place-grid">
-
-
-                        {pagedRooms.map((place) => {
-                          const placeId = place.id || place.studyRoomId;
-                          const isSelected = selectedPlace && (
-                            String(selectedPlace.id || selectedPlace.studyRoomId) === String(placeId) ||
-                            selectedPlace.name === place.name
-                          );
-
-                          return (
-                            <article
-                              className={`place-card ${isSelected ? "selected" : ""}`}
-                              key={placeId}
-                              ref={(el) => {
-                                if (el) cardElementRefs.current[placeId] = el;
-                              }}
-                              onClick={() => setSelectedPlace(place)}
-                            >
-
-                              <div className="place-image">
-                                <img
-                                  src={place.imageUrl || studyReservationBg}
-                                  alt={place.name}
-                                />
-                                <span className="place-rating">
-                                  ★ {place.rating ? Number(place.rating).toFixed(1) : "-"}
-                                </span>
-                                {isSelected && (
-                                  <span className="place-selected">
-                                    ✓ 선택됨
-                                  </span>
-                                )}
-                              </div>
-
-
-                  <div className="place-card-content">
-
-                    <span className="place-location">
-                      {place.location}
-                    </span>
-
-                    <h3>
-                      {place.name}
-                    </h3>
-
-                    <p>
-                      {place.description}
-                    </p>
-
-
-                    <div className="place-card-bottom">
-
-                      <div>
-                        <span>
-                          {place.minCapacity}~{place.maxCapacity}명
-
-              {displayRooms.map((place) => {
+              {pagedRooms.map((place) => {
                 const placeId = place.id || place.studyRoomId;
                 const isSelected = selectedPlace && (
                   String(selectedPlace.id || selectedPlace.studyRoomId) === String(placeId) ||
@@ -918,7 +856,6 @@ function StudyReservation() {
                       {isSelected && (
                         <span className="place-selected">
                           ✓ 선택됨
-
                         </span>
                       )}
                     </div>
