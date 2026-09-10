@@ -1468,6 +1468,23 @@ function Mentoring() {
       return;
     }
 
+    // "멘토 정보 수정" 폼과 동일한 링크 검증을 두 모드가 함께 재사용한다.
+    // (registerMode === "offering"이면서 아직 멘토 프로필이 없는 첫 등록일
+    // 때도 이 값들을 입력받으므로, 분기 이전에 한 번만 계산한다.)
+    const github = normalizeLinkUrl(registerForm.github, "github");
+    const velog = normalizeLinkUrl(registerForm.velog, "velog");
+    const portfolio = normalizeLinkUrl(registerForm.portfolio, "portfolio");
+    const invalidLink = [
+      [registerForm.github, github, "GitHub"],
+      [registerForm.velog, velog, "Velog"],
+      [registerForm.portfolio, portfolio, "Portfolio"]
+    ].find(([value, normalized]) => value.trim() && !normalized);
+
+    if (invalidLink) {
+      alert("올바른 형식의 링크를 입력해주세요.");
+      return;
+    }
+
     // =================================================
     // 멘토링 등록/수정 (registerMode === "offering")
     //
@@ -1480,6 +1497,22 @@ function Mentoring() {
         alert("멘토링 이름을 입력해주세요.");
         return;
       }
+
+      // 아직 멘토 프로필이 없는 첫 등록이라면, "멘토 정보 수정" 화면과
+      // 동일한 필수 항목(경력/멘토 소개)도 함께 입력받는다 - 프로필이 이미
+      // 있는 멘토가 새 멘토링만 추가하는 경우에는 폼에 이 항목들이 아예
+      // 표시되지 않으므로 검증하지 않는다("프로필은 그대로 유지" 원칙).
+      if (!myMentor) {
+        if (!registerForm.career.trim()) {
+          alert("경력을 입력해주세요.");
+          return;
+        }
+        if (!registerForm.introduction.trim()) {
+          alert("멘토 소개를 입력해주세요.");
+          return;
+        }
+      }
+
       if (registerForm.skills.length === 0) {
         alert("기술 분야를 하나 이상 선택해주세요.");
         return;
@@ -1521,6 +1554,13 @@ function Mentoring() {
 
       const offeringRequestData = {
         title: registerForm.title.trim(),
+        career: registerForm.career.trim(),
+        careerDetail: registerForm.careerDetail.trim(),
+        certificates: registerForm.certificates.trim(),
+        introduction: registerForm.introduction.trim(),
+        github,
+        velog,
+        portfolio,
         skills: registerForm.skills.join(", "),
         consultationFields: registerForm.consultationTypes.join(", "),
         mentoringType: registerForm.mentoringType,
@@ -1657,20 +1697,6 @@ function Mentoring() {
         );
         return;
       }
-    }
-
-    const github = normalizeLinkUrl(registerForm.github, "github");
-    const velog = normalizeLinkUrl(registerForm.velog, "velog");
-    const portfolio = normalizeLinkUrl(registerForm.portfolio, "portfolio");
-    const invalidLink = [
-      [registerForm.github, github, "GitHub"],
-      [registerForm.velog, velog, "Velog"],
-      [registerForm.portfolio, portfolio, "Portfolio"]
-    ].find(([value, normalized]) => value.trim() && !normalized);
-
-    if (invalidLink) {
-      alert("올바른 형식의 링크를 입력해주세요.");
-      return;
     }
 
     const requestData = {
@@ -4368,7 +4394,8 @@ function Mentoring() {
               />
             </div>
 
-            {registerMode === "profile" && (
+            {(registerMode === "profile" ||
+              (registerMode === "offering" && !myMentor)) && (
               <>
                 <div className="register-section">
                   <label htmlFor="career">
@@ -4521,7 +4548,8 @@ function Mentoring() {
               </div>
             </div>
 
-            {registerMode === "profile" && (
+            {(registerMode === "profile" ||
+              (registerMode === "offering" && !myMentor)) && (
               <>
                 <div className="register-section">
                   <label htmlFor="github">
