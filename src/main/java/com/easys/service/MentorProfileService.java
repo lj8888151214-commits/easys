@@ -22,10 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -237,6 +239,40 @@ public class MentorProfileService {
                     );
                 })
                 .collect(Collectors.toList());
+    }
+
+    // =====================================================
+    // 최고의 멘토 (EASYS AI 챗봇 - "최고의 멘토는 누구야?")
+    // =====================================================
+
+    // 후기가 이 개수 미만인 멘토는 "최고의 멘토" 후보에서 제외한다. 이 값이 없으면
+    // 후기 1개에 5.0점을 받은 멘토가 후기 50개에 4.9점인 멘토를 이기는 식으로
+    // 표본이 너무 적은 평가가 "최고"로 뽑혀버릴 수 있다.
+    private static final long BEST_MENTOR_MIN_REVIEWS = 3;
+
+    @Transactional(readOnly = true)
+    public Optional<MentorProfileResponseDto> findBestMentor() {
+        List<MentorProfileResponseDto> reviewedMentors = getApprovedMentors().stream()
+                .filter(mentor -> mentor.getReviewCount() > 0)
+                .toList();
+
+        if (reviewedMentors.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<MentorProfileResponseDto> reliableMentors = reviewedMentors.stream()
+                .filter(mentor -> mentor.getReviewCount() >= BEST_MENTOR_MIN_REVIEWS)
+                .toList();
+
+        // 신뢰 기준(BEST_MENTOR_MIN_REVIEWS)을 채운 멘토가 아직 없으면(예: 서비스 초기),
+        // 후기가 하나라도 있는 멘토 중에서 고른다 - 억지로 없는 데이터를 만들어내지 않는다.
+        List<MentorProfileResponseDto> candidates =
+                reliableMentors.isEmpty() ? reviewedMentors : reliableMentors;
+
+        return candidates.stream()
+                .max(Comparator
+                        .comparingDouble(MentorProfileResponseDto::getAverageRating)
+                        .thenComparingLong(MentorProfileResponseDto::getReviewCount));
     }
 
     private MentorProfileResponseDto toResponse(MentorProfile mentorProfile) {

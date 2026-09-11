@@ -129,6 +129,35 @@
   text-align: center;
   margin-top: 20px;
   line-height: 1.6;
+  padding: 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 20단계: "학습 중 궁금한 개념부터 EASYS 이용 방법까지 편하게 질문해보세요"가
+   한 단어(어절) 중간에서 "질문해보/세요"처럼 이상하게 줄바꿈되던 문제 - 원인은
+   text-align만 가운데였을 뿐, 줄바꿈 자체는 브라우저가 컨테이너 폭에 맞춰 아무
+   글자에서나 끊고 있었던 것이다(한글은 띄어쓰기 없이도 글자 단위로 줄바꿈이
+   가능해서 생기는 문제). word-break: keep-all로 띄어쓰기(어절) 단위에서만
+   줄바꿈되게 하고, max-width로 의도한 지점에서 자연스럽게 2줄이 되도록 폭을
+   좁혀준다. overflow-wrap은 혹시 끊을 공백이 전혀 없는 긴 영단어가 나와도
+   컨테이너를 벗어나지 않도록 하는 안전장치다. */
+.ai-chatbot-empty p {
+  margin: 0 0 6px;
+  max-width: 280px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.ai-chatbot-empty p:first-child {
+  font-weight: 700;
+  color: #2e4033;
+  font-size: 14px;
+}
+
+.ai-chatbot-empty p:last-child {
+  margin-bottom: 0;
 }
 
 .ai-chatbot-message-row {
@@ -161,6 +190,22 @@
 .ai-chatbot-shortcut:hover {
   background: #243329;
 }
+
+/* 19단계: "대화 기록 삭제"/"취소" 같은 확인 버튼 두 개를 나란히 보여준다.
+   .ai-chatbot-shortcut의 margin-left(들여쓰기)는 이 줄 전체에 한 번만 주고,
+   버튼 자체는 border만 남긴 <button>이라 <Link> 바로가기와 자연스럽게 구분된다. */
+.ai-chatbot-confirm-row {
+  display: flex;
+  gap: 8px;
+  margin-left: 31px;
+}
+
+.ai-chatbot-confirm-button {
+  margin-left: 0;
+  border: none;
+  font-family: inherit;
+}
+
 
 .ai-chatbot-avatar {
   flex-shrink: 0;

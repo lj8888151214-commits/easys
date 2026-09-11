@@ -75,6 +75,13 @@ public class PersonalScheduleService {
         return personalScheduleRepository.findByMemberOrderByStartAtAsc(member);
     }
 
+    // 18단계: "방금 등록한 일정"은 startAt(일정 자체의 날짜)이 아니라 실제로 언제
+    // "생성"됐는지로 판단해야 한다(AiChatService).
+    @Transactional(readOnly = true)
+    public List<PersonalSchedule> getMySchedulesByCreatedAtDesc(Member member) {
+        return personalScheduleRepository.findByMemberOrderByCreatedAtDesc(member);
+    }
+
     @Transactional(readOnly = true)
     public List<PersonalSchedule> getMySchedules(Member member,
                                                  LocalDateTime startAt,

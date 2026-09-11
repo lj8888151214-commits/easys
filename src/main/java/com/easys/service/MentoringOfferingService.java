@@ -426,12 +426,14 @@ public class MentoringOfferingService {
     // 멘토링(Offering) 등록 시 사용하는 버전.
     //
     // 이 회원이 아직 MentorProfile이 없다면(=첫 멘토링 등록),
-    // 지금 입력한 멘토링 정보(제목/가격/방식/기술/상담분야/일정)를
-    // 그대로 재사용해 MentorProfile을 함께 생성한다.
+    // 지금 입력한 정보(제목/경력/경력상세/자격증/멘토소개/GitHub/Velog/
+    // Portfolio/가격/방식/기술/상담분야/일정 - "멘토 정보 수정" 화면과 동일한
+    // 항목)를 그대로 재사용해 MentorProfile을 함께 생성한다.
     // 사용자 입장에서는 "멘토 등록"과 "멘토링 등록"이 하나의 동작으로
     // 느껴져야 하므로, 별도의 프로필 작성 화면을 거치게 하지 않는다.
-    // (career/자격증/포트폴리오 등 프로필 전용 항목은 비워두고,
-    //  필요하면 이후 "내 멘토 정보 수정하기"에서 채울 수 있다.)
+    // (프로필이 이미 있는 멘토가 새 멘토링만 추가하는 경우에는 이 메서드가
+    // findByMember()에서 바로 반환되므로, 기존 프로필의 이 필드들은 이번
+    // 요청 내용으로 절대 덮어써지지 않는다.)
     // =====================================================
 
     private MentorProfile getOrCreateMentorOfMember(Member member, MentoringOfferingCreateDto request) {
@@ -440,7 +442,17 @@ public class MentoringOfferingService {
                         MentorProfile.builder()
                                 .member(member)
                                 .title(request.getTitle().trim())
-                                .introduction(request.getTitle().trim() + " 멘토링을 진행합니다.")
+                                .introduction(
+                                        request.getIntroduction() != null && !request.getIntroduction().isBlank()
+                                                ? request.getIntroduction().trim()
+                                                : request.getTitle().trim() + " 멘토링을 진행합니다."
+                                )
+                                .career(trim(request.getCareer()))
+                                .careerDetail(trim(request.getCareerDetail()))
+                                .certificates(trim(request.getCertificates()))
+                                .github(trim(request.getGithub()))
+                                .velog(trim(request.getVelog()))
+                                .portfolio(trim(request.getPortfolio()))
                                 .skills(trim(request.getSkills()))
                                 .price(request.getPrice())
                                 .mentoringType(request.getMentoringType().trim())
