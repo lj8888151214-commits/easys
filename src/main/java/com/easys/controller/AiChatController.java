@@ -23,6 +23,7 @@ import java.util.Map;
 @RequestMapping("/api/ai")
 public class AiChatController {
 
+
     private final AiChatService aiChatService;
 
     public AiChatController(AiChatService aiChatService) {
@@ -75,4 +76,24 @@ public class AiChatController {
         aiChatService.deleteHistory(userDetails, sessionId);
         return ResponseEntity.ok(Map.of("message", "대화 기록을 삭제했습니다."));
     }
+
+//    private final AiChatService aiChatService;
+//
+//    public AiChatController(AiChatService aiChatService) {
+//        this.aiChatService = aiChatService;
+//    }
+//
+//    @PostMapping("/chat")
+//    public ResponseEntity<?> chat(@RequestBody AiChatRequestDto request) {
+//        try {
+//            String reply = aiChatService.ask(request.getMessage());
+//            return ResponseEntity.ok(Map.of("reply", reply));
+//        } catch (IllegalArgumentException e) {
+//            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+//        } catch (IllegalStateException e) {
+//            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+//                    .body(Map.of("message", e.getMessage()));
+//        }
+//    }
+
 }

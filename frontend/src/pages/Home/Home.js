@@ -4,6 +4,7 @@ import video1 from "../../assets/videos/main_video1.mp4";
 import video2 from "../../assets/videos/main_video2.mp4";
 import video3 from "../../assets/videos/main_video3.mp4";
 
+
 const heroVideos = [
   {
     video: video1,

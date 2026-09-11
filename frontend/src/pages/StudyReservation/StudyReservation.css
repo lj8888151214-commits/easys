@@ -1138,4 +1138,234 @@
     font-size: 26px;
   }
 
+
+  /* =====================================================
+     실시간 라이브 파노라마 섹션 스타일 (전역 적용)
+  ===================================================== */
+
+.stream-list-section.panorama-section {
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 24px;
+  margin: 40px auto;
+  /* 🌟 최대 너비 제한을 풀거나 100%로 설정하여 폭을 넓힘 */
+  max-width: 100%;
+}
+
+  /* 상단 헤더 타이틀 영역 */
+  .stream-section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+    padding: 0 10px;
+  }
+
+  .stream-section-heading .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6366f1;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: inline-block;
+  }
+
+  .stream-section-heading h2 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  /* 파노라마 트랙 및 스크롤 레이아웃 */
+  .stream-panorama-container {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  .stream-panorama-container::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .stream-panorama-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+
+  .stream-panorama-track {
+    display: flex;
+    gap: 24px;
+    padding: 4px;
+  }
+
+  /* 빈 상태 카드 */
+  .panorama-empty-card {
+    width: 100%;
+    padding: 60px 20px;
+    text-align: center;
+    background: #ffffff;
+    border: 2px dashed #e2e8f0;
+    border-radius: 16px;
+    color: #64748b;
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  /* 개별 방송 카드 디자인 (Panorama Card) */
+  .stream-card.panorama-card {
+    flex: 0 0 340px;
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stream-card.panorama-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 30px -10px rgba(99, 102, 241, 0.15);
+    border-color: #c7d2fe;
+  }
+
+  /* 썸네일 영역 */
+  .stream-thumbnail {
+    position: relative;
+    width: 100%;
+    height: 190px;
+    background: #0f172a;
+    overflow: hidden;
+  }
+
+  .stream-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .stream-card.panorama-card:hover .stream-video {
+    transform: scale(1.05);
+  }
+
+  .stream-video-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.6) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* 배지 (타이틀 & 라이브 상태) */
+  .stream-number-badge {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    color: #ffffff;
+    font-weight: 600;
+    z-index: 2;
+  }
+
+  .stream-live {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+    z-index: 2;
+    animation: pulse-live 2s infinite;
+  }
+
+  @keyframes pulse-live {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+  }
+
+  /* 카드 하단 콘텐츠 영역 */
+  .stream-card-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .stream-category {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6366f1;
+    background: #eef2ff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    width: fit-content;
+    margin-bottom: 8px;
+  }
+
+  .stream-card-content p {
+    font-size: 14px;
+    color: #475569;
+    margin: 0 0 12px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.5;
+    flex-grow: 1;
+  }
+
+  .stream-host {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+
+  /* 카드 푸터 (시청자 수 & 버튼) */
+  .stream-card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+    margin-top: auto;
+  }
+
+  .stream-card-bottom span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .stream-card-bottom button {
+    background: #6366f1;
+    color: #ffffff;
+    border: none;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+
+  .stream-card-bottom button:hover {
+    background: #4f46e5;
+    transform: translateY(-1px);
+  }
+
 }
