@@ -1,9 +1,15 @@
 .payment-page {
   display: flex;
   justify-content: center;
-  padding: 80px 20px;
+  padding: calc(var(--header-height) + 24px) 20px 80px;
   min-height: 60vh;
   background: #fafbfa;
+}
+
+@media screen and (max-width: 600px) {
+  .payment-page {
+    padding: calc(var(--header-height) + 15px) 15px 50px;
+  }
 }
 
 .payment-card {
@@ -11,7 +17,7 @@
   max-width: 420px;
   background: #ffffff;
   border-radius: 24px;
-  padding: 36px 30px;
+  padding: 48px 30px 44px;
   box-shadow: 0 12px 30px rgba(36, 51, 41, 0.08);
   text-align: center;
 }
@@ -24,7 +30,7 @@
 }
 
 .payment-card h2 {
-  margin: 6px 0 24px;
+  margin: 10px 0 30px;
   color: #243329;
   font-size: 22px;
 }
@@ -32,9 +38,9 @@
 .payment-summary {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 28px;
-  padding: 18px;
+  gap: 14px;
+  margin-bottom: 34px;
+  padding: 22px;
   border-radius: 16px;
   background: #f3f6f3;
   text-align: left;
@@ -67,7 +73,7 @@
 .payment-back-button {
   display: inline-block;
   width: 100%;
-  padding: 15px;
+  padding: 17px;
   border: 0;
   border-radius: 24px;
   background: #243329;
@@ -94,19 +100,19 @@
 
 .payment-link-button {
   text-decoration: none;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .payment-notice {
   color: #7b857e;
   font-size: 13px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .payment-error {
   color: #c0392b;
   font-size: 13px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .payment-success-icon,
