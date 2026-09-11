@@ -1339,7 +1339,34 @@ function Mentoring() {
     // "멘토 등록하기"를 처음 누르는 경우에도(아직 MentorProfile이 없어도)
     // 곧바로 새 멘토링 등록 폼을 열 수 있다. MentorProfile은 서버에서
     // 이 폼을 처음 제출할 때 자동으로 함께 생성된다.
-    resetRegisterForm();
+    //
+    // 이미 멘토 프로필이 있다면(myMentor) 실무경험/자격증/Portfolio 등
+    // 프로필 정보를 기존 값 그대로 폼에 채워, 새 멘토링을 추가로 등록할
+    // 때도 언제든 함께 확인/수정할 수 있게 한다.
+    if (myMentor) {
+      setRegisterForm((prev) => ({
+        ...prev,
+        title: "",
+        career: myMentor.career || "",
+        careerDetail: myMentor.careerDetail || "",
+        certificates: myMentor.certificates || "",
+        skills: [],
+        consultationTypes: [],
+        mentoringType: "",
+        github: myMentor.github || "",
+        velog: myMentor.velog || "",
+        portfolio: myMentor.portfolio || "",
+        introduction: myMentor.introduction || "",
+        price: "",
+        availableDays: [],
+        availableDates: [],
+        availableStart: "",
+        availableEnd: "",
+        availableSchedules: []
+      }));
+    } else {
+      resetRegisterForm();
+    }
     setRegisterMode("offering");
     setEditingOfferingId(null);
     setRegisterLockedDates([]);
@@ -1407,11 +1434,14 @@ function Mentoring() {
         !isPastDate(new Date(`${schedule.date}T00:00:00`))
     );
 
+    // 실무경험/자격증/Portfolio(및 GitHub/Velog/멘토 소개)는 멘토링(offering)이
+    // 아니라 멘토 프로필(myMentor)에 속한 값이므로, 여기서도 그 값을 그대로
+    // 불러와 보여주고 수정할 수 있게 한다.
     setRegisterForm({
       title: offering.title || "",
-      career: "",
-      careerDetail: "",
-      certificates: "",
+      career: myMentor?.career || "",
+      careerDetail: myMentor?.careerDetail || "",
+      certificates: myMentor?.certificates || "",
       skills: offering.skills
         ? offering.skills
             .split(",")
@@ -1425,10 +1455,10 @@ function Mentoring() {
             .filter(Boolean)
         : [],
       mentoringType: offering.mentoringType || "",
-      github: "",
-      velog: "",
-      portfolio: "",
-      introduction: "",
+      github: myMentor?.github || "",
+      velog: myMentor?.velog || "",
+      portfolio: myMentor?.portfolio || "",
+      introduction: myMentor?.introduction || "",
       price: offering.price ?? "",
       availableDays: offering.availableDays
         ? offering.availableDays
@@ -1498,19 +1528,15 @@ function Mentoring() {
         return;
       }
 
-      // 아직 멘토 프로필이 없는 첫 등록이라면, "멘토 정보 수정" 화면과
-      // 동일한 필수 항목(경력/멘토 소개)도 함께 입력받는다 - 프로필이 이미
-      // 있는 멘토가 새 멘토링만 추가하는 경우에는 폼에 이 항목들이 아예
-      // 표시되지 않으므로 검증하지 않는다("프로필은 그대로 유지" 원칙).
-      if (!myMentor) {
-        if (!registerForm.career.trim()) {
-          alert("경력을 입력해주세요.");
-          return;
-        }
-        if (!registerForm.introduction.trim()) {
-          alert("멘토 소개를 입력해주세요.");
-          return;
-        }
+      // 실무경험(경력 상세)과 멘토 소개는 멘토 프로필 정보이며, 이 폼에서
+      // 항상 함께 입력/수정하므로 등록/수정 모두 필수로 검증한다.
+      if (!registerForm.careerDetail.trim()) {
+        alert("경력 상세(실무 경력)를 입력해주세요.");
+        return;
+      }
+      if (!registerForm.introduction.trim()) {
+        alert("멘토 소개를 입력해주세요.");
+        return;
       }
 
       if (registerForm.skills.length === 0) {
@@ -1554,7 +1580,9 @@ function Mentoring() {
 
       const offeringRequestData = {
         title: registerForm.title.trim(),
-        career: registerForm.career.trim(),
+        // "경력" 입력란은 화면에서 제거했고, "경력 상세"가 곧 실무 경력이므로
+        // 그 값을 career 컬럼(백엔드 필수값)에도 그대로 함께 저장한다.
+        career: registerForm.careerDetail.trim(),
         careerDetail: registerForm.careerDetail.trim(),
         certificates: registerForm.certificates.trim(),
         introduction: registerForm.introduction.trim(),
@@ -1616,9 +1644,9 @@ function Mentoring() {
         setShowRegister(false);
         setEditingOfferingId(null);
 
-        // 처음으로 "멘토 등록하기"를 눌러 첫 멘토링을 만든 경우,
-        // 서버에서 MentorProfile이 함께 자동 생성되므로 화면 상태도 갱신한다.
         if (!myMentor) {
+          // 처음으로 "멘토 등록하기"를 눌러 첫 멘토링을 만든 경우,
+          // 서버에서 MentorProfile이 함께 자동 생성되므로 화면 상태도 갱신한다.
           try {
             const meResponse = await fetch("/api/mentor/me", {
               credentials: "include"
@@ -1629,10 +1657,57 @@ function Mentoring() {
           } catch (meError) {
             console.error("내 멘토 정보 갱신 오류:", meError);
           }
+        } else {
+          // 이미 멘토 프로필이 있는 경우, 이 폼에서 함께 입력한
+          // 실무경험/자격증/Portfolio(및 GitHub/Velog/멘토 소개)를
+          // 기존 멘토 프로필(PUT /mentor/me)에도 반영한다. 멘토링
+          // (offering) 고유 항목(제목/가격/방식/상담분야/일정 등)은
+          // 그대로 두고 프로필 값만 갱신한다.
+          try {
+            const profileSyncData = {
+              title: myMentor.title,
+              introduction: registerForm.introduction.trim(),
+              // "경력" 입력란은 화면에서 제거했고, "경력 상세"가 곧 실무 경력이므로
+              // 그 값을 career 컬럼(백엔드 필수값)에도 그대로 함께 저장한다.
+              career: registerForm.careerDetail.trim(),
+              careerDetail: registerForm.careerDetail.trim(),
+              certificates: registerForm.certificates.trim(),
+              skills: myMentor.skills || "",
+              price: myMentor.price,
+              mentoringType: myMentor.mentoringType,
+              consultationFields: myMentor.consultationFields || "",
+              github,
+              velog,
+              portfolio,
+              availableDays: myMentor.availableDays || "",
+              availableDates: myMentor.availableDates || "",
+              availableStart: myMentor.availableStart || "",
+              availableEnd: myMentor.availableEnd || "",
+              availableSchedules: myMentor.availableSchedules || ""
+            };
+
+            const profileResponse = await fetch("/api/mentor/me", {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              credentials: "include",
+              body: JSON.stringify(profileSyncData)
+            });
+
+            if (profileResponse.ok) {
+              setMyMentor(await profileResponse.json());
+            } else {
+              console.error("멘토 프로필 동기화 실패:", profileResponse.status);
+            }
+          } catch (profileError) {
+            console.error("멘토 프로필 동기화 오류:", profileError);
+          }
         }
 
         await fetchMyOfferings();
         await fetchOfferings();
+        await fetchMentors();
       } catch (error) {
         console.error("멘토링 등록/수정 오류:", error);
         alert("서버와 통신하는 중 오류가 발생했습니다.");
@@ -1646,8 +1721,8 @@ function Mentoring() {
       return;
     }
 
-    if (!registerForm.career.trim()) {
-      alert("경력을 입력해주세요.");
+    if (!registerForm.careerDetail.trim()) {
+      alert("경력 상세(실무 경력)를 입력해주세요.");
       return;
     }
 
@@ -1702,7 +1777,9 @@ function Mentoring() {
     const requestData = {
       title: registerForm.title.trim(),
       introduction: registerForm.introduction.trim(),
-      career: registerForm.career.trim(),
+      // "경력" 입력란은 화면에서 제거했고, "경력 상세"가 곧 실무 경력이므로
+      // 그 값을 career 컬럼(백엔드 필수값)에도 그대로 함께 저장한다.
+      career: registerForm.careerDetail.trim(),
       careerDetail: registerForm.careerDetail.trim(),
       certificates: registerForm.certificates.trim(),
       skills: registerForm.skills.join(", "),
@@ -3351,8 +3428,6 @@ function Mentoring() {
                 </span>
 
                 <h2>{selectedMentor.name}</h2>
-
-                <p>{selectedMentor.career}</p>
               </div>
             </div>
 
@@ -4394,24 +4469,13 @@ function Mentoring() {
               />
             </div>
 
-            {(registerMode === "profile" ||
-              (registerMode === "offering" && !myMentor)) && (
+            {
+              // 실무경험/자격증/Portfolio 등 멘토 프로필 정보는 멘토
+              // 등록(profile)이든 멘토링 등록/수정(offering)이든 항상
+              // 표시하고 입력/수정할 수 있어야 한다.
+            }
+            {(
               <>
-                <div className="register-section">
-                  <label htmlFor="career">
-                    경력
-                  </label>
-
-                  <input
-                    id="career"
-                    name="career"
-                    value={registerForm.career}
-                    onChange={handleRegisterChange}
-                    placeholder="예) 백엔드 개발 5년차"
-                    required
-                  />
-                </div>
-
                 <div className="register-section">
                   <label htmlFor="careerDetail">
                     경력 상세
@@ -4548,8 +4612,12 @@ function Mentoring() {
               </div>
             </div>
 
-            {(registerMode === "profile" ||
-              (registerMode === "offering" && !myMentor)) && (
+            {
+              // 실무경험/자격증/Portfolio 등 멘토 프로필 정보는 멘토
+              // 등록(profile)이든 멘토링 등록/수정(offering)이든 항상
+              // 표시하고 입력/수정할 수 있어야 한다.
+            }
+            {(
               <>
                 <div className="register-section">
                   <label htmlFor="github">
