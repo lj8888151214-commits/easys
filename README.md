@@ -78,9 +78,9 @@
 
 ### 📱 5. 주요 화면 시각 자료
 
-| 실시간 스트리밍 & 멘토링 세션 | 실시간 양방향 채팅 |
+| 실시간 스트리밍|
 | <img width="945" height="511" alt="image" src="https://github.com/user-attachments/assets/66cf02ab-ddf9-44f5-a76f-c6e9175e9b91" />
-| 실시간 스트리밍 & 멘토링 세션 | 실시간 양방향 채팅 |
+| 카카오 맵 API 적용, 제휴 카페 검색|
 | <img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/54dcf0ed-f2e8-4225-aba3-60b91ca0b85d" />
-| 실시간 스트리밍 & 멘토링 세션 | 실시간 양방향 채팅 |
+| 과거 채팅 사이트 컨셉의 귓속말 기능 적용|
 | <img width="885" height="511" alt="image" src="https://github.com/user-attachments/assets/170e6cec-66eb-4643-a6f4-2065f9f434e7" />
