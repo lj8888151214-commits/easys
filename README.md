@@ -78,9 +78,24 @@
 
 ### 📱 5. 주요 화면 시각 자료
 
-| 실시간 스트리밍|
- <img width="945" height="511" alt="image" src="https://github.com/user-attachments/assets/66cf02ab-ddf9-44f5-a76f-c6e9175e9b91" />
-| 카카오 맵 API 적용, 제휴 카페 검색|
- <img width="1600" height="900" alt="image" src="https://github.com/user-attachments/assets/54dcf0ed-f2e8-4225-aba3-60b91ca0b85d" />
-| 과거 채팅 사이트 컨셉의 귓속말 기능 적용|
- <img width="885" height="511" alt="image" src="https://github.com/user-attachments/assets/170e6cec-66eb-4643-a6f4-2065f9f434e7" />
+#### 1. 📹 실시간 비디오 스트리밍
+> **WebRTC / WebSocket 기반 무중단 실시간 영상 송수신**
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/66cf02ab-ddf9-44f5-a76f-c6e9175e9b91" width="80%" alt="실시간 스트리밍" />
+</p>
+
+---
+
+#### 2. 🗺️ 카카오 맵 API 기반 제휴 카페 검색
+> **위치 기반 맞춤형 제휴 카페 조회 및 지도 마커 렌더링**
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/54dcf0ed-f2e8-4225-aba3-60b91ca0b85d" width="80%" alt="카카오 맵 API 적용" />
+</p>
+
+---
+
+#### 3. 💬 레트로 감성 귓속말 채팅
+> **과거 채팅 사이트 감성을 현대적으로 재해석한 1:1 실시간 메시징**
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/170e6cec-66eb-4643-a6f4-2065f9f434e7" width="80%" alt="귓속말 기능" />
+</p>
